@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Sign Up</title>
+
+    <!-- Font Icon -->
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='register-login-form/fonts/material-icon/css/material-design-iconic-font.min.css') }}">
+
+    <!-- Main css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='register-login-form/css/style.css') }}">
+    <!-- Jquery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+
+    <style>
+        /* Font Icon */
+        @import url('https://fonts.googleapis.com/css2?family=Material+Icons');
+
+        .zmdi {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .form-group input {
+            padding-left: 40px;
+            /* Adjust based on icon width + padding */
+        }
+
+        .error-message {
+            color: red;
+            margin-top: -15px;
+            margin-bottom: 0px;
+            font-size: 12px;
+        }
+
+        .signup-image {
+            margin-top: 20px;
+            /* Add margin to the signup image section */
+        }
+
+        /* The Modal (background) */
+        .modal {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            /* Stay in place */
+            z-index: 100;
+            /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            /* Full width */
+            height: 100%;
+            /* Full height */
+            overflow: auto;
+            /* Enable scroll if needed */
+            background-color: rgb(0, 0, 0);
+            /* Fallback color */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black w/ opacity */
+        }
+
+        /* Modal Content/Box */
+        .modal-content {
+            border-radius: 5px;
+            background-color: #fefefe;
+            margin: 15% auto;
+            /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 55%;
+            /* Could be more or less, depending on screen size */
+        }
+
+        /* The Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            // Call specific validation functions on keyup for respective input fields
+            $('#fullname').on('keyup', validateFullName);
+            $('#email').on('keyup', validateEmail);
+            $('#password').on('keyup', validatePassword);
+            $('#confirmPassword').on('keyup', validateConfirmPassword);
+
+            // Call validateCheckbox on change for checkbox
+            $('#agree-term').on('change', validateCheckbox);
+
+            // Handle register button click
+            $('#register').on('click', function (event) {
+                event.preventDefault(); // Prevent the default form submission
+                if (validateForm()) {
+                    // Show the verification modal
+                    $('#verificationModal').show();
+
+                    // Submit the form after showing the modal
+                    setTimeout(function () {
+                        $('form').submit();
+                    }, 2000); // Adjust the delay as needed
+                }
+            });
+        });
+
+        function validateFullName() {
+            var fullName = $('#fullname').val();
+            if (!/^[a-zA-Z][a-zA-Z\s]{3,}$/.test(fullName)) {
+                $('.error-fullname').text("Name should contain only alphabets and spaces");
+                return false;
+            } else {
+                $('.error-fullname').text("");
+                return true;
+            }
+        }
+
+        function validateEmail() {
+            var email = $('#email').val();
+            if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+                $('.error-email').text("Enter a valid email address");
+                $('#register').prop('disabled', true); // Disable the register button
+                return false;
+            } else {
+                // Check if email already exists
+                $.ajax({
+                    type: 'POST',
+                    url: '/check_email', // Flask route to handle email check
+                    data: { email: email },
+                    success: function (response) {
+                        if (response === 'exists') {
+                            $('.error-email').text("Email already registered");
+                            $('#register').prop('disabled', true); // Disable the register button
+                        } else {
+                            $('.error-email').text("");
+                        }
+                    },
+                    error: function () {
+                        console.error('Error checking email');
+                        $('.error-email').text("Error checking email");
+                        $('#register').prop('disabled', true); // Disable the register button
+                    }
+                });
+                return true; // Return true immediately, the actual validation is done asynchronously
+            }
+        }
+
+        function validatePassword() {
+            var password = $('#password').val();
+            if (!/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}/.test(password)) {
+                $('.error-password').text("Password must include one uppercase letter, one lowercase letter, one number and at least 8 characters length");
+                return false;
+            } else {
+                $('.error-password').text("");
+                return true;
+            }
+        }
+
+        function validateConfirmPassword() {
+            var confirmPassword = $('#confirmPassword').val();
+            var password = $('#password').val();
+            if (confirmPassword !== password) {
+                $('.error-confirmPassword').text("Passwords do not match");
+                return false;
+            } else {
+                $('.error-confirmPassword').text("");
+                return true;
+            }
+        }
+
+        function validateCheckbox() {
+            if (!$('#agree-term').is(':checked')) {
+                $('.error-checkbox').text("You must agree to the terms and conditions");
+                return false;
+            } else {
+                $('.error-checkbox').text("");
+                return true;
+            }
+        }
+
+        function validateForm() {
+            var isValid = true;
+
+            // Validate each field individually
+            if (!validateFullName()) isValid = false;
+            if (!validateEmail()) isValid = false;
+            if (!validatePassword()) isValid = false;
+            if (!validateConfirmPassword()) isValid = false;
+            if (!validateCheckbox()) isValid = false;
+
+            // Enable/disable register button based on form validity
+            $('#register').prop('disabled', !isValid);
+
+            return isValid;
+        }
+
+        // Handle Terms of Service modal
+        var termsModal = $('#termsModal');
+        var termsLink = $('.term-service');
+        var termsClose = $('.close');
+
+        termsLink.on('click', function (event) {
+            event.preventDefault();
+            termsModal.show();
+        });
+
+        termsClose.on('click', function () {
+            termsModal.hide();
+        });
+
+        $(window).on('click', function (event) {
+            if ($(event.target).is(termsModal)) {
+                termsModal.hide();
+            }
+        });
+
+        // Handle Verification Modal
+        var verificationModal = $('#verificationModal');
+        var verificationClose = $('.close-verification');
+
+        verificationClose.on('click', function () {
+            verificationModal.hide();
+        });
+
+        $(window).on('click', function (event) {
+            if ($(event.target).is(verificationModal)) {
+                verificationModal.hide();
+            }
+        });
+
+        function validatePassword() {
+            var password = $('#password').val();
+            if (!/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}/.test(password)) {
+                $('.error-password').text("Password must include one uppercase letter, one lowercase letter, one number and at least 8 characters length");
+                return false;
+            } else {
+                $('.error-password').text("");
+                return true;
+            }
+        }
+
+        function validateConfirmPassword() {
+            var confirmPassword = $('#confirmPassword').val();
+            var password = $('#password').val();
+            if (confirmPassword !== password) {
+                $('.error-confirmPassword').text("Passwords do not match");
+                return false;
+            } else {
+                $('.error-confirmPassword').text("");
+                return true;
+            }
+        }
+
+        function validateCheckbox() {
+            if (!$('#agree-term').is(':checked')) {
+                $('.error-checkbox').text("You must agree to the terms and conditions");
+                return false;
+            } else {
+                $('.error-checkbox').text("");
+                return true;
+            }
+        }
+
+        function validateForm() {
+            var isValid = true;
+
+            // Validate each field individually
+            if (!validateFullName()) isValid = false;
+            if (!validateEmail()) isValid = false;
+            if (!validatePassword()) isValid = false;
+            if (!validateConfirmPassword()) isValid = false;
+            if (!validateCheckbox()) isValid = false;
+
+            // Enable/disable register button based on form validity
+            $('#register').prop('disabled', !isValid);
+
+            return isValid;
+        }
+
+        // Handle Terms of Service modal
+        var termsModal = $('#termsModal');
+        var termsLink = $('.term-service');
+        var termsClose = $('.close');
+
+        termsLink.on('click', function (event) {
+            event.preventDefault();
+            termsModal.show();
+        });
+
+        termsClose.on('click', function () {
+            termsModal.hide();
+        });
+
+        $(window).on('click', function (event) {
+            if ($(event.target).is(termsModal)) {
+                termsModal.hide();
+            }
+        });
+
+        // Handle Verification Modal
+        var verificationModal = $('#verificationModal');
+        var verificationClose = $('.close-verification');
+
+        verificationClose.on('click', function () {
+            verificationModal.hide();
+        });
+
+        $(window).on('click', function (event) {
+            if ($(event.target).is(verificationModal)) {
+                verificationModal.hide();
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+
+    <div class="main">
+
+        <!-- Sign up form -->
+        <section class="signup">
+            <div class="container">
+                <div class="signup-content">
+                    <div class="signup-form">
+                        <h2 class="form-title">Sign up</h2>
+                        <form method="POST" action="" class="register-form" id="register-form">
+                            <div class="form-group">
+                                <label for="fullname"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                                <input type="text" name="fullname" id="fullname" placeholder="Your Name" required />
+                            </div>
+                            <p style="color: red;" class="error-fullname error-message"></p>
+                            <div class="form-group">
+                                <label for="type"><i class="zmdi zmdi-case-check"></i></label>
+                                <select name="type" id="type">
+                                    <option value="1">Job Seeker</option>
+                                    <option value="2">Employer</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="email"><i class="zmdi zmdi-email"></i></label>
+                                <input type="email" name="email" id="email" placeholder="Your Email" required />
+                            </div>
+                            <p style="color: red;" class="error-email error-message"></p>
+                            <div class="form-group">
+                                <label for="password"><i class="zmdi zmdi-lock"></i></label>
+                                <input type="password" name="password" id="password" placeholder="Password" required />
+                            </div>
+                            <p style="color: red;" class="error-password error-message"></p>
+                            <div class="form-group">
+                                <label for="confirmPassword"><i class="zmdi zmdi-lock-outline"></i></label>
+                                <input type="password" name="confirmPassword" id="confirmPassword"
+                                    placeholder="Repeat your password" required />
+                            </div>
+                            <span style="color: red;" class="error-confirmPassword error-message"></span>
+                            <div class="form-group">
+                                <input type="checkbox" name="agree-term" id="agree-term" class="agree-term" />
+                                <label for="agree-term" class="label-agree-term"><span><span></span></span>I agree all
+                                    statements in <a href="#" class="term-service">Terms of service</a></label>
+                            </div>
+                            <p style="color: red;" id="agree-term" class="error-checkbox error-message"></p>
+                            <div class="form-group form-button">
+                                <input type="submit" name="signup" id="register" class="form-submit" value="Register" />
+                            </div>
+                        </form>
+                    </div>
+                    <div class="signup-image">
+                        <figure><img
+                                src="{{ url_for('static', filename='register-login-form/images/signup-image.jpg') }}"
+                                alt="sign up image"></figure>
+                        <a href="{{ url_for('login') }}" class="signup-image-link">I am already a member</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- JS -->
+    <script src="{{ url_for('static', filename='register-login-form/vendor/jquery/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='register-login-form/js/main.js') }}"></script>
+
+    <!-- Terms of Service Modal -->
+    <div id="termsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Terms of Service</h2>
+            <p>
+                <b>Last Updated: 01-01-2024</b><br><br>
+
+                Welcome to JobSeek! By accessing or using our services, you agree to be bound by the following terms and
+                conditions. Please read these terms carefully before using our website and
+                services.<br><br>
+
+                <b>1. Acceptance of Terms</b><br>
+                By registering an account, accessing, or using JobSeek, you agree to be bound by these Terms of Service
+                and our Privacy Policy. If you do not agree to these terms, please do not use our services.<br><br>
+
+                <b>2. Description of Service</b><br>
+                JobSeek provides a platform for job seekers to find job opportunities and for employers to post job
+                listings. Our services include job postings, resume submissions, and other related services.<br><br>
+
+                <b>3. User Responsibilities</b><br>
+                a. Account Registration: Users must register for an account to access certain features of JobSeek. You
+                agree to provide accurate and complete information during the registration process and keep your account
+                information up-to-date.<br>
+
+                b. Use of Services: You agree to use JobSeek for lawful purposes only and not to engage in any activity
+                that disrupts or interferes with our services.<br>
+
+                c. Content: You are responsible for the content you post on JobSeek, including resumes, job listings,
+                and messages. You agree not to post any content that is false, misleading, defamatory, or violates any
+                laws or regulations.<br><br>
+
+                <b>4. Job Postings and Applications</b><br>
+                a. Employers: Employers can post job listings on JobSeek. By posting a job, you agree that the
+                information provided is accurate and complies with all applicable laws and regulations.<br>
+
+                b. Job Seekers: Job seekers can apply for jobs listed on JobSeek. By submitting an application, you
+                agree that the information provided is accurate and that you have the necessary qualifications for the
+                job.<br><br>
+
+                <b>5. Privacy</b><br>
+                Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use, and
+                disclose your personal information.<br><br>
+
+                <b>6. Fees and Payments</b><br>
+                JobSeek may charge fees for certain services, such as premium job postings or resume enhancements. All
+                fees are non-refundable unless otherwise stated. Payment terms are detailed at the point of
+                purchase.<br><br>
+
+                <b>7. Intellectual Property</b><br>
+                All content and materials on JobSeek, including text, graphics, logos, and software, are the property of
+                JobSeek or its licensors and are protected by intellectual property laws. You may not use, reproduce, or
+                distribute any content from JobSeek without our written permission.<br><br>
+
+                <b>8. Termination</b><br>
+                JobSeek reserves the right to suspend or terminate your account and access to our services at any time,
+                without notice, for any reason, including if you violate these Terms of Service.<br><br>
+
+                <b>9. Disclaimers</b><br>
+                JobSeek is provided on an "as-is" and "as-available" basis. We do not guarantee the accuracy,
+                completeness, or reliability of any content or service provided on JobSeek. Your use of JobSeek is at
+                your own risk.<br><br>
+
+                <b>10. Limitation of Liability</b><br>
+                To the fullest extent permitted by law, JobSeek shall not be liable for any direct, indirect,
+                incidental, special, or consequential damages resulting from your use of our services, even if we have
+                been advised of the possibility of such damages.<br><br>
+
+                <b>11. Governing Law</b><br>
+                These Terms of Service are governed by and construed in accordance with the laws of [Your
+                Country/State]. Any disputes arising under these terms will be subject to the exclusive jurisdiction of
+                the courts of [Your Country/State].<br><br>
+
+                <b>12. Changes to Terms</b><br>
+                JobSeek reserves the right to modify these Terms of Service at any time. We will notify you of any
+                changes by posting the new terms on our website. Your continued use of JobSeek after any changes
+                indicates your acceptance of the new terms.<br><br>
+
+                <b>13. Contact Us</b><br>
+                If you have any questions or concerns about these Terms of Service, please contact us at
+                jobseek@gmail.com.<br><br>
+
+                <b>JobSeek</b><br>
+                jobseek@gmail.com
+            </p>
+        </div>
+    </div>
+
+    <!-- Email Verification Modal -->
+    <div id="verificationModal" class="modal">
+        <div class="modal-content">
+            <!-- <span class="close">&times;</span> -->
+            <p>Please check your email for verification.</p>
+        </div>
+    </div>
+
+</body><!-- This templates was made by Colorlib (https://colorlib.com) -->
+
+</html>

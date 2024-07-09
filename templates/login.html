@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Sign In</title>
+
+  <!-- Font Icon -->
+  <link rel="stylesheet"
+    href="{{ url_for('static', filename='register-login-form/fonts/material-icon/css/material-design-iconic-font.min.css') }}">
+
+  <!-- Main css -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='register-login-form/css/style.css') }}">
+
+  <style>
+    /* The Modal (background) */
+    .modal {
+      display: none;
+      /* Hidden by default */
+      position: fixed;
+      /* Stay in place */
+      z-index: 100;
+      /* Sit on top */
+      left: 0;
+      top: 0;
+      width: 100%;
+      /* Full width */
+      height: 100%;
+      /* Full height */
+      overflow: auto;
+      /* Enable scroll if needed */
+      background-color: rgb(0, 0, 0);
+      /* Fallback color */
+      background-color: rgba(0, 0, 0, 0.4);
+      /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    .modal-content {
+      border-radius: 5px;
+      background-color: #fefefe;
+      margin: 15% auto;
+      /* 15% from the top and centered */
+      padding: 20px;
+      border: 1px solid #888;
+      width: 40%;
+      /* Could be more or less, depending on screen size */
+    }
+
+    /* The Close Button */
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .error-message {
+      color: red;
+      margin-top: -15px;
+      margin-bottom: 0px;
+      font-size: 12px;
+    }
+  </style>
+  <script type="text/javascript">
+    function preventBack() {
+      window.history.forward();
+    }
+
+    setTimeout("preventBack()", 0);
+
+    window.onunload = function () { null }; 
+  </script>
+</head>
+
+<body>
+
+  <div class="main">
+
+    <!-- Sing in  Form -->
+    <section class="sign-in">
+      <div class="container">
+        <div class="signin-content">
+          <div class="signin-image">
+
+            <figure><img src="{{ url_for('static', filename='register-login-form/images/signin-image.jpg') }}"
+                alt="sign in image"></figure>
+            <a href="{{ url_for('register') }}" class="signup-image-link">Create an account</a>
+          </div>
+
+          <div class="signin-form">
+            <h2 class="form-title">Sign In</h2>
+            <form method="POST" class="register-form" id="login-form">
+              <div class="form-group">
+                <label for="email"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                <input type="text" name="email" id="email" placeholder="Email" />
+              </div>
+              <div class="form-group">
+                <label for="password"><i class="zmdi zmdi-lock"></i></label>
+                <input type="password" name="password" id="password" placeholder="Password" />
+              </div>
+              <a href="#" id="forgot-password-link" class="signup-image-link">Forgot Password?</a>
+              <div class="form-group form-button">
+                <input type="submit" name="signin" id="signin" class="form-submit" value="Log in" />
+              </div>
+            </form>
+            <div class="social-login">
+              <span class="social-label">Or login with</span>
+              <ul class="socials">
+                <li><a href="#"><i class="display-flex-center zmdi zmdi-facebook"></i></a></li>
+                <li><a href="#"><i class="display-flex-center zmdi zmdi-twitter"></i></a></li>
+                <li><a href="#"><i class="display-flex-center zmdi zmdi-google"></i></a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- JS -->
+  <script src="{{ url_for('static', filename='register-login-form/vendor/jquery/jquery.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='register-login-form/js/main.js') }}"></script>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgotPasswordModal" class="modal">
+    <div class="modal-content">
+      <!-- <h2>Forgot Password</h2> -->
+      <form method="POST" id="forgot-password-form">
+        <div class="form-group">
+          <label for="forgot-email"></label>
+          <input type="email" name="forgot-email" id="forgot-email" placeholder="Your Email" required />
+        </div>
+        <p class="error-message" id="error-forgot-email"></p>
+        <div class="form-group form-button">
+          <button type="button" id="generate-otp" class="form-submit">Generate OTP</button>
+        </div>
+        <div class="form-group">
+          <label for="otp"></label>
+          <input type="text" name="otp" id="otp" placeholder="Enter OTP" required />
+        </div>
+        <p class="error-message" id="error-otp"></p>
+        <div class="form-group form-button">
+          <button type="submit" id="verify-otp" class="form-submit">Verify OTP</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function () {
+      // Get the modal
+      var modal = $('#forgotPasswordModal');
+
+      // Get the link that opens the modal
+      var link = $('#forgot-password-link');
+
+      // Get the <span> element that closes the modal
+      var span = $('.close');
+
+      // When the user clicks on the link, open the modal
+      link.on('click', function (event) {
+        event.preventDefault();
+        modal.show();
+      });
+
+      // When the user clicks on <span> (x), close the modal
+      span.on('click', function () {
+        modal.hide();
+      });
+
+      // When the user clicks anywhere outside of the modal, close it
+      $(window).on('click', function (event) {
+        if ($(event.target).is(modal)) {
+          modal.hide();
+        }
+      });
+
+      // Call email validation function on keyup
+      $('#forgot-email').on('keyup', validateEmail);
+      function validateEmail() {
+        var email = $('#forgot-email').val();
+        if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+          $('#error-forgot-email').text("Enter a valid email address");
+          $('#generate-otp').prop('disabled', true); // Disable the generate OTP button
+          return false;
+        } else {
+          // Check if email already exists
+          $.ajax({
+            type: 'POST',
+            url: '/check_email', // Flask route to handle email check
+            data: { email: email },
+            success: function (response) {
+              if (response === 'exists') {
+                $('#error-forgot-email').text("");
+                $('#generate-otp').prop('disabled', false); // Enable the generate OTP button
+              } else {
+                $('#error-forgot-email').text("Email not registered");
+                $('#generate-otp').prop('disabled', true); // Disable the generate OTP button
+              }
+            },
+            error: function () {
+              console.error('Error checking email');
+              $('#error-forgot-email').text("Error checking email");
+              $('#generate-otp').prop('disabled', true); // Disable the generate OTP button
+            }
+          });
+          return true; // Return true immediately, the actual validation is done asynchronously
+        }
+      }
+
+      // Handle OTP generation
+      $('#generate-otp').on('click', function () {
+        var email = $('#forgot-email').val();
+        if (!email) {
+          $('#error-forgot-email').text("Please enter a valid email");
+          return;
+        }
+        $.ajax({
+          type: 'POST',
+          url: '/generate_otp', // Flask endpoint for generating OTP
+          data: JSON.stringify({ email: email }),
+          contentType: 'application/json',
+          success: function (response) {
+            if (response.status === 'success') {
+              $('#error-forgot-email').text("OTP has been sent to your email")
+            } else {
+              $('#error-forgot-email').text(response.message);
+            }
+          },
+          error: function () {
+            $('#error-forgot-email').text("Error generating OTP");
+          }
+        });
+      });
+
+      // Handle OTP verification
+      $('#forgot-password-form').on('submit', function (event) {
+        event.preventDefault();
+        var email = $('#forgot-email').val();
+        var otp = $('#otp').val();
+        if (!otp) {
+          $('#error-otp').text("Please enter the OTP");
+          return;
+        }
+        $.ajax({
+          type: 'POST',
+          url: '/verify_otp', // Flask endpoint for verifying OTP
+          data: JSON.stringify({ email: email, otp: otp }),
+          contentType: 'application/json',
+          success: function (response) {
+            if (response.status === 'success') {
+              $('#error-otp').text("OTP verified successfully. You can now reset your password.");
+              modal.hide();
+              window.location.href = "{{ url_for('forgot_password') }}";
+            } else {
+              $('#error-otp').text(response.message);
+            }
+          },
+          error: function () {
+            $('#error-otp').text("Error verifying OTP");
+          }
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>
