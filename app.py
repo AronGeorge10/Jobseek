@@ -9,6 +9,7 @@ import jwt
 from datetime import datetime, timedelta
 import random
 import logging
+from authlib.integrations.flask_client import OAuth,OAuthError
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Required for flashing messages
@@ -144,6 +145,7 @@ def login():
 
         if user and bcrypt.check_password_hash(user.password, password):
             login_user(user)
+            session['email'] = email
             return redirect(url_for('index'))
         else:
             flash('Invalid email or password.', 'error')
@@ -217,7 +219,6 @@ def verify_otp():
         return jsonify({'status': 'error', 'message': 'OTP not found or expired'}), 400
 
 
-
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -241,6 +242,65 @@ def forgot_password():
 
     return render_template('forgot_password.html')
 
+appConf = {
+    "OAUTH2_CLIENT_ID": "354675704618-6952kjcntdu1p47nilp7a56fhe113og0.apps.googleusercontent.com",
+    "OAUTH2_CLIENT_SECRET": "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",
+    "OAUTH2_META_URL": "https://accounts.google.com/.well-known/openid-configuration",
+    "FLASK_SECRET": "ALongRandomlyGeneratedString",
+    "FLASK_PORT": 5000
+    
+}
+
+app.secret_key = appConf.get("FLASK_SECRET")
+
+oauth = OAuth(app)
+oauth.register(
+    "myApp",
+    client_id=appConf.get("OAUTH2_CLIENT_ID"),
+    client_secret=appConf.get("OAUTH2_CLIENT_SECRET"),
+    client_kwargs={
+        "scope": "openid profile email ",
+        # 'code_challenge_method': 'S256'  # enable PKCE
+    },
+    server_metadata_url=f'{appConf.get("OAUTH2_META_URL")}',
+)
+
+@app.route("/google_login")
+def  google_login():
+    return oauth.myApp.authorize_redirect(redirect_uri=url_for("auth_receiver",_external=True))
+
+@app.route("/auth-receiver")
+def auth_receiver():
+    try:
+        token = oauth.myApp.authorize_access_token()
+    except OAuthError as error:
+        # Handle the error when user cancels the authentication
+        error_description = error.description if hasattr(error, 'description') else 'Unknown error'
+        return redirect(url_for("login")) 
+    if token is None:
+        return "Google authentication failed: no token received."
+   
+    session["user"]=token
+    user_info = token.get("userinfo")
+    user_email = user_info.get('email')
+    user = User.get_by_email(user_email)
+    login_user(user)
+    
+    user = collection_login_credentials.find_one({'email': user_email})
+    session['user_id'] = str(user['_id'])
+    # session['username'] = user['username']
+    session['email'] = user['email']
+    user_details = collection_user_registration.find_one({'_id': user['registration_id']})
+    if user_details:
+        session['full_name'] = user_details['full_name']
+        # session['phone_number'] = user_details['phone_number']
+        # session['address'] = user_details['address']
+        # session['dob'] = user_details['dob']
+            
+           
+    # return user_email
+    # return json.dumps(session.get("user"))
+    return redirect(url_for("index"))
 
 if __name__ == '__main__':
     app.run(debug=True)
