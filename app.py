@@ -216,6 +216,8 @@ def verify_otp():
         logging.debug("OTP not found or expired")
         return jsonify({'status': 'error', 'message': 'OTP not found or expired'}), 400
 
+
+
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
