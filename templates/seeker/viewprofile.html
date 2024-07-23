@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Firmbee.com - Free Project Management Platform for remote teams">
+    <title>Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <script src="https://kit.fontawesome.com/0e035b9984.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='webpage/css/main.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .profile-container {
+            width: 80%;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-header img {
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+        }
+
+        .profile-header h1 {
+            margin: 10px 0 5px 0;
+            font-size: 24px;
+        }
+
+        .profile-header h2 {
+            margin: 5px 0;
+            font-size: 18px;
+            color: #777;
+        }
+
+        .profile-header .job-title-input {
+            width: 40%;
+            margin: 0 auto;
+        }
+
+        ::placeholder {
+            text-align: center;
+        }
+
+        .profile-section {
+            margin-bottom: 20px;
+        }
+
+        .profile-section h3 {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            color: #007bff;
+        }
+
+        .profile-section p {
+            margin: 0;
+        }
+
+        .profile-section ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .profile-section ul li {
+            margin-bottom: 10px;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .contact-info p {
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .contact-info input {
+            margin-left: 10px;
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .work-experience-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .work-experience-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .work-experience-header input {
+            /* margin-right: 10px; */
+        }
+
+        .work-experience-details {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .work-experience-details input {
+            flex: 1;
+            max-width: 200px;
+            /* Adjust as needed */
+        }
+
+        main {
+            padding-top: 80px;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let jobCount = 1;
+            let educationCount = 1;
+            let skillCount = 1;
+            let certificationCount = 1;
+            let projectCount = 1;
+
+            // Add Job
+            document.getElementById('add-job-button').addEventListener('click', function () {
+                jobCount++;
+                const newJobItem = document.createElement('li');
+                newJobItem.className = 'work-experience-item';
+                newJobItem.innerHTML = `
+                <div class="work-experience-header">
+                    <input class="form-control" type="text" name="job_title_${jobCount}" placeholder="Job Title">&nbsp;
+                    <input class="form-control" type="text" name="duration_${jobCount}" placeholder="Duration">
+                </div>
+                <ul>
+                    <li><input class="form-control" type="text" name="company_${jobCount}" placeholder="Company Name"></li>
+                    <li><input class="form-control" type="text" name="responsibility_${jobCount}" placeholder="Responsibility"></li>
+                </ul>
+            `;
+                document.getElementById('work-experience-list').appendChild(newJobItem);
+            });
+
+            // Add Education
+            document.getElementById('add-education-button').addEventListener('click', function () {
+                educationCount++;
+                const newEducationItem = document.createElement('li');
+                newEducationItem.className = 'education-item';
+                newEducationItem.innerHTML = `
+                <strong><input class="form-control" type="text" name="degree_${educationCount}" placeholder="Degree"></strong>
+                <br>
+                <input class="form-control" type="text" name="university_${educationCount}" placeholder="University">,
+                <input class="form-control" type="text" name="graduation_year_${educationCount}" placeholder="Graduation Year">
+            `;
+                document.getElementById('education-list').appendChild(newEducationItem);
+            });
+
+            // Add Skill
+            document.getElementById('add-skill-button').addEventListener('click', function () {
+                skillCount++;
+                const newSkillItem = document.createElement('li');
+                newSkillItem.className = 'skill-item';
+                newSkillItem.innerHTML = `
+                <input class="form-control" type="text" name="skill_${skillCount}" placeholder="Skill ${skillCount}">
+            `;
+                document.getElementById('skills-list').appendChild(newSkillItem);
+            });
+
+            // Add Certification
+            document.getElementById('add-certification-button').addEventListener('click', function () {
+                certificationCount++;
+                const newCertificationItem = document.createElement('li');
+                newCertificationItem.className = 'certification-item';
+                newCertificationItem.innerHTML = `
+                <input class="form-control" type="text" name="certification_${certificationCount}" placeholder="Certification ${certificationCount}">
+            `;
+                document.getElementById('certifications-list').appendChild(newCertificationItem);
+            });
+
+            // Add Project
+            document.getElementById('add-project-button').addEventListener('click', function () {
+                projectCount++;
+                const newProjectItem = document.createElement('li');
+                newProjectItem.className = 'project-item';
+                newProjectItem.innerHTML = `
+                <strong><input class="form-control" type="text" name="project_${projectCount}" placeholder="Project Name"></strong>
+                <br>
+                <textarea class="form-control" name="project_description_${projectCount}" rows="2" placeholder="Project Description"></textarea>
+            `;
+                document.getElementById('projects-list').appendChild(newProjectItem);
+            });
+        });
+    </script>
+
+</head>
+
+<body>
+    {% include '_navbar.html' %}
+    <main>
+        <div class="profile-container">
+            <div class="profile-header">
+                <img src="{{ url_for('static', filename='webpage/img/profile.png') }}" alt="Profile Photo">
+                <h1>{{ user.name }}</h1>
+                <h2><input class="form-control" type="text" name="job_title" value="{{ user.job_title }}"
+                        placeholder="Job Title"></h2>
+            </div>
+            <div class="profile-section">
+                <h3>Contact Information</h3>
+                <div class="contact-info">
+                    <div>
+                        <p>Email: <input class="form-control" type="email" name="email" value="{{ user.email }}"
+                                placeholder="Email"></p>
+                        <p>Phone: <input class="form-control" type="tel" name="phone" value="{{ user.phone }}"
+                                placeholder="Phone"></p>
+                    </div>
+                    <div>
+                        <p>Address: <input class="form-control" type="text" name="address" value="{{ user.address }}"
+                                placeholder="Address"></p>
+                        <p>LinkedIn: <input class="form-control" type="url" name="linkedin" value="{{ user.linkedin }}"
+                                placeholder="LinkedIn"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-section">
+                <h3>Professional Summary</h3>
+                <textarea class="form-control" name="summary" rows="3"
+                    placeholder="Professional Summary">{{ user.summary }}</textarea>
+            </div>
+            <div class="profile-section">
+                <h3>Work Experience</h3>
+                <ul id="work-experience-list">
+                    {% for job in user.work_experience %}
+                    <li class="work-experience-item">
+                        <div class="work-experience-header">
+                            <input class="form-control" type="text" name="job_title_{{ loop.index }}"
+                                value="{{ job.title }}" placeholder="Job Title">&nbsp;
+                            <input class="form-control" type="text" name="duration_{{ loop.index }}"
+                                value="{{ job.duration }}" placeholder="Duration">
+                        </div>
+                        <ul>
+                            <li><input class="form-control" type="text" name="company_{{ loop.index }}"
+                                    value="{{ job.company }}" placeholder="Company Name"></li>
+                            <li><input class="form-control" type="text" name="responsibility_{{ loop.index }}"
+                                    value="{{ job.responsibility }}" placeholder="Responsibility"></li>
+                        </ul>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <button id="add-job-button" type="button">Add Job</button>
+            </div>
+            <div class="profile-section">
+                <h3>Education</h3>
+                <ul id="education-list">
+                    {% for edu in user.education %}
+                    <li class="education-item">
+                        <strong><input class="form-control" type="text" name="degree_{{ loop.index }}"
+                                value="{{ edu.degree }}" placeholder="Degree"></strong>
+                        <br>
+                        <input class="form-control" type="text" name="university_{{ loop.index }}"
+                            value="{{ edu.university }}" placeholder="University">,
+                        <input class="form-control" type="text" name="graduation_year_{{ loop.index }}"
+                            value="{{ edu.graduation_year }}" placeholder="Graduation Year">
+                    </li>
+                    {% endfor %}
+                </ul>
+                <button id="add-education-button" type="button">Add Education</button>
+            </div>
+            <div class="profile-section">
+                <h3>Skills</h3>
+                <ul id="skills-list">
+                    {% for skill in user.skills %}
+                    <li><input class="form-control" type="text" name="skill_{{ loop.index }}" value="{{ skill }}"
+                            placeholder="Skill {{ loop.index }}"></li>
+                    {% endfor %}
+                </ul>
+                <button id="add-skill-button" type="button">Add Skill</button>
+            </div>
+            <div class="profile-section">
+                <h3>Certifications</h3>
+                <ul id="certifications-list">
+                    {% for cert in user.certifications %}
+                    <li><input class="form-control" type="text" name="certification_{{ loop.index }}" value="{{ cert }}"
+                            placeholder="Certification {{ loop.index }}"></li>
+                    {% endfor %}
+                </ul>
+                <button id="add-certification-button" type="button">Add Certification</button>
+            </div>
+            <div class="profile-section">
+                <h3>Projects</h3>
+                <ul id="projects-list">
+                    {% for project in user.projects %}
+                    <li class="project-item">
+                        <strong><input class="form-control" type="text" name="project_{{ loop.index }}"
+                                value="{{ project.name }}" placeholder="Project Name"></strong>
+                        <br>
+                        <textarea class="form-control" name="project_description_{{ loop.index }}" rows="2"
+                            placeholder="Project Description">{{ project.description }}</textarea>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <button id="add-project-button" type="button">Add Project</button>
+            </div>
+        </div>
+    </main>
+    <script src="{{ url_for('static', filename='webpage/js/nav-bg.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+        // Existing JavaScript for adding items
+    </script>
+</body>
+
+</html>

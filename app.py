@@ -10,8 +10,10 @@ from datetime import datetime, timedelta
 import random
 import logging
 from authlib.integrations.flask_client import OAuth,OAuthError
+from blueprints.seeker import seeker_bp
 
 app = Flask(__name__)
+app.register_blueprint(seeker_bp, url_prefix='/seeker')
 app.secret_key = os.urandom(24)  # Required for flashing messages
 
 # Configure logging
@@ -95,8 +97,6 @@ def register():
 
         # Send verification email
         send_verification_email(email)
-
-        flash('Registration successful. Please check your email for verification instructions.', 'success')
 
     return render_template('register.html')
 
@@ -301,6 +301,18 @@ def auth_receiver():
     # return user_email
     # return json.dumps(session.get("user"))
     return redirect(url_for("index"))
+
+# @app.route("/view_profile")
+# def view_profile():
+#     return render_template("view_profile.html", user=session.get("user"))
+
+@app.route("/blog")
+def blog():
+    return render_template("blog.html")
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
 
 if __name__ == '__main__':
     app.run(debug=True)
