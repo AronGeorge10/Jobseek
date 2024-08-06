@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a New Job</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Validate all fields on keyup
+            $('#title').on('keyup', validateTitle);
+            $('#description').on('keyup', validateDescription);
+            $('#salary').on('keyup', validateSalary);
+            $('#location').on('keyup', validateLocation);
+            $('#company').on('keyup', validateCompany);
+
+            // Handle form submission
+            $('form').on('submit', function(event) {
+                if (!validateForm()) {
+                    event.preventDefault();
+                }
+            });
+        });
+
+        function validateTitle() {
+            var title = $('#title').val().trim();
+            if (title.length < 3) {
+                $('.error-title').text("Title should be at least 3 characters long");
+                return false;
+            } else if (title.length > 100) {
+                $('.error-title').text("Title should not exceed 100 characters");
+                return false;
+            } else if (!/^[a-zA-Z\s\-&()]+$/.test(title)) {
+                $('.error-title').text("Title can only contain letters, spaces, hyphens, ampersands, and parentheses");
+                return false;
+            } else {
+                $('.error-title').text("");
+                return true;
+            }
+        }
+
+        function validateDescription() {
+            var description = $('#description').val();
+            if (description.length < 10) {
+                $('.error-description').text("Description should be at least 10 characters long");
+                return false;
+            } else {
+                $('.error-description').text("");
+                return true;
+            }
+        }
+
+        function validateSalary() {
+            var salary = $('#salary').val();
+            if (!/^\$?[0-9]+(\.[0-9]{1,2})?$/.test(salary)) {
+                $('.error-salary').text("Please enter a valid salary (e.g., 50000 or 50000.00)");
+                return false;
+            } else {
+                $('.error-salary').text("");
+                return true;
+            }
+        }
+
+        function validateLocation() {
+            var location = $('#location').val();
+            if (location.length < 2) {
+                $('.error-location').text("Location should be at least 2 characters long");
+                return false;
+            } else {
+                $('.error-location').text("");
+                return true;
+            }
+        }
+
+        function validateCompany() {
+            var company = $('#company').val();
+            if (company.length < 2) {
+                $('.error-company').text("Company name should be at least 2 characters long");
+                return false;
+            } else {
+                $('.error-company').text("");
+                return true;
+            }
+        }
+
+        function validateForm() {
+            var isValid = true;
+
+            if (!validateTitle()) isValid = false;
+            if (!validateDescription()) isValid = false;
+            if (!validateSalary()) isValid = false;
+            if (!validateLocation()) isValid = false;
+            if (!validateCompany()) isValid = false;
+
+            // Validate requirements
+            var requirements = $('input[name="requirements[]"]');
+            if (requirements.length === 0 || requirements.first().val().trim() === '') {
+                $('.error-requirements').text("At least one requirement is needed");
+                isValid = false;
+            } else {
+                $('.error-requirements').text("");
+            }
+
+            // Validate responsibilities
+            var responsibilities = $('input[name="responsibilities[]"]');
+            if (responsibilities.length === 0 || responsibilities.first().val().trim() === '') {
+                $('.error-responsibilities').text("At least one responsibility is needed");
+                isValid = false;
+            } else {
+                $('.error-responsibilities').text("");
+            }
+
+            return isValid;
+        }
+
+        function addRequirement() {
+            var requirementsList = document.getElementById('requirements-list');
+            var newRequirement = document.createElement('li');
+            newRequirement.innerHTML = `
+                <input type="text" class="form-control mt-2" name="requirements[]" required>
+                <span class="error-message"></span>
+            `;
+            requirementsList.appendChild(newRequirement);
+        }
+
+        function addResponsibility() {
+            var responsibilitiesList = document.getElementById('responsibilities-list');
+            var newResponsibility = document.createElement('li');
+            newResponsibility.innerHTML = `
+                <input type="text" class="form-control mt-2" name="responsibilities[]" required>
+                <span class="error-message"></span>
+            `;
+            responsibilitiesList.appendChild(newResponsibility);
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .job-form-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875em;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="job-form-container">
+            <h1 class="text-center mb-4">Post a New Job</h1>
+            <form method="POST" action="/recruiter/post_job">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Job Title</label>
+                    <input type="text" class="form-control" id="title" name="title" required maxlength="100">
+                    <span class="error-title error-message"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Job Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    <span class="error-description error-message"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="responsibilities" class="form-label">Job Responsibilities</label>
+                    <ul id="responsibilities-list">
+                        <li>
+                            <input type="text" class="form-control" name="responsibilities[]" required>
+                        </li>
+                    </ul>
+                    <button type="button" class="btn btn-secondary mt-2" onclick="addResponsibility()">Add Responsibility</button>
+                    <span class="error-responsibilities error-message"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="requirements" class="form-label">Job Requirements</label>
+                    <ul id="requirements-list">
+                        <li>
+                            <input type="text" class="form-control" name="requirements[]" required>
+                        </li>
+                    </ul>
+                    <button type="button" class="btn btn-secondary mt-2" onclick="addRequirement()">Add Requirement</button>
+                    <span class="error-requirements error-message"></span>
+                </div>            
+                <div class="mb-3">
+                    <label for="salary" class="form-label">Salary</label>
+                    <input type="text" class="form-control" id="salary" name="salary" required>
+                    <span class="error-salary error-message"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="location" class="form-label">Job Location</label>
+                    <input type="text" class="form-control" id="location" name="location" required>
+                    <span class="error-location error-message"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="company" class="form-label">Company</label>
+                    <input type="text" class="form-control" id="company" name="company" required>
+                    <span class="error-company error-message"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="job_type" class="form-label">Job Type</label>
+                    <select class="form-select" id="job_type" name="job_type" required>
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Internship">Internship</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="experience_level" class="form-label">Experience Level</label>
+                    <select class="form-select" id="experience_level" name="experience_level" required>
+                        <option value="Entry-level">Entry-level</option>
+                        <option value="Mid-level">Mid-level</option>
+                        <option value="Senior">Senior</option>
+                        <option value="Executive">Executive</option>
+                    </select>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Post Job</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS (optional, for certain Bootstrap features) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

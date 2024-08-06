@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+</head>
+<body>
+    <!-- Sidebar -->
+  {% include 'admin/_sidebar.html' %}
+
+    <div class="main content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="mt-4">Admin Dashboard</h1>
+                    <p>Welcome to the admin dashboard. Here you can manage the job portal.</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-3 col-md-6">
+                    <div class="card text-white bg-primary mb-3">
+                        <div class="card-header">Total Users</div>
+                        <div class="card-body">
+                            <h5 class="card-title">1234</h5>
+                            <p class="card-text">Manage users.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="card text-white bg-success mb-3">
+                        <div class="card-header">Active Job Listings</div>
+                        <div class="card-body">
+                            <h5 class="card-title">567</h5>
+                            <p class="card-text">Manage job listings.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="card text-white bg-danger mb-3">
+                        <div class="card-header">Pending Applications</div>
+                        <div class="card-body">
+                            <h5 class="card-title">89</h5>
+                            <p class="card-text">Manage applications.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="card text-white bg-warning mb-3">
+                        <div class="card-header">Settings</div>
+                        <div class="card-body">
+                            <h5 class="card-title">Configure</h5>
+                            <p class="card-text">Manage settings.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add more widgets or sections as needed -->
+
+        </div>
+    </div>
+</body>
+</html>

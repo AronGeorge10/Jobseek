@@ -70,6 +70,31 @@
       margin-bottom: 0px;
       font-size: 12px;
     }
+
+    .flash-messages {
+      margin-bottom: 20px;
+    }
+
+    .alert {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+
+    .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .alert-warning {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .alert-danger {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
   </style>
   <script type="text/javascript">
     function preventBack() {
@@ -89,6 +114,16 @@
     <!-- Sing in  Form -->
     <section class="sign-in">
       <div class="container">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
         <div class="signin-content">
           <div class="signin-image">
 

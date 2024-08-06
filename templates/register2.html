@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Sign Up</title>
+
+    <!-- Font Icon -->
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='register-login-form/fonts/material-icon/css/material-design-iconic-font.min.css') }}">
+
+    <!-- Main css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='register-login-form/css/style.css') }}">
+    <!-- Jquery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+
+    <style>
+        /* Font Icon */
+        @import url('https://fonts.googleapis.com/css2?family=Material+Icons');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        .main {
+            padding: 50px 0;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .signup-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .signup-form {
+            flex: 1;
+            padding: 40px;
+        }
+
+        .form-title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .tab {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            border: none;
+            background-color: transparent;
+        }
+
+        .tab button {
+            background-color: #f0f2f5;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 12px 24px;
+            transition: 0.3s;
+            font-size: 16px;
+            border-radius: 25px;
+            margin: 0 10px;
+        }
+
+        .tab button:hover {
+            background-color: #e4e6e9;
+        }
+
+        .tab button.active {
+            background-color: #4267B2;
+            color: white;
+        }
+
+        .tabcontent {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-with-icon input {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-with-icon .zmdi {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #4267B2;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .form-button {
+            text-align: center;
+        }
+
+        .form-submit {
+            background-color: #4267B2;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: inline-block;
+            text-align: center;
+            width: 150px;
+        }
+
+        .form-submit:hover {
+            background-color: #365899;
+        }
+
+        .signup-image {
+            flex: 1;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .signup-image img {
+            max-width: 100%;
+            border-radius: 10px;
+        }
+
+        .signup-image-link {
+            display: block;
+            margin-top: 20px;
+            color: #4267B2;
+            text-decoration: none;
+        }
+
+        /* The Modal (background) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Modal Content/Box */
+        .modal-content {
+            border-radius: 5px;
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 55%;
+        }
+
+        /* The Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            // Call specific validation functions on keyup for respective input fields
+            $('#seeker-fullname').on('keyup', validateFullName);
+            $('#seeker-email').on('keyup', validateEmail);
+            $('#seeker-password').on('keyup', validatePassword);
+            $('#seeker-confirmPassword').on('keyup', validateConfirmPassword);
+
+            // Call validateCheckbox on change for checkbox
+            $('#seeker-agree-term').on('change', validateCheckbox);
+
+            // Handle register button click
+            $('#seeker-register').on('click', function (event) {
+                event.preventDefault(); // Prevent the default form submission
+                if (validateForm()) {
+                    // Show the verification modal
+                    $('#verificationModal').show();
+
+                    // Submit the form after showing the modal
+                    setTimeout(function () {
+                        $('#seeker-register-form').submit();
+                    }, 2000); // Adjust the delay as needed
+                }
+            });
+
+            // Recruiter form validation
+            $('#recruiter-fullname').on('keyup', validateRecruiterFullName);
+            $('#recruiter-email').on('keyup', validateRecruiterEmail);
+            $('#recruiter-password').on('keyup', validateRecruiterPassword);
+            $('#recruiter-confirmPassword').on('keyup', validateRecruiterConfirmPassword);
+            $('#company_name').on('keyup', validateCompanyName);
+            $('#company_email').on('keyup', validateCompanyEmail);
+            $('#company_website').on('keyup', validateCompanyWebsite);
+            $('#industry').on('keyup', validateIndustry);
+            $('#company_address').on('keyup', validateCompanyAddress);
+            $('#recruiter-agree-term').on('change', validateRecruiterCheckbox);
+
+            // Handle recruiter register button click
+            $('#recruiter-register').on('click', function (event) {
+                event.preventDefault(); // Prevent the default form submission
+                if (validateRecruiterForm()) {
+                    // Show the verification modal
+                    $('#verificationModal').show();
+
+                    // Submit the form after showing the modal
+                    setTimeout(function () {
+                        $('#recruiter-register-form').submit();
+                    }, 2000); // Adjust the delay as needed
+                }
+            });
+        });
+
+        function validateFullName() {
+            var fullName = $('#seeker-fullname').val();
+            if (!/^[a-zA-Z][a-zA-Z\s]{3,}$/.test(fullName)) {
+                $('.error-fullname').text("Name should contain only alphabets and spaces");
+                return false;
+            } else {
+                $('.error-fullname').text("");
+                return true;
+            }
+        }
+
+        function validateEmail() {
+            var email = $('#seeker-email').val();
+            if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+                $('.error-email').text("Enter a valid email address");
+                $('#seeker-register').prop('disabled', true); // Disable the register button
+                return false;
+            } else {
+                // Check if email already exists
+                $.ajax({
+                    type: 'POST',
+                    url: '/check_email', // Flask route to handle email check
+                    data: { email: email },
+                    success: function (response) {
+                        if (response === 'exists') {
+                            $('.error-email').text("Email already registered");
+                            $('#seeker-register').prop('disabled', true); // Disable the register button
+                        } else {
+                            $('.error-email').text("");
+                            $('#seeker-register').prop('disabled', false); // Enable the register button
+                        }
+                    },
+                    error: function () {
+                        console.error('Error checking email');
+                        $('.error-email').text("Error checking email");
+                        $('#seeker-register').prop('disabled', true); // Disable the register button
+                    }
+                });
+                return true; // Return true immediately, the actual validation is done asynchronously
+            }
+        }
+
+        function validatePassword() {
+            var password = $('#seeker-password').val();
+            if (!/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}/.test(password)) {
+                $('.error-password').text("Password must include one uppercase letter, one lowercase letter, one number and at least 8 characters length");
+                return false;
+            } else {
+                $('.error-password').text("");
+                return true;
+            }
+        }
+
+        function validateConfirmPassword() {
+            var confirmPassword = $('#seeker-confirmPassword').val();
+            var password = $('#seeker-password').val();
+            if (confirmPassword !== password) {
+                $('.error-confirmPassword').text("Passwords do not match");
+                return false;
+            } else {
+                $('.error-confirmPassword').text("");
+                return true;
+            }
+        }
+
+        function validateCheckbox() {
+            if (!$('#seeker-agree-term').is(':checked')) {
+                $('.error-checkbox').text("You must agree to the terms and conditions");
+                return false;
+            } else {
+                $('.error-checkbox').text("");
+                return true;
+            }
+        }
+
+        function validateForm() {
+            var isValid = true;
+
+            // Validate each field individually
+            if (!validateFullName()) isValid = false;
+            if (!validateEmail()) isValid = false;
+            if (!validatePassword()) isValid = false;
+            if (!validateConfirmPassword()) isValid = false;
+            if (!validateCheckbox()) isValid = false;
+
+            // Enable/disable register button based on form validity
+            $('#seeker-register').prop('disabled', !isValid);
+
+            return isValid;
+        }
+
+        // Recruiter form validation functions
+        function validateRecruiterFullName() {
+            var fullName = $('#recruiter-fullname').val();
+            if (!/^[a-zA-Z][a-zA-Z\s]{3,}$/.test(fullName)) {
+                $('.error-recruiter-fullname').text("Name should contain only alphabets and spaces");
+                $('#recruiter-register').prop('disabled', true);
+                return false;
+            } else {
+                $('.error-recruiter-fullname').text("");
+                $('#recruiter-register').prop('disabled', false);
+                return true;
+            }
+        }
+
+        function validateRecruiterEmail() {
+            var email = $('#recruiter-email').val();
+            if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+                $('.error-recruiter-email').text("Enter a valid email address");
+                $('#recruiter-register').prop('disabled', true);
+                return false;
+            } else {
+                // Check if email already exists (you may need to adjust this AJAX call)
+                $.ajax({
+                    type: 'POST',
+                    url: '/check_email',
+                    data: { email: email },
+                    success: function (response) {
+                        if (response === 'exists') {
+                            $('.error-recruiter-email').text("Email already registered");
+                            $('#recruiter-register').prop('disabled', true);
+                        } else {
+                            $('.error-recruiter-email').text("");
+                        }
+                    },
+                    error: function () {
+                        console.error('Error checking email');
+                        $('.error-recruiter-email').text("Error checking email");
+                        $('#recruiter-register').prop('disabled', true);
+                    }
+                });
+                return true;
+            }
+        }
+
+        function validateRecruiterPassword() {
+            var password = $('#recruiter-password').val();
+            if (!/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}/.test(password)) {
+                $('.error-recruiter-password').text("Password must include one uppercase letter, one lowercase letter, one number and at least 8 characters length");
+                return false;
+            } else {
+                $('.error-recruiter-password').text("");
+                return true;
+            }
+        }
+
+        function validateRecruiterConfirmPassword() {
+            var confirmPassword = $('#recruiter-confirmPassword').val();
+            var password = $('#recruiter-password').val();
+            if (confirmPassword !== password) {
+                $('.error-recruiter-confirmPassword').text("Passwords do not match");
+                return false;
+            } else {
+                $('.error-recruiter-confirmPassword').text("");
+                return true;
+            }
+        }
+
+        function validateCompanyName() {
+            var companyName = $('#company_name').val();
+            if (!/^[a-zA-Z0-9\s]{2,}$/.test(companyName)) {
+                $('.error-company-name').text("Company name should be at least 2 characters long and contain only letters, numbers, and spaces");
+                return false;
+            } else {
+                $('.error-company-name').text("");
+                return true;
+            }
+        }
+
+        function validateCompanyEmail() {
+            var email = $('#company_email').val();
+            if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+                $('.error-company-email').text("Enter a valid company email address");
+                return false;
+            } else {
+                $('.error-company-email').text("");
+                return true;
+            }
+        }
+
+        function validateCompanyWebsite() {
+            var website = $('#company_website').val();
+            if (website && !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(website)) {
+                $('.error-company-website').text("Enter a valid website URL");
+                return false;
+            } else {
+                $('.error-company-website').text("");
+                return true;
+            }
+        }
+
+        function validateIndustry() {
+            var industry = $('#industry').val();
+            if (industry && !/^[a-zA-Z\s]{2,}$/.test(industry)) {
+                $('.error-industry').text("Industry should contain only letters and spaces");
+                return false;
+            } else {
+                $('.error-industry').text("");
+                return true;
+            }
+        }
+
+        function validateCompanyAddress() {
+            var address = $('#company_address').val();
+            if (address && address.length < 5) {
+                $('.error-company-address').text("Address should be at least 5 characters long");
+                return false;
+            } else {
+                $('.error-company-address').text("");
+                return true;
+            }
+        }
+
+        function validateRecruiterCheckbox() {
+            if (!$('#recruiter-agree-term').is(':checked')) {
+                $('.error-recruiter-checkbox').text("You must agree to the terms and conditions");
+                return false;
+            } else {
+                $('.error-recruiter-checkbox').text("");
+                return true;
+            }
+        }
+
+        function validateRecruiterForm() {
+            var isValid = true;
+
+            // Validate each field individually
+            if (!validateRecruiterFullName()) isValid = false;
+            if (!validateRecruiterEmail()) isValid = false;
+            if (!validateRecruiterPassword()) isValid = false;
+            if (!validateRecruiterConfirmPassword()) isValid = false;
+            if (!validateCompanyName()) isValid = false;
+            if (!validateCompanyEmail()) isValid = false;
+            if (!validateCompanyWebsite()) isValid = false;
+            if (!validateIndustry()) isValid = false;
+            if (!validateCompanyAddress()) isValid = false;
+            if (!validateRecruiterCheckbox()) isValid = false;
+
+            // Enable/disable register button based on form validity
+            $('#recruiter-register').prop('disabled', !isValid);
+
+            return isValid;
+        }
+
+        // Handle Terms of Service modal
+        var termsModal = $('#termsModal');
+        var termsLink = $('.term-service');
+        var termsClose = $('.close');
+
+        termsLink.on('click', function (event) {
+            event.preventDefault();
+            termsModal.show();
+        });
+
+        termsClose.on('click', function () {
+            termsModal.hide();
+        });
+
+        $(window).on('click', function (event) {
+            if ($(event.target).is(termsModal)) {
+                termsModal.hide();
+            }
+        });
+
+        // Handle Verification Modal
+        var verificationModal = $('#verificationModal');
+        var verificationClose = $('.close-verification');
+
+        verificationClose.on('click', function () {
+            verificationModal.hide();
+        });
+
+        $(window).on('click', function (event) {
+            if ($(event.target).is(verificationModal)) {
+                verificationModal.hide();
+            }
+        });
+    </script>
+
+    <script>
+        function openForm(evt, formName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(formName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // Get the element with id="defaultOpen" and click on it to open the default tab
+        document.getElementById("defaultOpen").click();
+    </script>
+
+</head>
+
+<body>
+
+    <div class="main">
+        <!-- Sign up form -->
+        <section class="signup">
+            <div class="container">
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+                <div class="signup-content">
+                    <div class="signup-form">
+                        <h2 class="form-title">Sign up</h2>
+
+                        <!-- Tabs for Seeker and Recruiter -->
+                        <div class="tab">
+                            <button class="tablinks" onclick="openForm(event, 'Seeker')" id="defaultOpen">Job
+                                Seeker</button>
+                            <button class="tablinks" onclick="openForm(event, 'Recruiter')">Recruiter</button>
+                        </div>
+
+                        <!-- Job Seeker Form -->
+                        <div id="Seeker" class="tabcontent" style="display: block;">
+                            <form method="POST" action="" class="register-form" id="seeker-register-form">
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-account material-icons-name"></i>
+                                        <input type="text" name="fullname" id="seeker-fullname" placeholder="Your Name"
+                                            required />
+                                    </div>
+                                    <span class="error-fullname error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-email"></i>
+                                        <input type="email" name="email" id="seeker-email" placeholder="Your Email"
+                                            required />
+                                    </div>
+                                    <span class="error-email error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-lock"></i>
+                                        <input type="password" name="password" id="seeker-password" placeholder="Password"
+                                            required />
+                                    </div>
+                                    <span class="error-password error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-lock-outline"></i>
+                                        <input type="password" name="confirmPassword" id="seeker-confirmPassword"
+                                            placeholder="Repeat your password" required />
+                                    </div>
+                                    <span class="error-confirmPassword error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <input type="checkbox" name="agree-term" id="seeker-agree-term"
+                                        class="agree-term" />
+                                    <label for="seeker-agree-term" class="label-agree-term"><span><span></span></span>I
+                                        agree all statements in <a href="#" class="term-service"
+                                            onclick="openModal('seekerTermsModal')">Terms of
+                                            service</a></label>
+                                    <span class="error-checkbox error-message"></span>
+                                </div>
+                                <input type="hidden" name="user_type" value="seeker">
+                                <div class="form-group form-button">
+                                    <input type="submit" name="signup" id="seeker-register" class="form-submit"
+                                        value="Register"/>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Recruiter Form -->
+                        <div id="Recruiter" class="tabcontent">
+                            <form method="POST" action="" class="register-form" id="recruiter-register-form">
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-account material-icons-name"></i>
+                                        <input type="text" name="fullname" id="recruiter-fullname" placeholder="Your Name"
+                                            required />
+                                    </div>
+                                    <span class="error-recruiter-fullname error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-email"></i>
+                                        <input type="email" name="email" id="recruiter-email" placeholder="Your Email"
+                                            required />
+                                    </div>
+                                    <span class="error-recruiter-email error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-lock"></i>
+                                        <input type="password" name="password" id="recruiter-password"
+                                            placeholder="Password" required />
+                                    </div>
+                                    <span class="error-recruiter-password error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-lock-outline"></i>
+                                        <input type="password" name="confirmPassword" id="recruiter-confirmPassword"
+                                            placeholder="Repeat your password" required />
+                                    </div>
+                                    <span class="error-recruiter-confirmPassword error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-case-check"></i>
+                                        <input type="text" name="company_name" id="company_name" placeholder="Company Name"
+                                            required />
+                                    </div>
+                                    <span class="error-company-name error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-email"></i>
+                                        <input type="email" name="company_email" id="company_email"
+                                            placeholder="Company Email" required />
+                                    </div>
+                                    <span class="error-company-email error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-globe"></i>
+                                        <input type="url" name="company_website" id="company_website"
+                                            placeholder="Company Website" />
+                                    </div>
+                                    <span class="error-company-website error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <i class="zmdi zmdi-city"></i>
+                                        <input type="text" name="industry" id="industry" placeholder="Industry" />
+                                    </div>
+                                    <span class="error-industry error-message"></span>
+                                </div>
+                                <div class="form-group">
+                                    <input type="checkbox" name="agree-term" id="recruiter-agree-term"
+                                        class="agree-term" />
+                                    <label for="recruiter-agree-term"
+                                        class="label-agree-term"><span><span></span></span>I
+                                        agree all statements in <a href="#" class="term-service"
+                                            onclick="openModal('recruiterTermsModal')">Terms of
+                                            service</a></label>
+                                    <span class="error-recruiter-checkbox error-message"></span>
+                                </div>
+                                <input type="hidden" name="user_type" value="recruiter">
+                                <div class="form-group form-button">
+                                    <input type="submit" name="signup" id="recruiter-register" class="form-submit"
+                                        value="Register" />
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="signup-image">
+                        <figure><img
+                                src="{{ url_for('static', filename='register-login-form/images/signup-image.jpg') }}"
+                                alt="sign up image"></figure>
+                        <a href="{{ url_for('login') }}" class="signup-image-link">I am already a member</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+
+    <!-- JS -->
+    <script src="{{ url_for('static', filename='register-login-form/vendor/jquery/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='register-login-form/js/main.js') }}"></script>
+
+    <!-- Seeker Terms of Service Modal -->
+    <div id="seekerTermsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('seekerTermsModal')">&times;</span>
+            <h2>Terms of Service - Job Seeker</h2>
+            <p>
+                <b>Last Updated: 01-01-2024</b><br><br>
+
+                Welcome to JobSeek! By accessing or using our services, you agree to be bound by the following terms and
+                conditions. Please read these terms carefully before using our website and
+                services.<br><br>
+
+                <b>1. Acceptance of Terms</b><br>
+                By registering an account, accessing, or using JobSeek, you agree to be bound by these Terms of Service
+                and our Privacy Policy. If you do not agree to these terms, please do not use our services.<br><br>
+
+                <b>2. Description of Service</b><br>
+                JobSeek provides a platform for job seekers to find job opportunities and for employers to post job
+                listings. Our services include job postings, resume submissions, and other related services.<br><br>
+
+                <b>3. User Responsibilities</b><br>
+                a. Account Registration: Users must register for an account to access certain features of JobSeek. You
+                agree to provide accurate and complete information during the registration process and keep your account
+                information up-to-date.<br>
+
+                b. Use of Services: You agree to use JobSeek for lawful purposes only and not to engage in any activity
+                that disrupts or interferes with our services.<br>
+
+                c. Content: You are responsible for the content you post on JobSeek, including resumes, job listings,
+                and messages. You agree not to post any content that is false, misleading, defamatory, or violates any
+                laws or regulations.<br><br>
+
+                <b>4. Job Postings and Applications</b><br>
+                a. Employers: Employers can post job listings on JobSeek. By posting a job, you agree that the
+                information provided is accurate and complies with all applicable laws and regulations.<br>
+
+                b. Job Seekers: Job seekers can apply for jobs listed on JobSeek. By submitting an application, you
+                agree that the information provided is accurate and that you have the necessary qualifications for the
+                job.<br><br>
+
+                <b>5. Privacy</b><br>
+                Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use, and
+                disclose your personal information.<br><br>
+
+                <b>6. Fees and Payments</b><br>
+                JobSeek may charge fees for certain services, such as premium job postings or resume enhancements. All
+                fees are non-refundable unless otherwise stated. Payment terms are detailed at the point of
+                purchase.<br><br>
+
+                <b>7. Intellectual Property</b><br>
+                All content and materials on JobSeek, including text, graphics, logos, and software, are the property of
+                JobSeek or its licensors and are protected by intellectual property laws. You may not use, reproduce, or
+                distribute any content from JobSeek without our written permission.<br><br>
+
+                <b>8. Termination</b><br>
+                JobSeek reserves the right to suspend or terminate your account and access to our services at any time,
+                without notice, for any reason, including if you violate these Terms of Service.<br><br>
+
+                <b>9. Disclaimers</b><br>
+                JobSeek is provided on an "as-is" and "as-available" basis. We do not guarantee the accuracy,
+                completeness, or reliability of any content or service provided on JobSeek. Your use of JobSeek is at
+                your own risk.<br><br>
+
+                <b>10. Limitation of Liability</b><br>
+                To the fullest extent permitted by law, JobSeek shall not be liable for any direct, indirect,
+                incidental, special, or consequential damages resulting from your use of our services, even if we have
+                been advised of the possibility of such damages.<br><br>
+
+                <b>11. Governing Law</b><br>
+                These Terms of Service are governed by and construed in accordance with the laws of [Your
+                Country/State]. Any disputes arising under these terms will be subject to the exclusive jurisdiction of
+                the courts of [Your Country/State].<br><br>
+
+                <b>12. Changes to Terms</b><br>
+                JobSeek reserves the right to modify these Terms of Service at any time. We will notify you of any
+                changes by posting the new terms on our website. Your continued use of JobSeek after any changes
+                indicates your acceptance of the new terms.<br><br>
+
+                <b>13. Contact Us</b><br>
+                If you have any questions or concerns about these Terms of Service, please contact us at
+                jobseek@gmail.com.<br><br>
+
+                <b>JobSeek</b><br>
+                jobseek@gmail.com
+            </p>
+        </div>
+    </div>
+
+    <!-- Recruiter Terms of Service Modal -->
+    <div id="recruiterTermsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('recruiterTermsModal')">&times;</span>
+            <h2>Terms of Service - Recruiter</h2>
+            <p>
+                <b>Last Updated: 01-01-2024</b><br><br>
+
+                Welcome to JobSeek! By accessing or using our services, you agree to be bound by the following terms and
+                conditions. Please read these terms carefully before using our website and
+                services.<br><br>
+
+                <b>1. Acceptance of Terms</b><br>
+                By registering an account, accessing, or using JobSeek, you agree to be bound by these Terms of Service
+                and our Privacy Policy. If you do not agree to these terms, please do not use our services.<br><br>
+
+                <b>2. Description of Service</b><br>
+                JobSeek provides a platform for job seekers to find job opportunities and for employers to post job
+                listings. Our services include job postings, resume submissions, and other related services.<br><br>
+
+                <b>3. User Responsibilities</b><br>
+                a. Account Registration: Users must register for an account to access certain features of JobSeek. You
+                agree to provide accurate and complete information during the registration process and keep your account
+                information up-to-date.<br>
+
+                b. Use of Services: You agree to use JobSeek for lawful purposes only and not to engage in any activity
+                that disrupts or interferes with our services.<br>
+
+                c. Content: You are responsible for the content you post on JobSeek, including job listings,
+                company profiles, and messages. You agree not to post any content that is false, misleading, defamatory,
+                or violates any laws or regulations.<br><br>
+
+                <b>4. Job Postings and Applications</b><br>
+                a. Employers: Employers can post job listings on JobSeek. By posting a job, you agree that the
+                information provided is accurate and complies with all applicable laws and regulations.<br>
+
+                b. Job Seekers: Job seekers can apply for jobs listed on JobSeek. By submitting an application, you
+                agree that the information provided is accurate and that you have the necessary qualifications for the
+                job.<br><br>
+
+                <b>5. Privacy</b><br>
+                Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use, and
+                disclose your personal information.<br><br>
+
+                <b>6. Fees and Payments</b><br>
+                JobSeek may charge fees for certain services, such as premium job postings or company profile
+                enhancements. All fees are non-refundable unless otherwise stated. Payment terms are detailed at the
+                point of
+                purchase.<br><br>
+
+                <b>7. Intellectual Property</b><br>
+                All content and materials on JobSeek, including text, graphics, logos, and software, are the property of
+                JobSeek or its licensors and are protected by intellectual property laws. You may not use, reproduce, or
+                distribute any content from JobSeek without our written permission.<br><br>
+
+                <b>8. Termination</b><br>
+                JobSeek reserves the right to suspend or terminate your account and access to our services at any time,
+                without notice, for any reason, including if you violate these Terms of Service.<br><br>
+
+                <b>9. Disclaimers</b><br>
+                JobSeek is provided on an "as-is" and "as-available" basis. We do not guarantee the accuracy,
+                completeness, or reliability of any content or service provided on JobSeek. Your use of JobSeek is at
+                your own risk.<br><br>
+
+                <b>10. Limitation of Liability</b><br>
+                To the fullest extent permitted by law, JobSeek shall not be liable for any direct, indirect,
+                incidental, special, or consequential damages resulting from your use of our services, even if we have
+                been advised of the possibility of such damages.<br><br>
+
+                <b>11. Governing Law</b><br>
+                These Terms of Service are governed by and construed in accordance with the laws of [Your
+                Country/State]. Any disputes arising under these terms will be subject to the exclusive jurisdiction of
+                the courts of [Your Country/State].<br><br>
+
+                <b>12. Changes to Terms</b><br>
+                JobSeek reserves the right to modify these Terms of Service at any time. We will notify you of any
+                changes by posting the new terms on our website. Your continued use of JobSeek after any changes
+                indicates your acceptance of the new terms.<br><br>
+
+                <b>13. Contact Us</b><br>
+                If you have any questions or concerns about these Terms of Service, please contact us at
+                jobseek@gmail.com.<br><br>
+
+                <b>JobSeek</b><br>
+                jobseek@gmail.com
+            </p>
+        </div>
+    </div>
+
+    <!-- Email Verification Modal -->
+    <div id="verificationModal" class="modal">
+        <div class="modal-content">
+            <p>Please check your email for verification.</p>
+        </div>
+    </div>
+
+    <script>
+        // Open modal
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = "block";
+        }
+
+        // Close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = "none";
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const seekerModal = document.getElementById('seekerTermsModal');
+            const recruiterModal = document.getElementById('recruiterTermsModal');
+            const verificationModal = document.getElementById('verificationModal');
+            if (event.target == seekerModal) {
+                seekerModal.style.display = "none";
+            }
+            if (event.target == recruiterModal) {
+                recruiterModal.style.display = "none";
+            }
+            if (event.target == verificationModal) {
+                verificationModal.style.display = "none";
+            }
+        }
+
+        // Open default tab
+        document.getElementById("defaultOpen").click();
+    </script>
+</body>
+
+</html>

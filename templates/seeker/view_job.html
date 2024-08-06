@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ job.title }} - JOBSEEK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <script src="https://kit.fontawesome.com/0e035b9984.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='webpage/css/main.css') }}">
+</head>
+<body>
+    {% include '_navbar.html' %}
+    <main>
+        <div class="main">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="job-details">
+                            <h2>{{ job.title }}</h2>
+                            <div class="job-meta">
+                                <span><i class="far fa-building"></i> {{ job.company }}</span>
+                                <span><i class="far fa-map-marker-alt"></i> {{ job.location }}</span>
+                                <span><i class="far fa-clock"></i> {{ job.job_type }}</span>
+                            </div>
+                            <h4>Job Description</h4>
+                            <p>{{ job.description }}</p>
+                            <h4>Requirements</h4>
+                            <ul>
+                                {% for requirement in job.requirements %}
+                                    <li>{{ requirement }}</li>
+                                {% endfor %}
+                            </ul>
+                            <h4>Responsibilities</h4>
+                            <ul>
+                                {% for responsibility in job.responsibilities %}
+                                    <li>{{ responsibility }}</li>
+                                {% endfor %}
+                            </ul>
+                            <h4>Salary</h4>
+                            <p>{{ job.salary }}</p>
+                            {% if has_applied %}
+                                <button type="button" class="main-btn" disabled>Applied</button>
+                            {% else %}
+                                <form action="{{ url_for('seeker.apply_job', job_id=job._id) }}" method="POST">
+                                    <button type="submit" class="main-btn">Apply Now</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <!-- Sidebar content (e.g., related jobs, company info) can be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer>
+        <div class="container text-center text-md-start">
+            <div class="footer-wrap">
+                <div class="about">
+                    <img src="./img/icon/company-logo.svg" alt="">
+                    <p class="text-muted py-4">
+                        Start working with Firmbee which can provide you with all the tools needed to run an effcieint business remotely.
+                    </p>
+                    <div class="social-media">
+                        <a href="" class="me-2 text-reset"><img src="img/icon/facebook-icon.svg" alt=""></a>
+                        <a href="" class="me-2 text-reset"><img src="img/icon/twitter-icon.svg" alt=""></a>
+                        <a href="" class="me-2 text-reset"><img src="img/icon/linkedin-icon.svg" alt=""></a>
+                        <a href="" class="me-2 text-reset"><img src="img/icon/instagram-icon.svg" alt=""></a>
+                    </div>
+                </div>
+                <div class="company">
+                    <h6 class="fw-bold">Company</h6>
+                    <p><a href="">About us</a></p>
+                    <p><a href="">Services</a></p>
+                    <p><a href="">Team</a></p>
+                    <p><a href="">Pricing</a></p>
+                    <p><a href="">Project</a></p>
+                    <p><a href="">Careers</a></p>
+                    <p><a href="">Blog</a></p>
+                    <p><a href="">Login</a></p>
+                </div>
+                <div class="useful-links">
+                    <h6 class="fw-bold">Useful links</h6>
+                    <p><a href="">Terms of </a></p>
+                    <p><a href="">Services</a></p>
+                    <p><a href="">Privacy Policy</a></p>
+                    <p><a href="">Documentation</a></p>
+                    <p><a href="">Changelog</a></p>
+                    <p><a href="">Components</a></p>
+                </div>
+                <div class="newsletter">
+                    <h6 class="fw-bold">Newsletter</h6>
+                    <p class="text-muted">Sign up and receive the latest tips
+                        via email.</p>
+                        <form id="subscribe" action="">
+                            <label for="email">Your e-mail:</label>
+                            <input type="email" placeholder="e-mail:" name="email" required>
+                            <button type="submit" class="main-btn">Subscribe</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="copyright">
+                    <p>&copy; 2024 JOBSEEK</p>
+                    <!--
+                    This template is licenced under Attribution 3.0 (CC BY 3.0 PL),
+                    You are free to: Share and Adapt. You must give appropriate credit, you may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+                    --> 
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div class="fb2022-copy">Fbee 2022 copyright</div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</body>
+</html>
