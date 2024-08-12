@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Recruiter - Admin</title>
+</head>
+<body>
+    <!-- Sidebar -->
+    {% include 'admin/_sidebar.html' %}
+
+    <div class="main content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="mt-4">View Recruiter</h1>
+                    <p>Detailed information about the recruiter.</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card mb-3">
+                        <div class="card-header">Personal Information</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ recruiter.full_name }}</h5>
+                            <p class="card-text">Email: {{ recruiter.email }}</p>
+
+                            <!-- Add more personal details as needed -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card mb-3">
+                        <div class="card-header">Company Information</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ recruiter.company_name }}</h5>
+                            <p class="card-text">Industry: {{ recruiter.industry }}</p>
+                            <!-- Add more company details as needed -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card mb-3">
+                        <div class="card-header">Posted Jobs</div>
+                        <div class="card-body">
+                            {% if jobs %}
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Job Title</th>
+                                            <th>Status</th>
+                                            <th>Posted Date</th>
+                                            <th>Applications</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for job in jobs %}
+                                        <tr>
+                                            <td>{{ job.title }}</td>
+                                            <td>{{ job.status }}</td>
+                                            <td>
+                                                {% if job.posted_date is string %}
+                                                    {{ job.posted_date }}
+                                                {% else %}
+                                                    {{ job.posted_date.strftime('%Y-%m-%d') }}
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ job.application_count }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <p>No jobs posted by this recruiter.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add more sections as needed -->
+
+        </div>
+    </div>
+</body>
+</html>

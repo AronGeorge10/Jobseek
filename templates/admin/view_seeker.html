@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Seeker - Admin</title>
+</head>
+<body>
+    <!-- Sidebar -->
+    {% include 'admin/_sidebar.html' %}
+
+    <div class="main content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="mt-4">View Seeker</h1>
+                    <p>Detailed information about the job seeker.</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card mb-3">
+                        <div class="card-header">Personal Information</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ seeker.full_name }}</h5>
+                            <p class="card-text">Email: {{ seeker.email }}</p>
+                            <p class="card-text">Phone: {{ seeker.phone }}</p>
+                            <!-- Add more personal details as needed -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card mb-3">
+                        <div class="card-header">Professional Information</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ seeker.current_job_title }}</h5>
+                            <p class="card-text">Experience: {{ seeker.years_of_experience }} years</p>
+                            <p class="card-text">Skills: {{ seeker.skills|join(', ') }}</p>
+                            <!-- Add more professional details as needed -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card mb-3">
+                        <div class="card-header">Job Applications</div>
+                        <div class="card-body">
+                            {% if applications %}
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Job Title</th>
+                                            <th>Company</th>
+                                            <th>Status</th>
+                                            {% if applications[0].get('application_date') %}
+                                                <th>Application Date</th>
+                                            {% endif %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for app in applications %}
+                                        <tr>
+                                            <td>{{ app.job_title }}</td>
+                                            <td>{{ app.company_name }}</td>
+                                            <td>{{ app.status }}</td>
+                                            {% if app.get('application_date') %}
+                                                <td>
+                                                    {% if app.application_date is string %}
+                                                        {{ app.application_date }}
+                                                    {% else %}
+                                                        {{ app.application_date.strftime('%Y-%m-%d') }}
+                                                    {% endif %}
+                                                </td>
+                                            {% endif %}
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <p>No job applications found for this seeker.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add more sections as needed -->
+
+        </div>
+    </div>
+</body>
+</html>

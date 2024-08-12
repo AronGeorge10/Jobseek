@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, redirect, url_for, flash, session, make_response, jsonify
 from pymongo import MongoClient
 import os
-from flask_bcrypt import Bcrypt
+from flask_bcrypt import Bcrypt, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_mail import Mail, Message
 from bson.objectid import ObjectId
@@ -26,7 +26,7 @@ app.secret_key = os.urandom(24)  # Required for flashing messages
 # logging.basicConfig(level=logging.DEBUG)
 
 # MongoDB connection URI
-MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://AronJain:AronJain@cluster0.qy4jgjm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://AronJain:4E1zkxYGeaWZQCL8@cluster0.qy4jgjm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 
 bcrypt = Bcrypt(app)
 client = MongoClient(MONGO_URI)
@@ -36,6 +36,7 @@ collection_seeker_registration = db.tbl_user_registration
 collection_recruiter_registration = db.tbl_recruiter_registration
 collection_login_credentials = db.tbl_login_credentials
 collection_resume_details = db.tbl_resume_details
+collection_industries = db.tbl_industries
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -51,24 +52,25 @@ app.config['MAIL_DEFAULT_SENDER'] = 'aronayikon10@gmail.com'
 mail = Mail(app)
 
 class User(UserMixin):
-    def __init__(self, id, email, password, user_type):
+    def __init__(self, id, email, password, user_type, is_admin=False):
         self.id = id
         self.email = email
         self.password = password
         self.user_type = user_type
+        self.is_admin = is_admin
 
     @staticmethod
     def get(user_id):
         user_data = collection_login_credentials.find_one({'_id': ObjectId(user_id)})
         if user_data:
-            return User(str(user_data['_id']), user_data['email'], user_data['password'], user_data['user_type'])
+            return User(str(user_data['_id']), user_data['email'], user_data['password'], user_data['user_type'], user_data.get('is_admin', False))
         return None
 
     @staticmethod
     def get_by_email(email):
         user_data = collection_login_credentials.find_one({'email': email})
         if user_data:
-            return User(str(user_data['_id']), user_data['email'], user_data['password'], user_data['user_type'])
+            return User(str(user_data['_id']), user_data['email'], user_data['password'], user_data['user_type'], user_data.get('is_admin', False))
         return None
 
 @app.route('/check_email', methods=['POST'])
@@ -126,7 +128,16 @@ def register():
                 company_name = request.form.get('company_name')
                 company_email = request.form.get('company_email')
                 company_website = request.form.get('company_website')
-                industry = request.form.get('industry')
+                industry_name = request.form.get('industry')
+                
+                # Find the industry ObjectId based on the name
+                industry = collection_industries.find_one({'name': industry_name})
+                if industry:
+                    industry_id = industry['_id']
+                else:
+                    # Handle the case where the industry is not found
+                    flash('Selected industry not found.', 'error')
+                    return redirect(url_for('register'))
                 
                 recruiter_registration = {
                     "full_name": full_name,
@@ -134,7 +145,7 @@ def register():
                     "company_name": company_name,
                     "company_email": company_email,
                     "company_website": company_website,
-                    "industry": industry,
+                    "industry_id": industry_id,  # Store the ObjectId instead of the name
                 }
                 collection_recruiter_registration.insert_one(recruiter_registration)
 
@@ -144,7 +155,9 @@ def register():
         except Exception as e:
             flash(f'An error occurred: {e}', 'danger')
 
-    return render_template('register2.html')
+    # Fetch industries from the database
+    industries = list(collection_industries.find())
+    return render_template('register.html', industries=industries)
 
 
 def send_verification_email(email):
@@ -188,24 +201,26 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        user = User.get_by_email(email)
+        user = collection_login_credentials.find_one({'email': email})
 
-        if user and bcrypt.check_password_hash(user.password, password):
-            login_user(user)
-            session['email'] = email
-            
-            if user.user_type == 'seeker':
-                return redirect(url_for('index'))
-            elif user.user_type == 'recruiter':
-                return redirect(url_for('recruiter.recruiter_index'))
-            elif user.user_type == 'admin':
-                return redirect(url_for('admin.admin_dashboard'))
+        if user:
+            if email == 'admin' and password == 'admin':
+                # Special case for admin user
+                login_user(User(str(user['_id']), user['email'], user['password'], user['user_type'], True))
+                return redirect(url_for('admin.dashboard'))
+            elif check_password_hash(user['password'], password):
+                login_user(User(str(user['_id']), user['email'], user['password'], user['user_type'], user.get('is_admin', False)))
+                
+                if user['user_type'] == 'seeker':
+                    return redirect(url_for('index'))
+                elif user['user_type'] == 'recruiter':
+                    return redirect(url_for('recruiter.recruiter_index'))
+                elif user['user_type'] == 'admin':
+                    return redirect(url_for('admin.admin_dashboard'))
             else:
-                flash('Invalid user type', 'error')
-                return redirect(url_for('login'))
+                flash('Invalid email or password. Try Again', 'warning')
         else:
             flash('Invalid email or password. Try Again', 'warning')
-            return redirect(url_for('login'))
 
     return render_template("login.html")
 
@@ -346,7 +361,7 @@ def auth_receiver():
     # Check if the email exists in your database
     user = collection_login_credentials.find_one({'email': user_email})
     if user:
-        login_user(User(str(user['_id']), user['email'], user['password'], user['user_type']))
+        login_user(User(str(user['_id']), user['email'], user['password'], user['user_type'], user.get('is_admin', False)))
         session['user_id'] = str(user['_id'])
         session['email'] = user['email']
         user_details = collection_seeker_registration.find_one({'_id': user['registration_id']})
@@ -365,12 +380,18 @@ def blog():
 def contact():
     return render_template("contact.html")
 
-@app.route('/job_postings')
-def job_postings():
-    # Fetch jobs from your database or data source
-    jobs = get_jobs()  # This function should return a list of job objects
+# @app.route('/job_postings')
+# def job_postings():
+#     # Fetch jobs from your database or data source
+#     jobs = get_jobs()  # This function should return a list of job objects
     
-    return render_template('seeker/job_postings.html', collection_jobs=jobs)
+#     return render_template('seeker/job_postings.html', collection_jobs=jobs)
+
+# Add a new route to fetch industries
+@app.route('/get_industries', methods=['GET'])
+def get_industries():
+    industries = list(collection_industries.find({}, {'_id': 0, 'name': 1}))
+    return jsonify(industries)
 
 if __name__ == '__main__':
     app.run(debug=True)

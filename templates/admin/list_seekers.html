@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - List Job Seekers</title>
+</head>
+<body>
+    <!-- Sidebar -->
+    {% include 'admin/_sidebar.html' %}
+
+    <div class="main content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="mt-4">Job Seekers</h1>
+                    <p>Manage job seekers registered on the platform.</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-table mr-1"></i>
+                            Job Seekers List
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Full Name</th>
+                                            <th>Email</th>
+                                            <th>Job Title</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for seeker in seekers %}
+                                        <tr>
+                                            <td>{{ seeker.full_name }}</td>
+                                            <td>{{ seeker.email }}</td>
+                                            <td>{{ seeker.job_title }}</td>
+                                            <td>
+                                                <a href="{{ url_for('admin.view_seeker', seeker_id=seeker.user_id) }}" class="btn btn-sm btn-info">View</a>
+                                                <a href="{{ url_for('admin.manage_seeker', seeker_id=seeker._id) }}" class="btn btn-sm btn-warning">Manage</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

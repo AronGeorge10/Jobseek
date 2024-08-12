@@ -1,43 +1,172 @@
 <!-- templates/_navbar.html -->
 <nav class="navbar navbar-expand-xl fixed-top">
-    <div class="container">
-      <a class="navbar-brand" href="{{ url_for('index') }}">
-        <img class="w-100" src="{{ url_for('static', filename='webpage/img/icon/jobseek-transparent.png') }}" alt="">
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <i class="fas fa-bars"></i>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-          <li class="nav-card-item">
-            <a class="nav-link active" href="{{ url_for('index') }}">Home</a>
-          </li>
-          <li class="nav-card-item">
-            <a class="nav-link" href="{{ url_for('seeker.job_postings') }}">Apply</a>
-          </li>
-          <li class="nav-card-item">
-            <a class="nav-link" href="{{ url_for('contact') }}">Contact</a>
-          </li>
-          <li class="nav-card-item">
-            <a class="nav-link" href="{{ url_for('blog') }}">Blog</a>
-          </li>
-        </ul>
-        <ul class="right navbar-nav ms-auto">
-          <li class="nav-card-item-right dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
-              aria-expanded="false">
-              <img src="{{ url_for('static', filename='webpage/img/profile.png') }}" alt="Profile Photo"
-                class="rounded-circle" width="40" height="40">
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-              <li><a class="dropdown-item" href="{{ url_for('seeker.viewprofile') }}">View Profile</a></li>
-              <li><a class="dropdown-item" href="">Settings</a></li>
-              <li><a class="dropdown-item" href="{{ url_for('logout') }}">Sign out</a></li>
-            </ul>
-          </li>
-        </ul>
-      </div>
+  <div class="container">
+    <a class="navbar-brand" href="{{ url_for('index') }}">
+      <img class="w-100" src="{{ url_for('static', filename='webpage/img/icon/jobseek-transparent.png') }}" alt="">
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-card-item">
+          <a class="nav-link active" href="{{ url_for('index') }}">Home</a>
+        </li>
+        <li class="nav-card-item">
+          <a class="nav-link" href="{{ url_for('seeker.job_postings') }}">Apply</a>
+        </li>
+        <li class="nav-card-item">
+          <a class="nav-link" href="{{ url_for('contact') }}">Contact</a>
+        </li>
+        <li class="nav-card-item">
+          <a class="nav-link" href="{{ url_for('blog') }}">Blog</a>
+        </li>
+      </ul>
+      <ul class="right navbar-nav ms-auto">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-bell"></i>
+              <span class="badge bg-danger" id="notificationCount"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown" id="notificationList">
+              <!-- Notifications will be dynamically added here -->
+          </ul>
+        </li>
+        <li class="nav-card-item-right dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            <img src="{{ url_for('static', filename='webpage/img/profile.png') }}" alt="Profile Photo"
+              class="rounded-circle" width="40" height="40">
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+            <li><a class="dropdown-item" href="{{ url_for('seeker.viewprofile') }}">View Profile</a></li>
+            <li><a class="dropdown-item" href="">Settings</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Sign out</a></li>
+          </ul>
+        </li>
+        
+      </ul>
     </div>
-  </nav>
-  
+  </div>
+</nav>
+
+<script>
+function loadNotifications() {
+  console.log('Loading notifications...');
+  fetch('/seeker/notifications')
+      .then(response => {
+          console.log('Response status:', response.status);
+          return response.json();
+      })
+      .then(data => {
+          console.log('Received notifications:', data);
+          const notificationList = document.getElementById('notificationList');
+          const notificationCount = document.getElementById('notificationCount');
+          console.log('notificationList element:', notificationList);
+          console.log('notificationCount element:', notificationCount);
+          notificationList.innerHTML = '';
+          let unreadCount = 0;
+
+          data.forEach(notification => {
+              const li = document.createElement('li');
+              li.innerHTML = `
+                  <a class="dropdown-item ${notification.is_read ? 'read' : 'unread'}" href="#" data-job-id="${notification.job_id || ''}" data-notification-id="${notification._id}">
+                      ${notification.message}
+                      <small class="notification-time d-block">${new Date(notification.created_at).toLocaleString()}</small>
+                  </a>
+              `;
+              li.querySelector('a').addEventListener('click', function(e) {
+                  e.preventDefault();
+                  const jobId = this.getAttribute('data-job-id');
+                  const notificationId = this.getAttribute('data-notification-id');
+                  
+                  // Mark notification as read
+                  if (!notification.is_read) {
+                      fetch(`/seeker/mark_notification_read/${notificationId}`, {
+                          method: 'POST',
+                          headers: {
+                              'Content-Type': 'application/json',
+                          },
+                      })
+                      .then(response => response.json())
+                      .then(data => {
+                          if (data.success) {
+                              this.classList.remove('unread');
+                              this.classList.add('read');
+                              loadNotifications(); // Reload notifications to update the count
+                          }
+                      })
+                      .catch(error => console.error('Error marking notification as read:', error));
+                  }
+
+                  if (jobId) {
+                      window.location.href = `/seeker/view_job/${jobId}`;
+                  }
+              });
+              notificationList.appendChild(li);
+              if (!notification.is_read) {
+                  unreadCount++;
+              }
+          });
+
+          if (unreadCount > 0) {
+              notificationCount.textContent = unreadCount;
+              notificationCount.style.display = 'inline';
+          } else {
+              notificationCount.style.display = 'none';
+          }
+
+          if (data.length === 0) {
+              const li = document.createElement('li');
+              li.innerHTML = '<span class="dropdown-item">No notifications</span>';
+              notificationList.appendChild(li);
+          }
+      })
+      .catch(error => {
+          console.error('Error loading notifications:', error);
+      });
+}
+
+// Load notifications when the page loads
+document.addEventListener('DOMContentLoaded', loadNotifications);
+
+// Refresh notifications every 60 seconds
+setInterval(loadNotifications, 60000);
+</script>
+
+<style>
+.notification-dropdown {
+    max-width: 300px;
+    width: 300px;
+}
+
+.notification-dropdown .dropdown-item {
+    white-space: normal;
+    word-wrap: break-word;
+    padding: 10px 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.notification-dropdown .dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.notification-dropdown .unread {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.notification-dropdown .unread:hover {
+    background-color: #e9ecef;
+}
+
+.notification-dropdown .read {
+    color: #6c757d;
+}
+
+.notification-time {
+    font-size: 0.8em;
+    color: #6c757d;
+}
+</style>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Postings - JOBSEEK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <script src="https://kit.fontawesome.com/0e035b9984.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='webpage/css/main.css') }}">
+
+</head>
+
+<body>
+    {% include 'recruiter/_navbar.html' %}
+    <div class="main">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <h2 class="mb-4">Job Applications for: {{ job.title }}</h2>
+
+                    {% if app %}
+                    {% for application in app %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Applicant: {{ application.applicant_name }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ job.title }}</h6>
+                            <p class="card-text">
+                                <strong>Email:</strong> {{ application.applicant_email }}<br>
+                                <strong>Applied on:</strong> {{ application.applied_at }}<br>
+                                <strong>Status:</strong> {{ application.status }}
+                            </p>
+                            <a href="{{ url_for('recruiter.view_applications', job_id=job._id) }}"
+                                class="btn btn-primary">Refresh</a>
+                            <a href="{{ url_for('recruiter.view_applicant_resume', applicant_id=application.user_id) }}"
+                                class="btn btn-secondary" target="_blank">View Resume</a>
+                            <button class="btn btn-success shortlist-btn" data-application-id="{{ application.id }}">
+                                {{ 'Shortlisted' if application.status == 'shortlisted' else 'Shortlist' }}
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p>No applications found for this job.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer -->
+    <footer>
+        <div class="container text-center text-md-start">
+            <div class="footer-wrap">
+                <div class="about">
+                    <img src="./img/icon/company-logo.svg" alt="">
+                    <p class="text-muted py-4">
+                        Start working with Firmbee which can provide you with all the tools needed to run an effcieint
+                        business
+                        remotely.
+                    </p>
+                    <div class="social-media">
+                        <a href="" class="me-2 text-reset"><img src="img/icon/facebook-icon.svg" alt=""></a>
+                        <a href="" class="me-2 text-reset"><img src="img/icon/twitter-icon.svg" alt=""></a>
+                        <a href="" class="me-2 text-reset"><img src="img/icon/linkedin-icon.svg" alt=""></a>
+                        <a href="" class="me-2 text-reset"><img src="img/icon/instagram-icon.svg" alt=""></a>
+                    </div>
+                </div>
+                <div class="company">
+                    <h6 class="fw-bold">Company</h6>
+                    <p><a href="">About us</a></p>
+                    <p><a href="">Services</a></p>
+                    <p><a href="">Team</a></p>
+                    <p><a href="">Pricing</a></p>
+                    <p><a href="">Project</a></p>
+                    <p><a href="">Careers</a></p>
+                    <p><a href="">Blog</a></p>
+                    <p><a href="">Login</a></p>
+                </div>
+                <div class="useful-links">
+                    <h6 class="fw-bold">Useful links</h6>
+                    <p><a href="">Terms of </a></p>
+                    <p><a href="">Services</a></p>
+                    <p><a href="">Privacy Policy</a></p>
+                    <p><a href="">Documentation</a></p>
+                    <p><a href="">Changelog</a></p>
+                    <p><a href="">Components</a></p>
+                </div>
+                <div class="newsletter">
+                    <h6 class="fw-bold">Newsletter</h6>
+                    <p class="text-muted">Sign up and receive the latest tips
+                        via email.</p>
+                    <form id="subscribe" action="">
+                        <label for="email">Your e-mail:</label>
+                        <input type="email" placeholder="e-mail:" name="email" required>
+                        <button type="submit" class="main-btn">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2024 JOBSEEK</p>
+                <!--
+              This template is licenced under Attribution 3.0 (CC BY 3.0 PL),
+              You are free to: Share and Adapt. You must give appropriate credit, you may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+              -->
+            </div>
+        </div>
+    </footer>
+    <div class="fb2022-copy">Fbee 2022 copyright</div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+    document.querySelectorAll('.shortlist-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const applicationId = this.getAttribute('data-application-id');
+            fetch(`/recruiter/shortlist/${applicationId}`, { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.textContent = data.new_status === 'shortlisted' ? 'Shortlisted' : 'Shortlist';
+                    const cardBody = this.closest('.card-body');
+                    const statusElement = Array.from(cardBody.querySelectorAll('strong')).find(el => el.textContent.includes('Status:'));
+                    if (statusElement && statusElement.nextSibling) {
+                        statusElement.nextSibling.textContent = ` ${data.new_status}`;
+                    }
+                    console.log(data.message); // Log the success message
+                } else {
+                    console.error(data.error || 'Failed to update shortlist status');
+                    alert(data.error || 'Failed to update shortlist status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the status');
+            });
+        });
+    });
+    </script>
+</body>
+
+</html>

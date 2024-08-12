@@ -30,22 +30,36 @@
                             <p>{{ job.description }}</p>
                             <h4>Requirements</h4>
                             <ul>
-                                {% for requirement in job.requirements %}
-                                    <li>{{ requirement }}</li>
-                                {% endfor %}
+                                {% if job.requirements %}
+                                    {% for requirement in job.requirements %}
+                                        <li>{{ requirement }}</li>
+                                    {% endfor %}
+                                {% else %}
+                                    <li>No specific requirements listed.</li>
+                                {% endif %}
                             </ul>
                             <h4>Responsibilities</h4>
                             <ul>
-                                {% for responsibility in job.responsibilities %}
-                                    <li>{{ responsibility }}</li>
-                                {% endfor %}
+                                {% if job.responsibilities %}
+                                    {% for responsibility in job.responsibilities %}
+                                        <li>{{ responsibility }}</li>
+                                    {% endfor %}
+                                {% else %}
+                                    <li>No specific responsibilities listed.</li>
+                                {% endif %}
                             </ul>
                             <h4>Salary</h4>
-                            <p>{{ job.salary }}</p>
+                            <p>{% if job.salary %}{{ job.salary }} LPA {% else %}Salary not specified{% endif %}</p>
                             {% if has_applied %}
-                                <button type="button" class="main-btn" disabled>Applied</button>
+                                <button type="button" class="main-btn" disabled>Applied</button>                       
+                                <form action="{{ url_for('seeker.cancel_application', job_id=job._id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger">Cancel Application</button>
+                                </form>
+                                {% if is_shortlisted %}
+                                    <span class="badge bg-success">Shortlisted</span>
+                                {% endif %}
                             {% else %}
-                                <form action="{{ url_for('seeker.apply_job', job_id=job._id) }}" method="POST">
+                                <form action="{{ url_for('seeker.apply_job', job_id=job._id) }}" method="POST" style="display: inline;">
                                     <button type="submit" class="main-btn">Apply Now</button>
                                 </form>
                             {% endif %}

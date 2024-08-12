@@ -22,121 +22,99 @@
       <div class="container">
         <div class="row">
           <div class="col-lg-8">
-            <div class="all-jobs">
-              <p>Total jobs: {{ jobs|length }}</p>
-              {% for job in jobs %}
-              <div class="job-item">
-                <h4>{{ job.title }}</h4>
-                <div class="job-meta">
-                  <span><i class="far fa-building"></i> {{ job.company }}</span>
-                  <span><i class="far fa-map-marker-alt"></i> {{ job.location }}</span>
-                  <span><i class="far fa-clock"></i> {{ job.job_type }}</span>
+            <!-- Add tabs here -->
+            <ul class="nav nav-tabs mb-3" id="jobTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="posted-jobs-tab" data-bs-toggle="tab" data-bs-target="#posted-jobs" type="button" role="tab" aria-controls="posted-jobs" aria-selected="true">Posted Jobs</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="applied-jobs-tab" data-bs-toggle="tab" data-bs-target="#applied-jobs" type="button" role="tab" aria-controls="applied-jobs" aria-selected="false">Applied Jobs</button>
+              </li>
+            </ul>
+            
+            <!-- Tab content -->
+            <div class="tab-content" id="jobTabsContent">
+              <div class="tab-pane fade show active" id="posted-jobs" role="tabpanel" aria-labelledby="posted-jobs-tab">
+                <div class="all-jobs">
+                  <p>Total jobs: {{ jobs|length }}</p>
+                  {% for job in jobs %}
+                  <div class="job-item">
+                    <h4>{{ job.title }}</h4>
+                    <div class="job-meta">
+                      <span><i class="far fa-building"></i> {{ job.company }}</span>
+                      <span><i class="far fa-map-marker-alt"></i> {{ job.location }}</span>
+                      <span><i class="far fa-clock"></i> {{ job.job_type }}</span>
+                    </div>
+                    <p>{{ job.description[:100] if job.description else '' }}...</p>
+                    <a href="{{ url_for('seeker.view_job', job_id=job._id) }}" class="main-btn">View Details</a>
+                  </div>
+                  <br>
+                  {% else %}
+                  <p>No jobs found.</p>
+                  {% endfor %}
                 </div>
-                <p>{{ job.description[:100] if job.description else '' }}...</p>
-                <a href="{{ url_for('seeker.view_job', job_id=job._id) }}" class="main-btn">View Details</a>
+
+                <nav aria-label="Job listings navigation">
+                  <ul class="pagination">
+                    <li class="page-item ">
+                      <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Previous</span>
+                      </a>
+                    </li>
+                    <li class="page-item"><a class="page-link active" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                      <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">Next</span>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
               </div>
-              <br>
-              {% else %}
-              <p>No jobs found.</p>
-              {% endfor %}
+              
+              <div class="tab-pane fade" id="applied-jobs" role="tabpanel" aria-labelledby="applied-jobs-tab">
+                <div class="applied-jobs">
+                  <p>Total applied jobs: {{ applied_jobs|length }}</p>
+                  {% for job in applied_jobs %}
+                  <div class="job-item">
+                    <h4>{{ job.title }}</h4>
+                    <div class="job-meta">
+                      <span><i class="far fa-building"></i> {{ job.company }}</span>
+                      <span><i class="far fa-map-marker-alt"></i> {{ job.location }}</span>
+                      <span><i class="far fa-clock"></i> {{ job.job_type }}</span>
+                    </div>
+                    <p>{{ job.description[:100] if job.description else '' }}...</p>
+                    <a href="{{ url_for('seeker.view_job', job_id=job._id) }}" class="main-btn">View Details</a>
+                    {% if job.is_shortlisted %}
+                      <span class="badge bg-success">Shortlisted</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Applied</span>
+                    {% endif %}
+                  </div>
+                  <br>
+                  {% else %}
+                  <p>No applied jobs found.</p>
+                  {% endfor %}
+                </div>
+                
+                <!-- Add pagination for applied jobs if needed -->
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <h3>Search Jobs</h3>
+            <div class="mb-4">
+              <input type="text" id="job-search-input" class="form-control" placeholder="Search jobs...">
             </div>
 
-            <nav aria-label="Job listings navigation">
-              <ul class="pagination">
-                <li class="page-item ">
-                  <a class="page-link" href="#" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                    <span class="sr-only">Previous</span>
-                  </a>
-                </li>
-                <li class="page-item"><a class="page-link active" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                  <a class="page-link" href="#" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                    <span class="sr-only">Next</span>
-                  </a>
-                </li>
-              </ul>
-            </nav>
-          </div>
-          <div class="sidebar col-lg-4">
-            <div class="input-group">
-              <div class="form-outline">
-                <input id="job-search-input" type="search" class="form-control" placeholder="Search jobs" />
+            <div id="search-results">
+              <h4>Search Results</h4>
+              <div id="results-container">
+                <!-- Search results will be dynamically inserted here -->
               </div>
-              <button id="job-search-button" type="button" class="btn dark">
-                <i class="fas fa-search"></i>
-              </button>
-            </div>
-            <div class="job-categories mt-5">
-              <h3>Job <span class="green">Categories</span></h3>
-              <a href="">All categories <img style="width: 20px; margin-left: 20px;"
-                  src="/img/icon/arrow-right-icon.svg" alt=""></a>
-              <!--Start carousel-->
-              <div id="carouselsidebar" class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
-                <div class="carousel-inner text-center">
-                  <div class="carousel-item active">
-                    <div class="card-item">
-                      <div class="photo">
-                        <img class="main-state" src="img/icon/business-development.svg" alt="">
-                        <img class="hover" src="img/icon/business-development-hover.svg" alt="">
-                      </div>
-                      <p>Business<br>
-                        Development</p>
-                    </div>
-                    <div class="card-item">
-                      <div class="photo">
-                        <img class="main-state" src="img/icon/graphic.svg" alt="">
-                        <img class="hover" src="img/icon/graphic-hover.svg" alt="">
-                      </div>
-                      <p>Graphic<br>
-                        Designer</p>
-                    </div>
-                  </div>
-                  <div class="carousel-item">
-                    <div class="card-item">
-                      <div class="photo">
-                        <img class="main-state" src="img/icon/pm.svg" alt="">
-                        <img class="hover" src="img/icon/pm-hover.svg" alt="">
-                      </div>
-                      <p>Project<br>
-                        Management</p>
-                    </div>
-                    <div class="card-item">
-                      <div class="photo">
-                        <img class="main-state" src="img/icon/marketing.svg" alt="">
-                        <img class="hover" src="img/icon/marketing-active.svg" alt="">
-                      </div>
-                      <p>Marketing &<br>
-                        Communication</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="carousel-nav">
-                  <a class="nav-item" role="button" data-bs-target="#carouselsidebar" data-bs-slide="prev"><img
-                      src="img/icon/prew-arrow.svg" alt=""></a>
-                  <a class="nav-item" role="button" data-bs-target="#carouselsidebar" data-bs-slide="next"><img
-                      src="img/icon/next-arrow.svg" alt=""></a>
-                </div>
-              </div>
-            </div>
-            <div class="featured-jobs my-5">
-              <h4>Featured <span class="green">Jobs</span></h4>
-              {% for job in jobs[:3] %}
-              <div class="job-item">
-                <a href="{{ url_for('seeker.view_job', job_id=job._id) }}" class="job-title">{{ job.title }}</a>
-                <div class="job-meta">
-                  <span><i class="far fa-building"></i> {{ job.company }}</span><span><i
-                      class="far fa-map-marker-alt"></i> {{ job.location }}</span><span><i class="far fa-clock"></i> {{
-                    job.job_type }}</span>
-                </div>
-                <p class="job-content">{{ job.description[:100] if job.description else '' }}...</p>
-              </div>
-              {% endfor %}
-              <a href="{{ url_for('seeker.job_postings') }}">View all jobs <img style="width: 20px; margin-left: 20px;"
-                  src="/img/icon/arrow-right-icon.svg" alt=""></a>
             </div>
           </div>
         </div>
@@ -193,10 +171,6 @@
       </div>
       <div class="copyright">
         <p>&copy; 2024 JOBSEEK</p>
-        <!--
-              This template is licenced under Attribution 3.0 (CC BY 3.0 PL),
-              You are free to: Share and Adapt. You must give appropriate credit, you may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-              -->
       </div>
     </div>
   </footer>
@@ -205,6 +179,63 @@
     integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
     crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      var searchTimeout;
+
+      $('#job-search-input').on('keyup', function() {
+        clearTimeout(searchTimeout);
+        var searchTerm = $(this).val().trim();
+
+        if (searchTerm.length === 0) {
+          $('#results-container').html('');
+          return;
+        }
+
+        searchTimeout = setTimeout(function() {
+          $.ajax({
+            url: "{{ url_for('seeker.search_jobs') }}",
+            method: 'GET',
+            data: { query: searchTerm },
+            success: function(response) {
+              var resultsHtml = '';
+              if (response.length > 0) {
+                response.forEach(function(job) {
+                  resultsHtml += `
+                    <div class="job-item mb-4">
+                      <h4>${job.title}</h4>
+                      <div class="job-meta">
+                        <span><i class="far fa-building"></i> ${job.company}</span>
+                        <span><i class="far fa-map-marker-alt"></i> ${job.location}</span>
+                        <span><i class="far fa-clock"></i> ${job.job_type}</span>
+                      </div>
+                      <p>
+                        ${job.salary ? `<strong>Salary:</strong> ${job.salary}<br>` : ''}
+                        ${job.experience_level ? `<strong>Experience Level:</strong> ${job.experience_level}<br>` : ''}
+                        <strong>Posted on:</strong> ${job.created_at}
+                      </p>
+                      <a href="{{ url_for('seeker.view_job', job_id='') }}${job.id}" class="main-btn">View Details</a>
+                    </div>
+                  `;
+                });
+              } else {
+                resultsHtml = '<p>No results found.</p>';
+              }
+              $('#results-container').html(resultsHtml);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              console.error("AJAX error:", textStatus, errorThrown);
+              var errorMessage = 'Error occurred while searching.';
+              if (jqXHR.responseJSON && jqXHR.responseJSON.details) {
+                errorMessage += ' Details: ' + jqXHR.responseJSON.details;
+              }
+              $('#results-container').html(`<p>${errorMessage}</p>`);
+            }
+          });
+        }, 300); // 300ms delay to avoid too many requests
+      });
+    });
+  </script>
 </body>
 
 </html>
