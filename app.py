@@ -22,7 +22,7 @@ app.register_blueprint(recruiter_bp, url_prefix='/recruiter')
 
 app.secret_key = os.urandom(24)  # Required for flashing messages
 
-# Configure logging
+# Confi+gure logging
 # logging.basicConfig(level=logging.DEBUG)
 
 # MongoDB connection URI
