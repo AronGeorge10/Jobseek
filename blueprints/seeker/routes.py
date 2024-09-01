@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, request, render_template, redirect, url_for, flash, make_response, jsonify, current_app
+from flask import Blueprint, request, render_template, redirect, url_for, flash, make_response, jsonify, current_app, render_template_string
 from flask_login import current_user, login_required
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -15,9 +15,12 @@ client = MongoClient(MONGO_URI)
 db = client['job_portal']
 collection_resume_details = db.tbl_resume_details
 collection_login_credentials = db.tbl_login_credentials
-collection_jobs = db.tbl_jobs
-collection_notifications = db.tbl_notifications
 collection_recruiter_registration = db.tbl_recruiter_registration
+collection_jobs = db.tbl_jobs
+collection_job_types = db.tbl_job_type
+collection_experience_levels = db.tbl_experience_type
+collection_notifications = db.tbl_notifications
+
 
 seeker_bp = Blueprint('seeker', __name__)
 
@@ -176,26 +179,23 @@ def generate_pdf():
 
     return response
 
-@seeker_bp.route('/job_postings', methods=['GET', 'POST'])
+@seeker_bp.route('/job_postings', methods=['GET'])
 @login_required
 def job_postings():
+    filter_options = get_filter_options()
+    return render_template('seeker/job_postings.html', filter_options=filter_options)
+
+@seeker_bp.route('/get_filtered_jobs', methods=['GET'])
+@login_required
+def get_filtered_jobs():
     try:
-        # Debug: Print the total number of jobs and recruiters
-        total_jobs = collection_jobs.count_documents({})
-        total_recruiters = collection_recruiter_registration.count_documents({})
-        print(f"Total jobs in collection: {total_jobs}")
-        print(f"Total recruiters in collection: {total_recruiters}")
+        locations = request.args.getlist('location')
+        job_types = request.args.getlist('job_type')
+        experience_levels = request.args.getlist('experience_level')
+        salary_min = request.args.get('salary_min')
+        salary_max = request.args.get('salary_max')
 
-        # Debug: Print a sample job document
-        sample_job = collection_jobs.find_one()
-        print(f"Sample job document: {sample_job}")
-
-        # Debug: Print a sample recruiter document
-        sample_recruiter = collection_recruiter_registration.find_one()
-        print(f"Sample recruiter document: {sample_recruiter}")
-
-        # Updated aggregation pipeline with correct field for lookup
-        jobs_with_company = list(collection_jobs.aggregate([
+        pipeline = [
             {
                 '$lookup': {
                     'from': 'tbl_recruiter_registration',
@@ -205,65 +205,149 @@ def job_postings():
                 }
             },
             {
-                '$unwind': '$recruiter_info'
+                '$unwind': {'path': '$recruiter_info', 'preserveNullAndEmptyArrays': True}
+            },
+            {
+                '$lookup': {
+                    'from': 'tbl_job_type',
+                    'localField': 'job_type',
+                    'foreignField': '_id',
+                    'as': 'job_type_info'
+                }
+            },
+            {
+                '$unwind': {'path': '$job_type_info', 'preserveNullAndEmptyArrays': True}
+            },
+            {
+                '$lookup': {
+                    'from': 'tbl_experience_type',
+                    'localField': 'experience_level',
+                    'foreignField': '_id',
+                    'as': 'experience_level_info'
+                }
+            },
+            {
+                '$unwind': {'path': '$experience_level_info', 'preserveNullAndEmptyArrays': True}
+            }
+        ]
+
+        match_conditions = {}
+        if locations:
+            match_conditions['location'] = {'$in': locations}
+        if job_types:
+            match_conditions['job_type_info.type'] = {'$in': job_types}
+        if experience_levels:
+            match_conditions['experience_level_info.type'] = {'$in': experience_levels}
+        if salary_min and salary_max:
+            salary_min = float(salary_min)
+            salary_max = float(salary_max)
+            match_conditions['$or'] = [
+                {'$and': [{'salary_min': {'$gte': salary_min}}, {'salary_min': {'$lte': salary_max}}]},
+                {'$and': [{'salary_max': {'$gte': salary_min}}, {'salary_max': {'$lte': salary_max}}]},
+                {'$and': [{'salary_min': {'$lte': salary_min}}, {'salary_max': {'$gte': salary_max}}]}
+            ]
+
+        if match_conditions:
+            pipeline.append({'$match': match_conditions})
+
+        pipeline.append({
+            '$project': {
+                '_id': {'$toString': '$_id'},
+                'title': 1,
+                'location': 1,
+                'job_type': '$job_type_info.type',
+                'experience_level': '$experience_level_info.type',
+                'description': 1,
+                'company': {'$ifNull': ['$recruiter_info.company_name', 'Unknown']},
+                'salary_min': 1,
+                'salary_max': 1,
+                'created_at': 1
+            }
+        })
+
+        current_app.logger.info(f"Aggregation pipeline: {pipeline}")
+        
+        jobs = list(collection_jobs.aggregate(pipeline))
+        current_app.logger.info(f"Number of jobs found: {len(jobs)}")
+        
+        return jsonify(jobs)
+    except Exception as e:
+        current_app.logger.error(f"Error in get_filtered_jobs: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': 'An error occurred while fetching jobs'}), 500
+
+def get_filter_options():
+    try:
+        pipeline = [
+            {
+                '$lookup': {
+                    'from': 'tbl_job_type',
+                    'localField': 'job_type',
+                    'foreignField': '_id',
+                    'as': 'job_type_info'
+                }
+            },
+            {
+                '$unwind': {'path': '$job_type_info', 'preserveNullAndEmptyArrays': True}
+            },
+            {
+                '$lookup': {
+                    'from': 'tbl_experience_type',
+                    'localField': 'experience_level',
+                    'foreignField': '_id',
+                    'as': 'experience_level_info'
+                }
+            },
+            {
+                '$unwind': {'path': '$experience_level_info', 'preserveNullAndEmptyArrays': True}
+            },
+            {
+                '$group': {
+                    '_id': None,
+                    'locations': {'$addToSet': '$location'},
+                    'job_types': {'$addToSet': '$job_type_info.type'},
+                    'experience_levels': {'$addToSet': '$experience_level_info.type'},
+                    'min_salary': {'$min': '$salary_min'},
+                    'max_salary': {'$max': '$salary_max'}
+                }
             },
             {
                 '$project': {
-                    '_id': 1,
-                    'title': 1,
-                    'location': 1,
-                    'job_type': 1,
-                    'description': 1,
-                    'company': '$recruiter_info.company_name',
-                    'recruiter_id': 1,
-                    'recruiter_user_id': '$recruiter_info.user_id'
+                    '_id': 0,
+                    'locations': 1,
+                    'job_types': 1,
+                    'experience_levels': 1,
+                    'salary_range': {
+                        'min': {'$ifNull': ['$min_salary', 0]},
+                        'max': {'$ifNull': ['$max_salary', 100]}
+                    }
                 }
             }
-        ]))
-        
-        print(f"Number of jobs found (with lookup): {len(jobs_with_company)}")
-        for job in jobs_with_company:
-            print(f"Job: {job['title']}, Recruiter ID: {job['recruiter_id']}, Recruiter User ID: {job['recruiter_user_id']}")
+        ]
 
-        # Fetch applied jobs for the current user
-        applied_jobs = list(db.tbl_job_applications.aggregate([
-            {'$match': {'user_id': ObjectId(current_user.id)}},
-            {'$lookup': {
-                'from': 'tbl_jobs',
-                'localField': 'job_id',
-                'foreignField': '_id',
-                'as': 'job_details'
-            }},
-            {'$unwind': '$job_details'},
-            {'$lookup': {
-                'from': 'tbl_recruiter_registration',
-                'localField': 'job_details.recruiter_id',
-                'foreignField': 'user_id',
-                'as': 'recruiter_info'
-            }},
-            {'$unwind': '$recruiter_info'},
-            {'$project': {
-                '_id': '$job_details._id',
-                'title': '$job_details.title',
-                'company': '$recruiter_info.company_name',
-                'location': '$job_details.location',
-                'job_type': '$job_details.job_type',
-                'description': '$job_details.description',
-                'is_shortlisted': {'$eq': ['$status', 'shortlisted']}
-            }}
-        ]))
+        result = list(collection_jobs.aggregate(pipeline))
         
-        print(f"Number of applied jobs: {len(applied_jobs)}")
+        if result:
+            filter_options = result[0]
+        else:
+            filter_options = {
+                'locations': [],
+                'job_types': [],
+                'experience_levels': [],
+                'salary_range': {'min': 0, 'max': 100}
+            }
 
-        if not jobs_with_company and not applied_jobs:
-            flash('No jobs found. The job database might be empty.', 'info')
-        
-        return render_template('seeker/job_postings.html', jobs=jobs_with_company, applied_jobs=applied_jobs)
-    
+        current_app.logger.info(f"Filter options: {filter_options}")
+        return filter_options
     except Exception as e:
-        print(f"Error in job_postings: {str(e)}")
-        flash('An error occurred while fetching job postings. Please try again later.', 'error')
-        return render_template('seeker/job_postings.html', jobs=[], applied_jobs=[])
+        current_app.logger.error(f"Error in get_filter_options: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return {
+            'locations': [],
+            'job_types': [],
+            'experience_levels': [],
+            'salary_range': {'min': 0, 'max': 100}
+        }
 
 @seeker_bp.route('/view_job/<job_id>')
 @login_required
@@ -277,16 +361,37 @@ def view_job(job_id):
             'as': 'recruiter_info'
         }},
         {'$unwind': '$recruiter_info'},
+        {'$lookup': {
+            'from': 'tbl_job_type',
+            'localField': 'job_type',
+            'foreignField': '_id',
+            'as': 'job_type_info'
+        }},
+        {'$unwind': '$job_type_info'},
+        {'$lookup': {
+            'from': 'tbl_experience_type',
+            'localField': 'experience_level',
+            'foreignField': '_id',
+            'as': 'experience_level_info'
+        }},
+        {'$unwind': '$experience_level_info'},
         {'$project': {
             '_id': 1,
             'title': 1,
             'location': 1,
-            'job_type': 1,
+            'job_type': '$job_type_info.type',
             'description': 1,
             'company': '$recruiter_info.company_name',
             'requirements': 1,
             'responsibilities': 1,
-            'salary': 1
+            'salary_min': 1,
+            'salary_max': 1,
+            'experience': 1,
+            'education': 1,
+            'soft_skills': 1,
+            'technical_skills': 1,
+            'application_deadline': 1,
+            'experience_level': '$experience_level_info.type'
         }}
     ]).next()
 
@@ -300,6 +405,10 @@ def view_job(job_id):
         has_applied = application is not None
         is_shortlisted = application['status'] == 'shortlisted' if application else False
         
+        # Convert application_deadline to a readable format
+        if 'application_deadline' in job and job['application_deadline']:
+            job['application_deadline'] = job['application_deadline'].strftime('%Y-%m-%d')
+        
         return render_template('seeker/view_job.html', job=job, has_applied=has_applied, is_shortlisted=is_shortlisted)
     else:
         flash('Job not found', 'error')
@@ -312,8 +421,7 @@ def apply_job(job_id):
         # Check if the job exists
         job = collection_jobs.find_one({'_id': ObjectId(job_id)})
         if not job:
-            flash('Job not found', 'error')
-            return redirect(url_for('seeker.job_postings'))
+            return jsonify({'success': False, 'message': 'Job not found'})
 
         # Check if the user has already applied
         existing_application = db.tbl_job_applications.find_one({
@@ -322,8 +430,7 @@ def apply_job(job_id):
         })
 
         if existing_application:
-            flash('You have already applied for this job', 'info')
-            return redirect(url_for('seeker.view_job', job_id=job_id))
+            return jsonify({'success': False, 'message': 'You have already applied for this job'})
 
         # Create a new application
         application = {
@@ -336,12 +443,23 @@ def apply_job(job_id):
         # Insert the application into the database
         db.tbl_job_applications.insert_one(application)
 
-        flash('Your application has been submitted successfully!', 'success')
-        return redirect(url_for('seeker.view_job', job_id=job_id))
+        # Prepare the HTML for the updated application status
+        html = render_template_string('''
+            <button class="btn btn-secondary mt-4" disabled>Applied</button>
+            <button id="cancel-application" class="btn btn-danger mt-4">Cancel Application</button>
+        ''')
+
+        return jsonify({
+            'success': True,
+            'message': 'Your application has been submitted successfully!',
+            'html': html
+        })
 
     except Exception as e:
-        flash(f'An error occurred while processing your application: {str(e)}', 'error')
-        return redirect(url_for('seeker.view_job', job_id=job_id))
+        return jsonify({
+            'success': False,
+            'message': f'An error occurred while processing your application: {str(e)}'
+        })
 
 @seeker_bp.route('/cancel_application/<job_id>', methods=['POST'])
 @login_required
@@ -350,8 +468,7 @@ def cancel_application(job_id):
         # Check if the job exists
         job = collection_jobs.find_one({'_id': ObjectId(job_id)})
         if not job:
-            flash('Job not found', 'error')
-            return redirect(url_for('seeker.job_postings'))
+            return jsonify({'success': False, 'message': 'Job not found'})
 
         # Find and delete the application
         result = db.tbl_job_applications.delete_one({
@@ -360,15 +477,27 @@ def cancel_application(job_id):
         })
 
         if result.deleted_count > 0:
-            flash('Your application has been canceled successfully.', 'success')
-        else:
-            flash('No application found for this job.', 'info')
+            # Prepare the HTML for the updated application status
+            html = render_template_string('''
+                <button id="apply-job" class="btn btn-primary mt-4">Apply Now</button>
+            ''')
 
-        return redirect(url_for('seeker.view_job', job_id=job_id))
+            return jsonify({
+                'success': True,
+                'message': 'Your application has been canceled successfully.',
+                'html': html
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'No application found for this job.'
+            })
 
     except Exception as e:
-        flash(f'An error occurred while canceling your application: {str(e)}', 'error')
-        return redirect(url_for('seeker.view_job', job_id=job_id))
+        return jsonify({
+            'success': False,
+            'message': f'An error occurred while canceling your application: {str(e)}'
+        })
 
 @seeker_bp.route('/notifications')
 @login_required
@@ -417,9 +546,33 @@ def mark_notification_read(notification_id):
 def search_jobs():
     try:
         query = request.args.get('query', '')
+        job_type = request.args.get('job_type')
+        location = request.args.get('location')
+        experience_level = request.args.get('experience_level')
+        salary_min = request.args.get('salary_min')
+        salary_max = request.args.get('salary_max')
         
-        current_app.logger.info(f"Received search query: {query}")
+        current_app.logger.info(f"Received search query: {query}, filters: job_type={job_type}, location={location}, experience_level={experience_level}, salary_min={salary_min}, salary_max={salary_max}")
         
+        match_conditions = [
+            {'$or': [
+                {'title': {'$regex': query, '$options': 'i'}},
+                {'description': {'$regex': query, '$options': 'i'}},
+                {'recruiter_info.company_name': {'$regex': query, '$options': 'i'}}
+            ]}
+        ]
+
+        if job_type:
+            match_conditions.append({'job_type': job_type})
+        if location:
+            match_conditions.append({'location': {'$regex': location, '$options': 'i'}})
+        if experience_level:
+            match_conditions.append({'experience_level': experience_level})
+        if salary_min:
+            match_conditions.append({'salary_min': {'$gte': int(salary_min)}})
+        if salary_max:
+            match_conditions.append({'salary_max': {'$lte': int(salary_max)}})
+
         pipeline = [
             {
                 '$lookup': {
@@ -436,13 +589,7 @@ def search_jobs():
                 }
             },
             {
-                '$match': {
-                    '$or': [
-                        {'title': {'$regex': query, '$options': 'i'}},
-                        {'description': {'$regex': query, '$options': 'i'}},
-                        {'recruiter_info.company_name': {'$regex': query, '$options': 'i'}}
-                    ]
-                }
+                '$match': {'$and': match_conditions}
             },
             {
                 '$project': {
@@ -452,7 +599,8 @@ def search_jobs():
                     'job_type': 1,
                     'description': 1,
                     'company': {'$ifNull': ['$recruiter_info.company_name', 'Unknown']},
-                    'salary': 1,
+                    'salary_min': 1,
+                    'salary_max': 1,
                     'experience_level': 1,
                     'created_at': {
                         '$dateToString': {
@@ -470,7 +618,6 @@ def search_jobs():
         
         current_app.logger.info(f"Number of jobs found: {len(jobs)}")
         
-        # Use the custom JSONEncoder to serialize the response
         return current_app.response_class(
             json.dumps(jobs, cls=JSONEncoder),
             mimetype='application/json'
@@ -479,3 +626,4 @@ def search_jobs():
         current_app.logger.error(f"Error in search_jobs: {str(e)}")
         current_app.logger.error(traceback.format_exc())
         return jsonify({'error': 'An internal server error occurred', 'details': str(e)}), 500
+

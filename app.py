@@ -12,7 +12,9 @@ import logging
 from authlib.integrations.flask_client import OAuth,OAuthError
 from blueprints.seeker.routes import seeker_bp
 from blueprints.admin.routes import admin_bp
-from blueprints.recruiter.routes import recruiter_bp
+from blueprints.recruiter.routes import recruiter_bp, send_shortlist_notifications
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
 
 app = Flask(__name__)
 # Register the blueprint
@@ -21,9 +23,6 @@ app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(recruiter_bp, url_prefix='/recruiter')
 
 app.secret_key = os.urandom(24)  # Required for flashing messages
-
-# Confi+gure logging
-# logging.basicConfig(level=logging.DEBUG)
 
 # MongoDB connection URI
 MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://AronJain:4E1zkxYGeaWZQCL8@cluster0.qy4jgjm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
@@ -228,9 +227,9 @@ def login():
 @login_required
 def index():
     response = make_response(render_template('index.html'))
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
     response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
+    response.headers['Expires'] = '-1'
     print(current_user.id)
     return response
 
@@ -240,9 +239,9 @@ def logout():
     logout_user()
     session.clear()  # Clear the session
     response = make_response(redirect(url_for('login')))
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
     response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
+    response.headers['Expires'] = '-1'
     return response
 
 # Mock function to send email
@@ -392,6 +391,14 @@ def contact():
 def get_industries():
     industries = list(collection_industries.find({}, {'_id': 0, 'name': 1}))
     return jsonify(industries)
+
+# Initialize and start the scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=send_shortlist_notifications, trigger="interval", hours=24)
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == '__main__':
     app.run(debug=True)

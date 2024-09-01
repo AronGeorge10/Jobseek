@@ -13,6 +13,64 @@
     integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
   <script src="https://kit.fontawesome.com/0e035b9984.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='webpage/css/main.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <style>
+    @media (max-width: 991px) {
+
+      .col-lg-3,
+      .col-lg-6 {
+        margin-bottom: 20px;
+      }
+    }
+
+    #filter-options,
+    #results-container {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .job-item {
+      border: 1px solid #e0e0e0;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 15px;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .job-item:hover {
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .job-title {
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    .company-name {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .job-details p {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .salary-range {
+      font-weight: bold;
+      color: #28a745;
+    }
+
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+
+    .btn-primary:hover {
+      background-color: #0056b3;
+      border-color: #0056b3;
+    }
+  </style>
 </head>
 
 <body>
@@ -21,101 +79,66 @@
     <div class="main">
       <div class="container">
         <div class="row">
-          <div class="col-lg-8">
-            <!-- Add tabs here -->
-            <ul class="nav nav-tabs mb-3" id="jobTabs" role="tablist">
-              <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="posted-jobs-tab" data-bs-toggle="tab" data-bs-target="#posted-jobs" type="button" role="tab" aria-controls="posted-jobs" aria-selected="true">Posted Jobs</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="applied-jobs-tab" data-bs-toggle="tab" data-bs-target="#applied-jobs" type="button" role="tab" aria-controls="applied-jobs" aria-selected="false">Applied Jobs</button>
-              </li>
-            </ul>
-            
-            <!-- Tab content -->
-            <div class="tab-content" id="jobTabsContent">
-              <div class="tab-pane fade show active" id="posted-jobs" role="tabpanel" aria-labelledby="posted-jobs-tab">
-                <div class="all-jobs">
-                  <p>Total jobs: {{ jobs|length }}</p>
-                  {% for job in jobs %}
-                  <div class="job-item">
-                    <h4>{{ job.title }}</h4>
-                    <div class="job-meta">
-                      <span><i class="far fa-building"></i> {{ job.company }}</span>
-                      <span><i class="far fa-map-marker-alt"></i> {{ job.location }}</span>
-                      <span><i class="far fa-clock"></i> {{ job.job_type }}</span>
-                    </div>
-                    <p>{{ job.description[:100] if job.description else '' }}...</p>
-                    <a href="{{ url_for('seeker.view_job', job_id=job._id) }}" class="main-btn">View Details</a>
-                  </div>
-                  <br>
-                  {% else %}
-                  <p>No jobs found.</p>
-                  {% endfor %}
-                </div>
-
-                <nav aria-label="Job listings navigation">
-                  <ul class="pagination">
-                    <li class="page-item ">
-                      <a class="page-link" href="#" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                        <span class="sr-only">Previous</span>
-                      </a>
-                    </li>
-                    <li class="page-item"><a class="page-link active" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                      <a class="page-link" href="#" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                        <span class="sr-only">Next</span>
-                      </a>
-                    </li>
-                  </ul>
-                </nav>
+          <div class="col-md-3">
+            <h3>Filters</h3>
+            <form id="filter-form">
+              <div class="mb-3">
+                <label class="form-label">Location</label>
+                {% if filter_options.locations %}
+                    {% for location in filter_options.locations %}
+                        <div class="form-check">
+                            <input class="form-check-input filter-checkbox" type="checkbox" name="location" value="{{ location }}" id="location-{{ loop.index }}">
+                            <label class="form-check-label" for="location-{{ loop.index }}">
+                                {{ location }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No locations available</p>
+                {% endif %}
               </div>
-              
-              <div class="tab-pane fade" id="applied-jobs" role="tabpanel" aria-labelledby="applied-jobs-tab">
-                <div class="applied-jobs">
-                  <p>Total applied jobs: {{ applied_jobs|length }}</p>
-                  {% for job in applied_jobs %}
-                  <div class="job-item">
-                    <h4>{{ job.title }}</h4>
-                    <div class="job-meta">
-                      <span><i class="far fa-building"></i> {{ job.company }}</span>
-                      <span><i class="far fa-map-marker-alt"></i> {{ job.location }}</span>
-                      <span><i class="far fa-clock"></i> {{ job.job_type }}</span>
-                    </div>
-                    <p>{{ job.description[:100] if job.description else '' }}...</p>
-                    <a href="{{ url_for('seeker.view_job', job_id=job._id) }}" class="main-btn">View Details</a>
-                    {% if job.is_shortlisted %}
-                      <span class="badge bg-success">Shortlisted</span>
-                    {% else %}
-                      <span class="badge bg-secondary">Applied</span>
-                    {% endif %}
-                  </div>
-                  <br>
-                  {% else %}
-                  <p>No applied jobs found.</p>
-                  {% endfor %}
-                </div>
-                
-                <!-- Add pagination for applied jobs if needed -->
+              <div class="mb-3">
+                <label class="form-label">Job Type</label>
+                {% if filter_options.job_types %}
+                    {% for job_type in filter_options.job_types %}
+                        <div class="form-check">
+                            <input class="form-check-input filter-checkbox" type="checkbox" name="job_type" value="{{ job_type }}" id="job-type-{{ loop.index }}">
+                            <label class="form-check-label" for="job-type-{{ loop.index }}">
+                                {{ job_type }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No job types available</p>
+                {% endif %}
               </div>
-            </div>
+              <div class="mb-3">
+                <label class="form-label">Experience Level</label>
+                {% if filter_options.experience_levels %}
+                    {% for level in filter_options.experience_levels %}
+                        <div class="form-check">
+                            <input class="form-check-input filter-checkbox" type="checkbox" name="experience_level" value="{{ level }}" id="experience-level-{{ loop.index }}">
+                            <label class="form-check-label" for="experience-level-{{ loop.index }}">
+                                {{ level }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No experience levels available</p>
+                {% endif %}
+              </div>
+              <div class="mb-3">
+                <label for="salary_range" class="form-label">Salary Range (LPA)</label>
+                <div id="salary-slider"></div>
+                <input type="hidden" id="salary_min" name="salary_min">
+                <input type="hidden" id="salary_max" name="salary_max">
+                <span id="salary-display"></span>
+              </div>
+            </form>
           </div>
-          <div class="col-lg-4">
-            <h3>Search Jobs</h3>
-            <div class="mb-4">
-              <input type="text" id="job-search-input" class="form-control" placeholder="Search jobs...">
-            </div>
-
-            <div id="search-results">
-              <h4>Search Results</h4>
-              <div id="results-container">
-                <!-- Search results will be dynamically inserted here -->
-              </div>
-            </div>
+          <div class="col-md-9">
+            <h3>Job Postings</h3>
+            <div id="job-listings"></div>
           </div>
         </div>
       </div>
@@ -179,61 +202,82 @@
     integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
     crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <script>
     $(document).ready(function() {
-      var searchTimeout;
-
-      $('#job-search-input').on('keyup', function() {
-        clearTimeout(searchTimeout);
-        var searchTerm = $(this).val().trim();
-
-        if (searchTerm.length === 0) {
-          $('#results-container').html('');
-          return;
-        }
-
-        searchTimeout = setTimeout(function() {
-          $.ajax({
-            url: "{{ url_for('seeker.search_jobs') }}",
-            method: 'GET',
-            data: { query: searchTerm },
-            success: function(response) {
-              var resultsHtml = '';
-              if (response.length > 0) {
-                response.forEach(function(job) {
-                  resultsHtml += `
-                    <div class="job-item mb-4">
-                      <h4>${job.title}</h4>
-                      <div class="job-meta">
-                        <span><i class="far fa-building"></i> ${job.company}</span>
-                        <span><i class="far fa-map-marker-alt"></i> ${job.location}</span>
-                        <span><i class="far fa-clock"></i> ${job.job_type}</span>
+      function updateJobListings() {
+        $.ajax({
+          url: "{{ url_for('seeker.get_filtered_jobs') }}",
+          type: 'GET',
+          data: $('#filter-form').serialize(),
+          success: function(response) {
+            console.log("Received response:", response);  // Add this line for debugging
+            var jobListings = $('#job-listings');
+            jobListings.empty();
+            if (response && response.length > 0) {
+              response.forEach(function(job) {
+                var jobHtml = `
+                  <div class="job-item">
+                    <div class="row align-items-center">
+                      <div class="col-md-6 col-lg-4">
+                        <h5 class="job-title">${job.title}</h5>
+                        <p class="company-name mb-0">${job.company}</p>
                       </div>
-                      <p>
-                        ${job.salary ? `<strong>Salary:</strong> ${job.salary}<br>` : ''}
-                        ${job.experience_level ? `<strong>Experience Level:</strong> ${job.experience_level}<br>` : ''}
-                        <strong>Posted on:</strong> ${job.created_at}
-                      </p>
-                      <a href="{{ url_for('seeker.view_job', job_id='') }}${job.id}" class="main-btn">View Details</a>
+                      <div class="col-md-6 col-lg-3">
+                        <div class="job-details">
+                          <p class="mb-0"><i class="fas fa-map-marker-alt"></i> ${job.location}</p>
+                          <p class="mb-0"><i class="fas fa-briefcase"></i> ${job.job_type}</p>
+                          <p class="mb-0"><i class="fas fa-graduation-cap"></i> ${job.experience_level}</p>
+                        </div>
+                      </div>
+                      <div class="col-md-6 col-lg-3">
+                        <p class="salary-range mb-0">₹${job.salary_min} - ₹${job.salary_max} LPA</p>
+                      </div>
+                      <div class="col-md-6 col-lg-2 text-md-end">
+                        <a href="/seeker/view_job/${job._id}" class="btn btn-primary">View Details</a>
+                      </div>
                     </div>
-                  `;
-                });
-              } else {
-                resultsHtml = '<p>No results found.</p>';
-              }
-              $('#results-container').html(resultsHtml);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-              console.error("AJAX error:", textStatus, errorThrown);
-              var errorMessage = 'Error occurred while searching.';
-              if (jqXHR.responseJSON && jqXHR.responseJSON.details) {
-                errorMessage += ' Details: ' + jqXHR.responseJSON.details;
-              }
-              $('#results-container').html(`<p>${errorMessage}</p>`);
+                  </div>
+                `;
+                jobListings.append(jobHtml);
+              });
+            } else {
+              jobListings.html('<p>No jobs found matching your criteria.</p>');
             }
-          });
-        }, 300); // 300ms delay to avoid too many requests
+          },
+          error: function(xhr, status, error) {
+            console.error("Error fetching jobs:", error);
+            console.error("Status:", status);
+            console.error("Response:", xhr.responseText);
+            $('#job-listings').html('<p>An error occurred while fetching jobs. Please try again later.</p>');
+          }
+        });
+      }
+
+      $(".filter-checkbox").change(updateJobListings);
+
+      $("#salary-slider").slider({
+        range: true,
+        min: {{ filter_options.salary_range.min }},
+        max: {{ filter_options.salary_range.max }},
+        values: [{{ filter_options.salary_range.min }}, {{ filter_options.salary_range.max }}],
+        slide: function(event, ui) {
+          $("#salary_min").val(ui.values[0]);
+          $("#salary_max").val(ui.values[1]);
+          $("#salary-display").text(Math.floor(ui.values[0]) + " - " + Math.floor(ui.values[1]) + " LPA");
+        },
+        stop: updateJobListings
       });
+
+      $("#salary_min").val({{ filter_options.salary_range.min }});
+      $("#salary_max").val({{ filter_options.salary_range.max }});
+      $("#salary-display").text(Math.floor({{ filter_options.salary_range.min }}) + " - " + Math.floor({{ filter_options.salary_range.max }}) + " LPA");
+
+      // Initial load of job listings
+      updateJobListings();
     });
   </script>
 </body>

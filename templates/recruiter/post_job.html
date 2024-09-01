@@ -6,141 +6,21 @@
     <title>Post a New Job</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- noUiSlider CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            // Validate all fields on keyup
-            $('#title').on('keyup', validateTitle);
-            $('#description').on('keyup', validateDescription);
-            $('#salary').on('keyup', validateSalary);
-            $('#location').on('keyup', validateLocation);
-            $('#company').on('keyup', validateCompany);
-
-            // Handle form submission
-            $('form').on('submit', function(event) {
-                if (!validateForm()) {
-                    event.preventDefault();
-                }
-            });
-        });
-
-        function validateTitle() {
-            var title = $('#title').val().trim();
-            if (title.length < 3) {
-                $('.error-title').text("Title should be at least 3 characters long");
-                return false;
-            } else if (title.length > 100) {
-                $('.error-title').text("Title should not exceed 100 characters");
-                return false;
-            } else if (!/^[a-zA-Z\s\-&()]+$/.test(title)) {
-                $('.error-title').text("Title can only contain letters, spaces, hyphens, ampersands, and parentheses");
-                return false;
-            } else {
-                $('.error-title').text("");
-                return true;
-            }
-        }
-
-        function validateDescription() {
-            var description = $('#description').val();
-            if (description.length < 10) {
-                $('.error-description').text("Description should be at least 10 characters long");
-                return false;
-            } else {
-                $('.error-description').text("");
-                return true;
-            }
-        }
-
-        function validateSalary() {
-            var salary = $('#salary').val();
-            if (!/^\$?[0-9]+(\.[0-9]{1,2})?$/.test(salary)) {
-                $('.error-salary').text("Please enter a valid salary (e.g., 50000 or 50000.00)");
-                return false;
-            } else {
-                $('.error-salary').text("");
-                return true;
-            }
-        }
-
-        function validateLocation() {
-            var location = $('#location').val();
-            if (location.length < 2) {
-                $('.error-location').text("Location should be at least 2 characters long");
-                return false;
-            } else {
-                $('.error-location').text("");
-                return true;
-            }
-        }
-
-        function validateCompany() {
-            var company = $('#company').val();
-            if (company.length < 2) {
-                $('.error-company').text("Company name should be at least 2 characters long");
-                return false;
-            } else {
-                $('.error-company').text("");
-                return true;
-            }
-        }
-
-        function validateForm() {
-            var isValid = true;
-
-            if (!validateTitle()) isValid = false;
-            if (!validateDescription()) isValid = false;
-            if (!validateSalary()) isValid = false;
-            if (!validateLocation()) isValid = false;
-            if (!validateCompany()) isValid = false;
-
-            // Validate requirements
-            var requirements = $('input[name="requirements[]"]');
-            if (requirements.length === 0 || requirements.first().val().trim() === '') {
-                $('.error-requirements').text("At least one requirement is needed");
-                isValid = false;
-            } else {
-                $('.error-requirements').text("");
-            }
-
-            // Validate responsibilities
-            var responsibilities = $('input[name="responsibilities[]"]');
-            if (responsibilities.length === 0 || responsibilities.first().val().trim() === '') {
-                $('.error-responsibilities').text("At least one responsibility is needed");
-                isValid = false;
-            } else {
-                $('.error-responsibilities').text("");
-            }
-
-            return isValid;
-        }
-
-        function addRequirement() {
-            var requirementsList = document.getElementById('requirements-list');
-            var newRequirement = document.createElement('li');
-            newRequirement.innerHTML = `
-                <input type="text" class="form-control mt-2" name="requirements[]" required>
-                <span class="error-message"></span>
-            `;
-            requirementsList.appendChild(newRequirement);
-        }
-
-        function addResponsibility() {
-            var responsibilitiesList = document.getElementById('responsibilities-list');
-            var newResponsibility = document.createElement('li');
-            newResponsibility.innerHTML = `
-                <input type="text" class="form-control mt-2" name="responsibilities[]" required>
-                <span class="error-message"></span>
-            `;
-            responsibilitiesList.appendChild(newResponsibility);
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.js"></script>
+    <!-- Stripe Payment -->
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         body {
             background-color: #f8f9fa;
         }
         .job-form-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 50px auto;
             padding: 30px;
             background-color: #ffffff;
@@ -152,13 +32,17 @@
             font-size: 0.875em;
             margin-top: 0.25rem;
         }
+        #experience-slider {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="job-form-container">
             <h1 class="text-center mb-4">Post a New Job</h1>
-            <form method="POST" action="/recruiter/post_job">
+            <form method="POST" action="{{ url_for('recruiter.post_job') }}" id="jobPostForm">
                 <div class="mb-3">
                     <label for="title" class="form-label">Job Title</label>
                     <input type="text" class="form-control" id="title" name="title" required maxlength="100">
@@ -170,28 +54,57 @@
                     <span class="error-description error-message"></span>
                 </div>
                 <div class="mb-3">
+                    <label for="education" class="form-label">Education Requirements</label>
+                    <input type="text" class="form-control" id="education" name="education" required>
+                    <span class="error-education error-message"></span>
+                </div>
+                <div class="mb-3">
                     <label for="responsibilities" class="form-label">Job Responsibilities</label>
-                    <ul id="responsibilities-list">
-                        <li>
-                            <input type="text" class="form-control" name="responsibilities[]" required>
-                        </li>
-                    </ul>
-                    <button type="button" class="btn btn-secondary mt-2" onclick="addResponsibility()">Add Responsibility</button>
+                    <div id="responsibilities-editor" class="form-control" contenteditable="true"></div>
+                    <input type="hidden" name="responsibilities" id="responsibilities">
                     <span class="error-responsibilities error-message"></span>
                 </div>
                 <div class="mb-3">
                     <label for="requirements" class="form-label">Job Requirements</label>
-                    <ul id="requirements-list">
-                        <li>
-                            <input type="text" class="form-control" name="requirements[]" required>
-                        </li>
-                    </ul>
-                    <button type="button" class="btn btn-secondary mt-2" onclick="addRequirement()">Add Requirement</button>
+                    <div id="requirements-editor" class="form-control" contenteditable="true"></div>
+                    <input type="hidden" name="requirements" id="requirements">
                     <span class="error-requirements error-message"></span>
-                </div>            
+                </div>
                 <div class="mb-3">
-                    <label for="salary" class="form-label">Salary(LPA)</label>
-                    <input type="text" class="form-control" id="salary" name="salary" required>
+                    <label for="soft_skills">Soft Skills</label>
+                    <select multiple class="form-control select2-multi" id="soft_skills" name="soft_skills[]" required>
+                        {% for skill in soft_skills %}
+                            <option value="{{ skill }}">{{ skill }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="error-soft-skills error-message"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="technical_skills">Technical Skills</label>
+                    <select multiple class="form-control select2-multi" id="technical_skills" name="technical_skills[]" required>
+                        {% for skill in technical_skills %}
+                            <option value="{{ skill }}">{{ skill }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="error-technical-skills error-message"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="experience" class="form-label">Years of Experience</label>
+                    <div id="experience-slider"></div>
+                    <input type="hidden" id="experience" name="experience">
+                    <p id="experience-value" class="mt-2"></p>
+                    <span class="error-experience error-message"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="salary" class="form-label">Salary Range (LPA)</label>
+                    <div class="row">
+                        <div class="col">
+                            <input type="number" class="form-control" id="salary_min" name="salary_min" required placeholder="Min">
+                        </div>
+                        <div class="col">
+                            <input type="number" class="form-control" id="salary_max" name="salary_max" required placeholder="Max">
+                        </div>
+                    </div>
                     <span class="error-salary error-message"></span>
                 </div>
                 <div class="mb-3">
@@ -202,29 +115,239 @@
                 <div class="mb-3">
                     <label for="job_type" class="form-label">Job Type</label>
                     <select class="form-select" id="job_type" name="job_type" required>
-                        <option value="Full-time">Full-time</option>
-                        <option value="Part-time">Part-time</option>
-                        <option value="Contract">Contract</option>
-                        <option value="Internship">Internship</option>
+                        <option value="">Select Job Type</option>
+                        {% for job_type in job_types %}
+                            <option value="{{ job_type._id }}">{{ job_type.type }}</option>
+                        {% endfor %}
                     </select>
+                    <span class="error-job-type error-message"></span>
                 </div>
                 <div class="mb-3">
                     <label for="experience_level" class="form-label">Experience Level</label>
                     <select class="form-select" id="experience_level" name="experience_level" required>
-                        <option value="Entry-level">Entry-level</option>
-                        <option value="Mid-level">Mid-level</option>
-                        <option value="Senior">Senior</option>
-                        <option value="Executive">Executive</option>
+                        <option value="">Select Experience Level</option>
+                        {% for level in experience_levels %}
+                            <option value="{{ level._id }}">{{ level.type }}</option>
+                        {% endfor %}
                     </select>
+                    <span class="error-experience-level error-message"></span>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="application_deadline" class="form-label">Application Deadline</label>
+                    <input type="date" class="form-control" id="application_deadline" name="application_deadline" required>
+                    <span class="error-application-deadline error-message"></span>
                 </div>
                 <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Post Job</button>
+                    <button type="submit" class="btn btn-primary" id="submitButton">Proceed to Payment</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Bootstrap JS (optional, for certain Bootstrap features) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2-multi').select2({
+                tags: true,
+                tokenSeparators: [',', ' '],
+                placeholder: "Select or type skills"
+            });
+
+            var slider = document.getElementById('experience-slider');
+            noUiSlider.create(slider, {
+                start: [0, 10],
+                connect: true,
+                range: {
+                    'min': 0,
+                    'max': 20
+                },
+                step: 1
+            });
+
+            var experienceValue = document.getElementById('experience-value');
+            slider.noUiSlider.on('update', function (values, handle) {
+                var minYears = Math.round(values[0]);
+                var maxYears = Math.round(values[1]);
+                experienceValue.innerHTML = minYears + ' - ' + maxYears + ' years';
+                document.getElementById('experience').value = minYears + '-' + maxYears;
+            });
+
+            // Set minimum date for application deadline
+            var today = new Date();
+            var dd = String(today.getDate() + 1).padStart(2, '0'); // Set to tomorrow
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var yyyy = today.getFullYear();
+            var minDate = yyyy + '-' + mm + '-' + dd;
+            $('#application_deadline').attr('min', minDate);
+
+            function initBulletEditor(editorId, textareaId) {
+                const editor = document.getElementById(editorId);
+                const textarea = document.getElementById(textareaId);
+
+                // Initialize with an empty bullet point
+                editor.innerHTML = '<ul><li></li></ul>';
+
+                editor.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.execCommand('insertHTML', false, '<li><br></li>');
+                        updateTextarea();
+                    }
+                });
+
+                editor.addEventListener('input', function() {
+                    // Ensure there's always at least one bullet point
+                    if (editor.innerHTML.trim() === '') {
+                        editor.innerHTML = '<ul><li><br></li></ul>';
+                    }
+                    updateTextarea();
+                });
+
+                function updateTextarea() {
+                    const bulletPoints = getBulletPoints(editorId);
+                    textarea.value = JSON.stringify(bulletPoints);
+                }
+
+                // Initial update of textarea
+                updateTextarea();
+            }
+
+            initBulletEditor('responsibilities-editor', 'responsibilities');
+            initBulletEditor('requirements-editor', 'requirements');
+
+            function validateForm() {
+                let isValid = true;
+                $('.error-message').text('');
+
+                // Job Title
+                if ($('#title').val().trim() === '') {
+                    $('.error-title').text('Job title is required');
+                    isValid = false;
+                }
+
+                // Job Description
+                if ($('#description').val().trim() === '') {
+                    $('.error-description').text('Job description is required');
+                    isValid = false;
+                }
+
+                // Responsibilities
+                var responsibilities = JSON.parse($('#responsibilities').val() || '[]');
+                if (responsibilities.length === 0) {
+                    $('.error-responsibilities').text('Job responsibilities are required');
+                    isValid = false;
+                }
+
+                // Requirements
+                var requirements = JSON.parse($('#requirements').val() || '[]');
+                if (requirements.length === 0) {
+                    $('.error-requirements').text('Job requirements are required');
+                    isValid = false;
+                }
+
+                // Soft Skills
+                if ($('#soft_skills').val().length === 0) {
+                    $('.error-soft-skills').text('At least one soft skill is required');
+                    isValid = false;
+                }
+
+                // Technical Skills
+                if ($('#technical_skills').val().length === 0) {
+                    $('.error-technical-skills').text('At least one technical skill is required');
+                    isValid = false;
+                }
+
+                // Experience
+                var experience = $('#experience').val().split('-');
+                if (experience.length !== 2 || isNaN(experience[0]) || isNaN(experience[1])) {
+                    $('.error-experience').text('Invalid experience range');
+                    isValid = false;
+                }
+
+                // Salary Range
+                var salaryMin = parseFloat($('#salary_min').val());
+                var salaryMax = parseFloat($('#salary_max').val());
+                if (isNaN(salaryMin) || isNaN(salaryMax) || salaryMin >= salaryMax) {
+                    $('.error-salary').text('Invalid salary range');
+                    isValid = false;
+                }
+
+                // Location
+                if ($('#location').val().trim() === '') {
+                    $('.error-location').text('Job location is required');
+                    isValid = false;
+                }
+
+                // Job Type
+                if ($('#job_type').val() === null) {
+                    $('.error-job-type').text('Job type is required');
+                    isValid = false;
+                }
+
+                // Experience Level
+                if ($('#experience_level').val() === null) {
+                    $('.error-experience-level').text('Experience level is required');
+                    isValid = false;
+                }
+
+                // Education
+                if ($('#education').val().trim() === '') {
+                    $('.error-education').text('Education requirement is required');
+                    isValid = false;
+                }
+
+                // Application Deadline
+                var deadlineInput = $('#application_deadline');
+                var selectedDate = new Date(deadlineInput.val());
+                var currentDate = new Date();
+                currentDate.setHours(0, 0, 0, 0);
+
+                if (deadlineInput.val() === '') {
+                    $('.error-application-deadline').text('Application deadline is required');
+                    isValid = false;
+                } else if (selectedDate <= currentDate) {
+                    $('.error-application-deadline').text('Application deadline must be a future date');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            // Add event listeners to all form inputs
+            $('form input, form textarea, form select').on('input change', function() {
+                $('#submitButton').prop('disabled', !validateForm());
+            });
+
+            // Initial form validation
+            validateForm();
+
+            // Form submission
+            $('#jobPostForm').on('submit', function(event) {
+                if (!validateForm()) {
+                    event.preventDefault();
+                }
+            });
+
+            // Prevent selecting past dates
+            $('#application_deadline').on('input', function() {
+                var selectedDate = new Date($(this).val());
+                var currentDate = new Date();
+                currentDate.setHours(0, 0, 0, 0);
+
+                if (selectedDate <= currentDate) {
+                    $('.error-application-deadline').text('Application deadline must be a future date');
+                    $(this).val('');
+                } else {
+                    $('.error-application-deadline').text('');
+                }
+            });
+
+            function getBulletPoints(editorId) {
+                const editor = document.getElementById(editorId);
+                const listItems = editor.querySelectorAll('li');
+                return Array.from(listItems).map(li => li.textContent.trim()).filter(text => text !== '');
+            }
+        });
+    </script>
 </body>
 </html>

@@ -18,6 +18,7 @@
         integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
     <script src="https://kit.fontawesome.com/0e035b9984.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='webpage/css/main.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         /* Include the updated CSS here */
         body {
@@ -185,6 +186,49 @@
         main {
             padding-top: 80px;
         }
+
+        .education-item {
+            margin-bottom: 10px;
+        }
+
+        .education-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .education-row input {
+            flex: 1;
+        }
+
+        .select2-container--classic .select2-selection--multiple {
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            padding: 5px;
+        }
+        .select2-container--classic .select2-selection--multiple .select2-selection__choice {
+            background-color: #007bff;
+            border: none;
+            color: #fff;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-top: 4px;
+            margin-right: 5px;
+        }
+        .select2-container--classic .select2-selection--multiple .select2-selection__choice__remove {
+            color: #fff;
+            margin-right: 5px;
+        }
+        .select2-container--classic .select2-search--inline .select2-search__field {
+            margin-top: 3px;
+            border: none !important;
+            outline: none !important;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875em;
+            margin-top: 0.25rem;
+        }
     </style>
 
     <script>
@@ -210,22 +254,13 @@
             var newEducation = document.createElement('li');
             newEducation.className = 'education-item';
             newEducation.innerHTML = `
-            <strong><input class="form-control" type="text" name="degree[]" placeholder="Degree"></strong>
-            <br>
-            <input class="form-control" type="text" name="university[]" placeholder="University">,
-            <input class="form-control" type="text" name="graduation_year[]" placeholder="Graduation Year">
-        `;
+                <div class="education-row">
+                    <input class="form-control" type="text" name="degree[]" placeholder="Degree">
+                    <input class="form-control" type="text" name="university[]" placeholder="University">
+                    <input class="form-control" type="text" name="graduation_year[]" placeholder="Graduation Year">
+                </div>
+            `;
             educationList.appendChild(newEducation);
-        }
-
-        function addSkill() {
-            var skillsList = document.getElementById('skills-list');
-            var newSkill = document.createElement('li');
-            newSkill.className = 'skill-item';
-            newSkill.innerHTML = `
-            <input class="form-control" type="text" name="skills[]" placeholder="Skill">
-        `;
-            skillsList.appendChild(newSkill);
         }
 
         function addCertification() {
@@ -369,34 +404,30 @@
                     <ul id="education-list">
                         {% if resume and resume.education %}
                         {% for edu in resume.education %}
-                        <li><strong><input class="form-control" type="text" name="degree[]" value="{{ edu.degree }}"
-                                    placeholder="Degree"></strong>
-                            <br>
-                            <input class="form-control" type="text" name="university[]" value="{{ edu.university }}"
-                                placeholder="University">,
-                            <input class="form-control" type="text" name="graduation_year[]"
-                                value="{{ edu.graduation_year }}" placeholder="Graduation Year">
+                        <li class="education-item">
+                            <div class="education-row">
+                                <input class="form-control" type="text" name="degree[]" value="{{ edu.degree }}" placeholder="Degree">
+                                <input class="form-control" type="text" name="university[]" value="{{ edu.university }}" placeholder="University">
+                                <input class="form-control" type="text" name="graduation_year[]" value="{{ edu.graduation_year }}" placeholder="Graduation Year">
+                            </div>
                         </li>
                         {% endfor %}
                         {% endif %}
                     </ul>
-                    <button id="add-education-button" class="btn btn-primary" type="button" onclick="addEducation()">Add
-                        Education</button>
+                    <button id="add-education-button" class="btn btn-primary" type="button" onclick="addEducation()">Add Education</button>
                 </div>
 
                 <!-- Skills Section -->
                 <div class="profile-section">
                     <h3>Skills</h3>
-                    <ul id="skills-list">
+                    <select class="form-control select2-multi" id="skills" name="skills[]" multiple="multiple" required>
                         {% if resume and resume.skills %}
-                        {% for skill in resume.skills %}
-                        <li><input class="form-control" type="text" name="skills[]" value="{{ skill }}"
-                                placeholder="Skill"></li>
-                        {% endfor %}
+                            {% for skill in resume.skills %}
+                                <option value="{{ skill }}" selected>{{ skill }}</option>
+                            {% endfor %}
                         {% endif %}
-                    </ul>
-                    <button id="add-skill-button" class="btn btn-primary" type="button" onclick="addSkill()">Add
-                        Skill</button>
+                    </select>
+                    <span class="error-skills error-message"></span>
                 </div>
 
                 <!-- Certifications Section -->
@@ -445,6 +476,39 @@
         integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
         crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2-multi').select2({
+                tags: true,
+                tokenSeparators: [',', ' '],
+                placeholder: "Add items...",
+                allowClear: true,
+                theme: "default",
+                width: '100%',
+                selectionCssClass: 'form-control',
+                dropdownCssClass: 'form-control'
+            });
+
+            // Form validation (if needed)
+            $('form').on('submit', function(event) {
+                var isValid = true;
+                $('.error-message').text('');
+
+                // Skills
+                if ($('#skills').val().length === 0) {
+                    $('.error-skills').text('At least one skill is required');
+                    isValid = false;
+                }
+
+                // Add other validation rules as needed
+
+                if (!isValid) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
