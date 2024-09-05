@@ -408,6 +408,7 @@
                             $('#recruiter-register').prop('disabled', true);
                         } else {
                             $('.error-recruiter-email').text("");
+                            $('#recruiter-register').prop('disabled', false); // Enable the register button
                         }
                     },
                     error: function () {

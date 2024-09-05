@@ -12,32 +12,54 @@
 <body>
     {% include 'recruiter/_navbar.html' %}
     <div class="container mt-5">
-        <h1 class="mb-4">Applicant Profile</h1>
+        <h2 class="mb-4">Applicant Profile</h2>
         <div class="card">
             <div class="card-body">
-                <h2 class="card-title">{{ applicant.name }}</h2>
-                <p class="card-text"><strong>Email:</strong> {{ applicant.email }}</p>
-                <p class="card-text"><strong>Phone:</strong> {{ applicant.phone }}</p>
+                <h3 class="card-title">{{ applicant.full_name }}</h3>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="card-text"><strong>Email:</strong> {{ applicant.email }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="card-text"><strong>Phone:</strong> {{ applicant.phone }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="card-text"><strong>LinkedIn:</strong> {{ applicant.linkedin }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="card-text"><strong>Address:</strong> {{ applicant.address }}</p>
+                    </div>
+                </div>
                 
                 {% if resume %}
                     <h3>Education</h3>
                     <ul>
                         {% for edu in resume.education %}
-                        <li>{{ edu.degree }} - {{ edu.institution }} ({{ edu.year }})</li>
+                        <li>{{ edu.degree }} at {{ edu.university }} graduated on {{ edu.graduation_year }}</li>
                         {% endfor %}
                     </ul>
 
                     <h3>Work Experience</h3>
                     <ul>
-                        {% for exp in resume.experience %}
-                        <li>{{ exp.position }} at {{ exp.company }} ({{ exp.start_date }} - {{ exp.end_date }})</li>
+                        {% for exp in resume.work_experience %}
+                        <li>{{ exp.job_title }} at {{ exp.company }} ({{ exp.duration }})</li>
                         {% endfor %}
                     </ul>
 
-                    <h3>Skills</h3>
+                    <h3>Soft Skills</h3>
                     <ul>
-                        {% for skill in resume.skills %}
-                        <li>{{ skill }}</li>
+                        {% for soft_skill in resume.soft_skills %}
+                        <li>{{ soft_skill }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <h3>Technical Skills</h3>
+                    <ul>
+                        {% for technical_skill in resume.technical_skills %}
+                        <li>{{ technical_skill }}</li>
                         {% endfor %}
                     </ul>
                 {% else %}

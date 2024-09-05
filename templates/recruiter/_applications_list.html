@@ -1,0 +1,32 @@
+{% if app %}
+{% for application in app %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title d-flex align-items-center">
+            Applicant: {{ application.applicant_name }}
+            <a href="{{ url_for('recruiter.view_applicant_profile', applicant_id=application.user_id, job_id=job._id) }}"
+               class="profile-btn" title="View Profile">
+                <i class="fas fa-user-circle"></i>
+            </a>
+        </h5>
+        <h6 class="card-subtitle mb-2 text-muted">{{ job.title }}</h6>
+        <p class="card-text">
+            <strong>Email:</strong> {{ application.applicant_email }}<br>
+            <strong>Applied on:</strong> {{ application.applied_at }}<br>
+            <strong>Status:</strong> {{ application.status }}
+        </p>
+        <a href="{{ url_for('recruiter.view_applications', job_id=job._id) }}"
+            class="btn btn-primary">Refresh</a>
+        <button class="btn shortlist-btn" data-application-id="{{ application.id }}">
+            {% if application.status == 'shortlisted' %}
+                Unshortlist
+            {% else %}
+                Shortlist
+            {% endif %}
+        </button>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<p>No applications found for this job.</p>
+{% endif %}

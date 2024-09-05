@@ -367,107 +367,167 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Professional Summary Section -->
                 <div class="profile-section">
                     <h3>Professional Summary</h3>
                     <textarea class="form-control" name="summary" rows="3"
                         placeholder="Professional Summary">{{ resume.summary if resume else '' }}</textarea>
                 </div>
+
+                <!-- Work Experience Section -->
                 <div class="profile-section">
-                    <h3>Work Experience</h3>
-                    <ul id="work-experience-list">
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <h3 class="section-title mb-0">Work Experience</h3>
+                        <div class="d-flex align-items-center">
+                            <label for="total_experience" class="form-label me-2 mb-0">Total Years:</label>
+                            <input type="number" class="form-control form-control-sm" id="total_experience" name="total_experience" 
+                                   min="0" step="0.5" style="width: 80px;" 
+                                   value="{{ resume.total_experience if resume and resume.total_experience is not none else '' }}">
+                        </div>
+                    </div>
+                    <div id="work-experience-list">
                         {% if resume and resume.work_experience %}
                         {% for job in resume.work_experience %}
-                        <li class="work-experience-item">
-                            <div class="work-experience-header">
-                                <input class="form-control" type="text" name="job_title[]" value="{{ job.job_title }}"
-                                    placeholder="Job Title">&nbsp;
-                                <input class="form-control" type="text" name="duration[]" value="{{ job.duration }}"
-                                    placeholder="Duration">
+                        <div class="work-experience-item card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <input class="form-control" type="text" name="job_title[]" value="{{ job.job_title }}" placeholder="Job Title">
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <input class="form-control" type="text" name="company[]" value="{{ job.company }}" placeholder="Company Name">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <input class="form-control" type="text" name="duration[]" value="{{ job.duration }}" placeholder="Duration">
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <textarea class="form-control" name="responsibility[]" placeholder="Responsibilities">{{ job.responsibility }}</textarea>
+                                    </div>
+                                </div>
                             </div>
-                            <ul>
-                                <li><input class="form-control" type="text" name="company[]" value="{{ job.company }}"
-                                        placeholder="Company Name"></li>
-                                <li><input class="form-control" type="text" name="responsibility[]"
-                                        value="{{ job.responsibility }}" placeholder="Responsibility"></li>
-                            </ul>
-                        </li>
+                        </div>
                         {% endfor %}
                         {% endif %}
-                    </ul>
-                    <button id="add-job-button" class="btn btn-primary" type="button" onclick="addJob()">Add
-                        Job</button>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary mt-2" onclick="addJob()">
+                        <i class="fas fa-plus me-2"></i>Add Job
+                    </button>
                 </div>
 
                 <!-- Education Section -->
                 <div class="profile-section">
                     <h3>Education</h3>
-                    <ul id="education-list">
+                    <div id="education-list">
                         {% if resume and resume.education %}
                         {% for edu in resume.education %}
-                        <li class="education-item">
-                            <div class="education-row">
-                                <input class="form-control" type="text" name="degree[]" value="{{ edu.degree }}" placeholder="Degree">
-                                <input class="form-control" type="text" name="university[]" value="{{ edu.university }}" placeholder="University">
-                                <input class="form-control" type="text" name="graduation_year[]" value="{{ edu.graduation_year }}" placeholder="Graduation Year">
+                        <div class="education-item card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <input class="form-control" type="text" name="degree[]" value="{{ edu.degree }}" placeholder="Degree">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <input class="form-control" type="text" name="university[]" value="{{ edu.university }}" placeholder="University">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <input class="form-control" type="text" name="graduation_year[]" value="{{ edu.graduation_year }}" placeholder="Graduation Year">
+                                    </div>
+                                </div>
                             </div>
-                        </li>
+                        </div>
                         {% endfor %}
                         {% endif %}
-                    </ul>
-                    <button id="add-education-button" class="btn btn-primary" type="button" onclick="addEducation()">Add Education</button>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary mt-2" onclick="addEducation()">
+                        <i class="fas fa-plus me-2"></i>Add Education
+                    </button>
                 </div>
 
-                <!-- Skills Section -->
+                <!-- Technical Skills Section -->
                 <div class="profile-section">
-                    <h3>Skills</h3>
-                    <select class="form-control select2-multi" id="skills" name="skills[]" multiple="multiple" required>
-                        {% if resume and resume.skills %}
-                            {% for skill in resume.skills %}
+                    <h3>Technical Skills</h3>
+                    <select class="form-control select2-multi" id="technical_skills" name="technical_skills[]" multiple="multiple" required>
+                        {% if resume and resume.technical_skills %}
+                            {% for skill in resume.technical_skills %}
                                 <option value="{{ skill }}" selected>{{ skill }}</option>
                             {% endfor %}
                         {% endif %}
+                        {% for skill in technical_skills_recommendations %}
+                            {% if resume and skill not in resume.technical_skills %}
+                                <option value="{{ skill }}">{{ skill }}</option>
+                            {% endif %}
+                        {% endfor %}
                     </select>
-                    <span class="error-skills error-message"></span>
+                    <span class="error-technical-skills error-message"></span>
+                </div>
+
+                <!-- Soft Skills Section -->
+                <div class="profile-section">
+                    <h3>Soft Skills</h3>
+                    <select class="form-control select2-multi" id="soft_skills" name="soft_skills[]" multiple="multiple" required>
+                        {% if resume and resume.soft_skills %}
+                            {% for skill in resume.soft_skills %}
+                                <option value="{{ skill }}" selected>{{ skill }}</option>
+                            {% endfor %}
+                        {% endif %}
+                        {% for skill in soft_skills_recommendations %}
+                            {% if resume and skill not in resume.soft_skills %}
+                                <option value="{{ skill }}">{{ skill }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    <span class="error-soft-skills error-message"></span>
                 </div>
 
                 <!-- Certifications Section -->
                 <div class="profile-section">
                     <h3>Certifications</h3>
-                    <ul id="certifications-list">
+                    <div id="certifications-list">
                         {% if resume and resume.certifications %}
                         {% for cert in resume.certifications %}
-                        <li><input class="form-control" type="text" name="certifications[]" value="{{ cert }}"
-                                placeholder="Certification">
-                        </li>
+                        <div class="certification-item card mb-2">
+                            <div class="card-body">
+                                <input class="form-control" type="text" name="certifications[]" value="{{ cert }}" placeholder="Certification">
+                            </div>
+                        </div>
                         {% endfor %}
                         {% endif %}
-                    </ul>
-                    <button id="add-certification-button" class="btn btn-primary" type="button"
-                        onclick="addCertification()">Add Certification</button>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary mt-2" onclick="addCertification()">
+                        <i class="fas fa-plus me-2"></i>Add Certification
+                    </button>
                 </div>
 
                 <!-- Projects Section -->
                 <div class="profile-section">
                     <h3>Projects</h3>
-                    <ul id="projects-list">
+                    <div id="projects-list">
                         {% if resume and resume.projects %}
                         {% for proj in resume.projects %}
-                        <li><strong><input class="form-control" type="text" name="projects[]"
-                                    value="{{ proj.project_name }}" placeholder="Project Name"></strong>
-                            <br>
-                            <textarea class="form-control" name="project_descriptions[]" rows="2"
-                                placeholder="Project Description">{{ proj.description }}</textarea>
-                        </li>
+                        <div class="project-item card mb-3">
+                            <div class="card-body">
+                                <strong><input class="form-control mb-2" type="text" name="projects[]" value="{{ proj.project_name }}" placeholder="Project Name"></strong>
+                                <textarea class="form-control" name="project_descriptions[]" rows="2" placeholder="Project Description">{{ proj.description }}</textarea>
+                            </div>
+                        </div>
                         {% endfor %}
                         {% endif %}
-                    </ul>
-                    <button id="add-project-button" class="btn btn-primary" type="button" onclick="addProject()">Add
-                        Project</button>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary mt-2" onclick="addProject()">
+                        <i class="fas fa-plus me-2"></i>Add Project
+                    </button>
                 </div>
-                <center><input type="submit" name="submit" id="submit" class="btn btn-primary" value="Save" />
-                    <button type="button" id="download-pdf" class="btn btn-secondary" onclick="downloadResume()">Download
-                        as PDF</button>
-                </center>
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-save me-2"></i>Save Profile
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="downloadResume()">
+                        <i class="fas fa-download me-2"></i>Download as PDF
+                    </button>
+                </div>
             </form>
         </div>
     </main>
@@ -495,9 +555,15 @@
                 var isValid = true;
                 $('.error-message').text('');
 
-                // Skills
-                if ($('#skills').val().length === 0) {
-                    $('.error-skills').text('At least one skill is required');
+                // Technical Skills
+                if ($('#technical_skills').val().length === 0) {
+                    $('.error-technical-skills').text('At least one technical skill is required');
+                    isValid = false;
+                }
+
+                // Soft Skills
+                if ($('#soft_skills').val().length === 0) {
+                    $('.error-soft-skills').text('At least one soft skill is required');
                     isValid = false;
                 }
 

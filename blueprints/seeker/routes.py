@@ -45,6 +45,7 @@ def viewprofile():
         address = request.form.get('address')
         linkedin = request.form.get('linkedin')
         summary = request.form.get('summary')
+        total_experience = request.form.get('total_experience')
 
         # Retrieve dynamic form data
         work_experience = []
@@ -69,7 +70,8 @@ def viewprofile():
                 "graduation_year": graduation_year
             })
 
-        skills = request.form.getlist('skills[]')
+        technical_skills = request.form.getlist('technical_skills[]')
+        soft_skills = request.form.getlist('soft_skills[]')
         certifications = request.form.getlist('certifications[]')
         
         projects = []
@@ -89,9 +91,11 @@ def viewprofile():
             "address": address,
             "linkedin": linkedin,
             "summary": summary,
+            "total_experience": float(total_experience) if total_experience else None,
             "work_experience": work_experience,
             "education": education,
-            "skills": skills,
+            "technical_skills": technical_skills,
+            "soft_skills": soft_skills,
             "certifications": certifications,
             "projects": projects
         }
@@ -138,7 +142,34 @@ def viewprofile():
     resume_document = collection_resume_details.find_one({"user_id": ObjectId(user_id)})
     print(f"Resume document: {resume_document}")  # Debug print
 
-    return render_template('seeker/viewprofile.html', user=current_user, resume=resume_document)
+    # Fetch skill recommendations
+    technical_skills_recommendations = get_skill_recommendations('technical_skills')
+    soft_skills_recommendations = get_skill_recommendations('soft_skills')
+
+    return render_template('seeker/viewprofile.html', 
+                           user=current_user, 
+                           resume=resume_document,
+                           technical_skills_recommendations=technical_skills_recommendations,
+                           soft_skills_recommendations=soft_skills_recommendations)
+
+def get_skill_recommendations(skill_type):
+    # Aggregate skills from jobs
+    job_skills = collection_jobs.aggregate([
+        {'$unwind': f'${skill_type}'},
+        {'$group': {'_id': f'${skill_type}'}},
+        {'$limit': 100}  # Limit to top 100 skills
+    ])
+
+    # Aggregate skills from resumes
+    resume_skills = collection_resume_details.aggregate([
+        {'$unwind': f'${skill_type}'},
+        {'$group': {'_id': f'${skill_type}'}},
+        {'$limit': 100}  # Limit to top 100 skills
+    ])
+
+    # Combine and deduplicate skills
+    all_skills = set(doc['_id'] for doc in job_skills) | set(doc['_id'] for doc in resume_skills)
+    return sorted(list(all_skills))
 
 @seeker_bp.route('/profile_picture/<user_id>')
 @login_required

@@ -25,8 +25,42 @@
             cursor: pointer;
             margin-left: 10px;
         }
+
         .profile-btn:hover {
             background-color: #0056b3;
+        }
+
+        /* Add some basic styling for the filter sidebar */
+        .sidebar {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+        }
+
+        /* Add this style to make the sidebar fixed */
+        .sidebar {
+            position: fixed;
+            /* Make the sidebar fixed */
+            top: 0;
+            /* Align to the top */
+            left: 0;
+            /* Align to the left */
+            height: 100%;
+            /* Full height */
+            overflow-y: auto;
+            /* Enable scrolling if content overflows */
+            z-index: 1000;
+            /* Ensure it stays above other content */
+        }
+
+        .main {
+            margin-top: 0%;
+            margin-left: 350px;
+            /* Adjust margin to prevent overlap */
         }
     </style>
 </head>
@@ -34,43 +68,92 @@
 <body>
     {% include 'recruiter/_navbar.html' %}
     <div class="main">
-        <div class="container">
+        <div class="container-fluid">
             <div class="row">
-                <div class="col-lg-8">
-                    <h2 class="mb-4">Job Applications for: {{ job.title }}</h2>
-
-                    {% if app %}
-                    {% for application in app %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title d-flex align-items-center">
-                                Applicant: {{ application.applicant_name }}
-                                <a href="{{ url_for('recruiter.view_applicant_profile', applicant_id=application.user_id, job_id=job._id) }}"
-                                   class="profile-btn" title="View Profile">
-                                    <i class="fas fa-user-circle"></i>
-                                </a>
-                            </h5>
-                            <h6 class="card-subtitle mb-2 text-muted">{{ job.title }}</h6>
-                            <p class="card-text">
-                                <strong>Email:</strong> {{ application.applicant_email }}<br>
-                                <strong>Applied on:</strong> {{ application.applied_at }}<br>
-                                <strong>Status:</strong> {{ application.status }}
-                            </p>
-                            <a href="{{ url_for('recruiter.view_applications', job_id=job._id) }}"
-                                class="btn btn-primary">Refresh</a>
-                            <button class="btn shortlist-btn" data-application-id="{{ application.id }}">
-                                {% if application.status == 'shortlisted' %}
-                                    Unshortlist
-                                {% else %}
-                                    Shortlist
-                                {% endif %}
-                            </button>
+                <!-- Filter Sidebar -->
+                <div class="col-md-3 sidebar">
+                    <h4>Filters</h4>
+                    <form id="filterForm">
+                        <div class="filter-section">
+                            <h5>Technical Skills</h5>
+                            {% for skill in technical_skills %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="technical_skills"
+                                    value="{{ skill }}" id="tech_{{ skill }}">
+                                <label class="form-check-label" for="tech_{{ skill }}">{{ skill }}</label>
+                            </div>
+                            {% endfor %}
                         </div>
+                        <div class="filter-section">
+                            <h5>Soft Skills</h5>
+                            {% for skill in soft_skills %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="soft_skills" value="{{ skill }}"
+                                    id="soft_{{ skill }}">
+                                <label class="form-check-label" for="soft_{{ skill }}">{{ skill }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="filter-section">
+                            <h5>Experience</h5>
+                            <select class="form-select" name="experience">
+                                <option value="">All</option>
+                                <option value="0-2">0-2 years</option>
+                                <option value="3-5">3-5 years</option>
+                                <option value="5+">5+ years</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <h5>Education</h5>
+                            <select class="form-select" name="education">
+                                <option value="">All</option>
+                                {% for edu in education_levels %}
+                                <option value="{{ edu }}">{{ edu }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <button type="button" class="btn btn-secondary" id="clearFilters">Clear Filters</button>
+                    </form>
+
+                </div>
+
+                <!-- Main Content -->
+                <div class="col-md-9">
+                    <h2 class="mb-4">Job Applications for: {{ job.title }}</h2>
+                    <div id="applicationsContainer">
+                        {% if app %}
+                        {% for application in app %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title d-flex align-items-center">
+                                    Applicant: {{ application.applicant_name }}
+                                    <a href="{{ url_for('recruiter.view_applicant_profile', applicant_id=application.user_id, job_id=job._id) }}"
+                                        class="profile-btn" title="View Profile">
+                                        <i class="fas fa-user-circle"></i>
+                                    </a>
+                                </h5>
+                                <p class="card-text">
+                                    <strong>Email:</strong> {{ application.applicant_email }}<br>
+                                    <strong>Applied on:</strong> {{ application.applied_at }}<br>
+                                    <strong>Status:</strong> {{ application.status }}
+                                </p>
+                                <a href="{{ url_for('recruiter.view_applications', job_id=job._id) }}"
+                                    class="btn btn-primary">Refresh</a>
+                                <button class="btn shortlist-btn" data-application-id="{{ application.id }}">
+                                    {% if application.status == 'shortlisted' %}
+                                    Unshortlist
+                                    {% else %}
+                                    Shortlist
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <p>No applications found for this job.</p>
+                        {% endif %}
                     </div>
-                    {% endfor %}
-                    {% else %}
-                    <p>No applications found for this job.</p>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -140,60 +223,80 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Add this to your HTML, perhaps at the end of the body -->
-    <div class="modal fade" id="shortlistModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="shortlistModalTitle">Confirm Action</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body" id="shortlistModalBody">
-            Are you sure you want to proceed?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary" id="shortlistConfirmBtn">Confirm</button>
-          </div>
+    <div class="modal fade" id="shortlistModal" tabindex="-1" aria-labelledby="shortlistModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shortlistModalLabel">Confirm Action</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to <span id="shortlistAction"></span> this candidate?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmShortlist">Confirm</button>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
     <script>
-        let currentApplicationId;
-        let isShortlisting;
+        let currentApplicationId, currentJobId, currentButton;
 
-        $('.shortlist-btn').on('click', function() {
-            const $btn = $(this);
-            const applicationId = $btn.data('application-id');
-            const isShortlisting = $btn.text().trim() === 'Shortlist';
-            
-            const modalTitle = isShortlisting ? 'Confirm Shortlist' : 'Confirm Unshortlist';
-            const modalBody = isShortlisting 
-                ? 'Are you sure you want to shortlist this candidate?'
-                : 'Are you sure you want to remove this candidate from the shortlist?';
-            
-            $('#shortlistModalTitle').text(modalTitle);
-            $('#shortlistModalBody').text(modalBody);
-            
-            const modal = new bootstrap.Modal(document.getElementById('shortlistModal'));
-            modal.show();
+        // Update this event listener for the shortlist buttons
+        $(document).on('click', '.shortlist-btn', function () {
+            currentApplicationId = $(this).data('application-id');
+            currentJobId = "{{ job._id }}";
+            currentButton = $(this);
 
-            $('#shortlistConfirmBtn').off('click').on('click', function() {
-                $.post(`/recruiter/shortlist/${applicationId}`, function(response) {
+            const action = currentButton.text().trim() === 'Shortlist' ? 'shortlist' : 'unshortlist';
+            $('#shortlistAction').text(action);
+            $('#shortlistModal').modal('show');
+        });
+
+        // Add this new event listener for the confirm button in the modal
+        $('#confirmShortlist').on('click', function () {
+            $.ajax({
+                url: `/recruiter/toggle_shortlist/${currentApplicationId}`,
+                type: 'POST',
+                data: { job_id: currentJobId },
+                success: function (response) {
                     if (response.success) {
-                        if (response.new_status === 'shortlisted') {
-                            $btn.text('Unshortlist');
-                            $btn.removeClass('btn-success').addClass('btn-warning');
+                        if (response.shortlisted) {
+                            currentButton.text('Unshortlist');
+                            currentButton.closest('.card-body').find('strong:contains("Status")').next().text('shortlisted');
                         } else {
-                            $btn.text('Shortlist');
-                            $btn.removeClass('btn-warning').addClass('btn-success');
+                            currentButton.text('Shortlist');
+                            currentButton.closest('.card-body').find('strong:contains("Status")').next().text('applied');
                         }
-                        // You might want to update other parts of the UI here
+                        $('#shortlistModal').modal('hide');
                     } else {
-                        alert('Failed to update shortlist status. Please try again.');
+                        alert('Failed to update shortlist status');
                     }
-                });
-                
-                modal.hide();
+                },
+                error: function () {
+                    alert('An error occurred while updating shortlist status');
+                }
+            });
+        });
+
+        $('#filterForm').on('submit', function (event) {
+            event.preventDefault();
+            const formData = $(this).serialize();
+            const jobId = "{{ job._id }}";
+
+            $.get(`/recruiter/view_applications/${jobId}`, formData, function (data) {
+                $('#applicationsContainer').html(data);
+            });
+        });
+    </script>
+    <script>
+        // Clear filters functionality
+        document.getElementById('clearFilters').addEventListener('click', function () {
+            // Reset the form
+            document.getElementById('filterForm').reset();
+            $.get(`/recruiter/view_applications/${jobId}`, formData, function (data) {
+                $('#applicationsContainer').html(data);
             });
         });
     </script>

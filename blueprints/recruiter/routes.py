@@ -193,24 +193,72 @@ def view_applications(job_id):
         flash('Job not found or access denied.', 'error')
         return redirect(url_for('recruiter.recruiter_index'))
     
-    # Fetch applications for this job, using ObjectId
-    applications = list(collection_applications.find({'job_id': ObjectId(job_id)}))
-    
-    for app in applications:
-        app['id'] = str(app['_id'])
-        app['user_id'] = str(app['user_id'])
-        app['applied_at'] = app['applied_at'].strftime('%Y-%m-%d %H:%M:%S') if app.get('applied_at') else 'N/A'
-        
-        # Fetch user details for each application
-        user = collection_resume.find_one({'user_id': ObjectId(app['user_id'])})
-        if user:
-            app['applicant_name'] = user.get('full_name', 'Unknown')
-            app['applicant_email'] = user.get('email', 'N/A')
+    # Get filter parameters
+    status = request.args.get('status')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    technical_skills = request.args.getlist('technical_skills')
+    soft_skills = request.args.getlist('soft_skills')
+    experience = request.args.get('experience')
+    education = request.args.get('education')
+
+    # Build query
+    query = {'job_id': ObjectId(job_id)}
+    if status:
+        query['status'] = status
+    if start_date:
+        query['applied_at'] = {'$gte': datetime.strptime(start_date, '%Y-%m-%d')}
+    if end_date:
+        if 'applied_at' in query:
+            query['applied_at']['$lte'] = datetime.strptime(end_date, '%Y-%m-%d')
         else:
-            app['applicant_name'] = 'Unknown'
-            app['applicant_email'] = 'N/A'
+            query['applied_at'] = {'$lte': datetime.strptime(end_date, '%Y-%m-%d')}
+
+    # Fetch applications for this job, using ObjectId
+    applications = list(collection_applications.find(query))
     
-    return render_template('recruiter/view_applications.html', job=job, app=applications)
+    # Filter applications based on resume details
+    filtered_applications = []
+    for app in applications:
+        resume = collection_resume.find_one({'user_id': ObjectId(app['user_id'])})
+        if resume:
+            if technical_skills and not all(skill in resume.get('technical_skills', []) for skill in technical_skills):
+                continue
+            if soft_skills and not all(skill in resume.get('soft_skills', []) for skill in soft_skills):
+                continue
+            if experience:
+                min_exp, max_exp = map(int, experience.split('-'))
+                if min_exp == 5:  # For "5+" option
+                    if resume.get('total_experience', 0) < 5:
+                        continue
+                elif not (min_exp <= resume.get('total_experience', 0) < max_exp):
+                    continue
+            if education and resume.get('highest_education') != education:
+                continue
+            
+            app['applicant_name'] = resume.get('full_name', 'Unknown')
+            app['applicant_email'] = resume.get('email', 'N/A')
+            app['id'] = str(app['_id'])
+            app['user_id'] = str(app['user_id'])
+            app['applied_at'] = app['applied_at'].strftime('%Y-%m-%d %H:%M:%S') if app.get('applied_at') else 'N/A'
+            filtered_applications.append(app)
+    
+    # Get technical skills and soft skills for this specific job
+    technical_skills = job.get('technical_skills', [])
+    soft_skills = job.get('soft_skills', [])
+    
+    # Get education levels (you might want to use a predefined list or fetch from a separate collection)
+    education_levels = ['High School', 'Bachelor', 'Master', 'PhD']  # Example list, adjust as needed
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('recruiter/_applications_list.html', app=filtered_applications, job=job)
+    
+    return render_template('recruiter/view_applications.html', 
+                           job=job, 
+                           app=filtered_applications, 
+                           technical_skills=technical_skills,
+                           soft_skills=soft_skills,
+                           education_levels=education_levels)
 
 @recruiter_bp.route('/posted_jobs')
 @login_required
@@ -485,35 +533,37 @@ def search_jobs():
         current_app.logger.error(f"Error in search_jobs: {str(e)}")
         return jsonify({'error': 'An error occurred during the search'}), 500
 
-@recruiter_bp.route('/shortlist/<application_id>', methods=['POST'])
+@recruiter_bp.route('/toggle_shortlist/<application_id>', methods=['POST'])
 @login_required
-def shortlist_application(application_id):
+def toggle_shortlist(application_id):
     if current_user.user_type != 'recruiter':
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
-    try:
-        application = collection_applications.find_one({'_id': ObjectId(application_id)})
-        if not application:
-            return jsonify({'success': False, 'error': 'Application not found'}), 404
-        
-        # Check if the job belongs to the current recruiter
-        job = collection_jobs.find_one({'_id': application['job_id'], 'recruiter_id': ObjectId(current_user.id)})
-        if not job:
-            return jsonify({'success': False, 'error': 'Access denied'}), 403
-        
-        new_status = 'shortlisted' if application['status'] != 'shortlisted' else 'applied'
-        result = collection_applications.update_one(
-            {'_id': ObjectId(application_id)},
-            {'$set': {'status': new_status}}
-        )
-        
-        if result.modified_count > 0:
-            return jsonify({'success': True, 'new_status': new_status, 'message': 'Status updated successfully'})
-        else:
-            return jsonify({'success': True, 'new_status': application['status'], 'message': 'No changes were necessary'}), 200
-    except Exception as e:
-        current_app.logger.error(f"Error in shortlisting application: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    job_id = request.form.get('job_id')
+    if not job_id:
+        return jsonify({'success': False, 'message': 'Job ID is required'}), 400
+
+    # Verify that the job belongs to the current recruiter
+    job = collection_jobs.find_one({'_id': ObjectId(job_id), 'recruiter_id': ObjectId(current_user.id)})
+    if not job:
+        return jsonify({'success': False, 'message': 'Job not found or access denied'}), 404
+
+    # Find the application
+    application = collection_applications.find_one({'_id': ObjectId(application_id), 'job_id': ObjectId(job_id)})
+    if not application:
+        return jsonify({'success': False, 'message': 'Application not found'}), 404
+
+    # Toggle the shortlist status
+    new_status = 'shortlisted' if application.get('status') != 'shortlisted' else 'applied'
+    result = collection_applications.update_one(
+        {'_id': ObjectId(application_id)},
+        {'$set': {'status': new_status}}
+    )
+
+    if result.modified_count > 0:
+        return jsonify({'success': True, 'shortlisted': new_status == 'shortlisted'})
+    else:
+        return jsonify({'success': False, 'message': 'Failed to update application status'}), 500
 
 @recruiter_bp.route('/view_applicant_profile/<applicant_id>')
 @login_required
@@ -531,12 +581,15 @@ def view_applicant_profile(applicant_id):
 
     # Prepare applicant data for JSON response
     applicant_data = {
-        'name': applicant.get('name'),
+        'full_name': applicant.get('full_name'),
         'email': applicant.get('email'),
         'phone': applicant.get('phone'),
+        'linkedin': applicant.get('linkedin'),
+        'address': applicant.get('address'),
         'education': applicant.get('education', []),
-        'experience': applicant.get('experience', []),
-        'skills': applicant.get('skills', [])
+        'work_experience': applicant.get('experience', []),
+        'soft_skills': applicant.get('soft_skills', []),
+        'technical_skills': applicant.get('technical_skills', [])
     }
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -544,7 +597,7 @@ def view_applicant_profile(applicant_id):
         return jsonify(applicant_data)
     else:
         # If it's a regular request, render the template
-        return render_template('recruiter/view_applicant_profile.html', applicant=applicant_data)
+        return render_template('recruiter/view_applicant_profile.html', applicant=applicant_data, resume=applicant)
 
 def send_shortlist_notifications():
     current_time = datetime.utcnow()
