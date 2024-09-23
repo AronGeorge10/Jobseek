@@ -8,6 +8,9 @@ import pdfkit
 from datetime import datetime
 import traceback
 import json
+import traceback
+from src.components.job_recommender import get_job_recommendations
+import pandas as pd
 
 # Use environment variables for sensitive information
 MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://AronJain:4E1zkxYGeaWZQCL8@cluster0.qy4jgjm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
@@ -658,3 +661,33 @@ def search_jobs():
         current_app.logger.error(traceback.format_exc())
         return jsonify({'error': 'An internal server error occurred', 'details': str(e)}), 500
 
+@seeker_bp.route('/recommendations', methods=['GET', 'POST'])
+@login_required
+def recommendations():
+    recommended_jobs = []  # Initialize as an empty list
+    if request.method == 'POST':
+        skills_string = request.form.get('skills', '').strip()
+        if skills_string:
+            recommended_jobs = get_job_recommendations(skills_string)
+            if not recommended_jobs:
+                flash('No job recommendations found based on your skills. Try different skills.', 'info')
+        else:
+            flash('Please enter at least one skill.', 'warning')
+    else:  # GET request
+        resume = collection_resume_details.find_one({"user_id": ObjectId(current_user.id)})
+        if resume:
+            user_skills = resume.get('technical_skills', []) + resume.get('soft_skills', [])
+            if user_skills:
+                skills_string = ', '.join(user_skills)
+                recommended_jobs = get_job_recommendations(skills_string)
+                if not recommended_jobs:
+                    flash('No job recommendations found based on your profile skills. Try updating your skills.', 'info')
+            else:
+                flash('No skills found in your profile. Please update your profile with your skills.', 'warning')
+        else:
+            flash('Please complete your profile to get job recommendations.', 'warning')
+
+    # Limit to top 3 recommendations
+    recommended_jobs = recommended_jobs[:3] if recommended_jobs else []
+
+    return render_template('seeker/recommendations.html', recommended_jobs=recommended_jobs)

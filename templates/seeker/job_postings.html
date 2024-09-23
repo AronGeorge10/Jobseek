@@ -70,6 +70,10 @@
       background-color: #0056b3;
       border-color: #0056b3;
     }
+
+    .recommendations-btn {
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 
@@ -137,7 +141,12 @@
             </form>
           </div>
           <div class="col-md-9">
-            <h3>Job Postings</h3>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h3>Job Postings</h3>
+              <a href="{{ url_for('seeker.recommendations') }}" class="btn btn-primary recommendations-btn">
+                <i class="fas fa-star me-2"></i>Get Job Recommendations
+              </a>
+            </div>
             <div id="job-listings"></div>
           </div>
         </div>
