@@ -201,6 +201,7 @@
                         editor.innerHTML = '<ul><li><br></li></ul>';
                     }
                     updateTextarea();
+                    validateForm(); // Add this line to trigger validation on input
                 });
 
                 function updateTextarea() {
@@ -232,14 +233,14 @@
                 }
 
                 // Responsibilities
-                var responsibilities = JSON.parse($('#responsibilities').val() || '[]');
+                var responsibilities = getBulletPoints('responsibilities-editor');
                 if (responsibilities.length === 0) {
                     $('.error-responsibilities').text('Job responsibilities are required');
                     isValid = false;
                 }
 
                 // Requirements
-                var requirements = JSON.parse($('#requirements').val() || '[]');
+                var requirements = getBulletPoints('requirements-editor');
                 if (requirements.length === 0) {
                     $('.error-requirements').text('Job requirements are required');
                     isValid = false;
