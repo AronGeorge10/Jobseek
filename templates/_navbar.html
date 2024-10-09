@@ -26,14 +26,15 @@
       </ul>
       <ul class="right navbar-nav ms-auto">
         <li class="nav-card-item-right">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="fas fa-bell"></i>
-              <span class="badge bg-danger" id="notificationCount"></span>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown" id="notificationList">
-              <!-- Notifications will be dynamically added here -->
-          </ul>
+          <li class="nav-item dropdown" style="margin-top: 10px;">
+            <a class="nav-link dropdown-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-bell"></i>
+                <span class="badge bg-danger" id="notificationCount"></span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown" id="notificationList">
+                <!-- Notifications will be dynamically added here -->
+            </ul>
+          </li>
         </li>
         <li class="nav-card-item-right dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
@@ -47,7 +48,6 @@
             <li><a class="dropdown-item" href="{{ url_for('logout') }}">Sign out</a></li>
           </ul>
         </li>
-        
       </ul>
     </div>
   </div>
