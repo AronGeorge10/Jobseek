@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Interview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='webpage/css/main.css') }}">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .form_container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        select,
+        input,
+        button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #4cae4c;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            color: #666666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #777;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'recruiter/_navbar.html' %}
+
+    <div class="form_container">
+        <h1>Schedule Interview</h1>
+
+        <!-- Flash message display -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="alert alert-dismissible fade show" role="alert">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form id="interview-form">
+            <select id="candidate_name" required>
+                <option value="">Select Candidate</option>
+                <!-- Options will be populated dynamically -->
+            </select>
+            <div class="error" id="candidate_name_error"></div>
+            <input type="datetime-local" id="interview_time" required>
+            <div class="error" id="interview_time_error"></div>
+            <input type="text" id="room_name" placeholder="Room Name" required>
+            <div class="error" id="room_name_error"></div>
+            <button type="submit" id="schedule-button" disabled>Schedule Interview</button>
+        </form>
+        <div class="footer">Powered by <b>JobSeek</b></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Use the candidates passed from the Flask route
+            const candidates = {{ candidates | tojson
+        }}; // Convert candidates to JSON
+        const defaultCandidateName = "{{ default_candidate_name }}"; // Get the default candidate name from the URL
+
+        if (candidates && candidates.length > 0) {
+            // Populate the dropdown with candidates
+            candidates.forEach(candidate => {
+                const option = new Option(candidate.name, candidate.id);
+                $('#candidate_name').append(option);
+
+                // Set the default candidate as selected if it matches
+                if (candidate.name === defaultCandidateName) {
+                    option.selected = true;
+                }
+            });
+        } else {
+            console.error('No candidates found or incorrect data format');
+        }
+
+        // Disable previous dates for the interview time
+        const today = new Date();
+        const minDate = today.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
+        $('#interview_time').attr('min', minDate);
+
+        // Validate candidate selection on change
+        $('#candidate_name').on('change', function () {
+            const candidateId = $(this).val();
+            if (!candidateId) {
+                $('#candidate_name_error').text('Please select a candidate.');
+            } else {
+                $('#candidate_name_error').text(''); // Clear error
+            }
+            validateForm();
+        });
+
+        // Validate interview time on change
+        $('#interview_time').on('change', function () {
+            const interviewTime = $(this).val();
+            if (!interviewTime) {
+                $('#interview_time_error').text('Please select a valid interview time.');
+            } else {
+                $('#interview_time_error').text(''); // Clear error
+            }
+            validateForm();
+        });
+
+        // Validate room name on input
+        $('#room_name').on('input', function () {
+            const roomName = $(this).val().trim();
+            // Updated regex: starts with a letter, allows letters, numbers, and spaces
+            const roomNamePattern = /^[a-zA-Z][a-zA-Z0-9\s]*$/;
+            if (!roomNamePattern.test(roomName)) {
+                $('#room_name_error').text('Room name must start with a letter and can only contain letters, numbers, and spaces.');
+            } else if (roomName.length < 4) {
+                $('#room_name_error').text('Room name must be at least 4 characters long.');
+            } else {
+                $('#room_name_error').text(''); // Clear error
+            }
+            validateForm();
+        });
+
+        // Function to validate the form and enable/disable the submit button
+        function validateForm() {
+            const candidateId = $('#candidate_name').val();
+            const interviewTime = $('#interview_time').val();
+            const roomName = $('#room_name').val().trim();
+            const roomNamePattern = /^[a-zA-Z][a-zA-Z0-9\s]*$/;
+
+            const isValid = candidateId && interviewTime && roomNamePattern.test(roomName) && roomName.length >= 4;
+
+            // Enable or disable the submit button based on validation
+            $('#schedule-button').prop('disabled', !isValid);
+        }
+
+        // Handle form submission with validation
+        $('#interview-form').on('submit', function (event) {
+            event.preventDefault();
+
+            const candidateId = $('#candidate_name').val();
+            const interviewTime = $('#interview_time').val();
+            const roomName = $('#room_name').val().trim();
+            let isValid = true;
+
+            // Clear previous error messages
+            $('.error').text('');
+
+            // Validate candidate selection
+            if (!candidateId) {
+                $('#candidate_name_error').text('Please select a candidate.');
+                isValid = false;
+            }
+
+            // Validate interview time
+            if (!interviewTime) {
+                $('#interview_time_error').text('Please select a valid interview time.');
+                isValid = false;
+            }
+
+            // Validate room name (only letters and numbers)
+            const roomNamePattern = /^[a-zA-Z0-9\s]+$/;
+            if (!roomNamePattern.test(roomName)) {
+                $('#room_name_error').text('Room name can only contain letters and numbers.');
+                isValid = false;
+            } else if (roomName.length < 4) {
+                $('#room_name_error').text('Room name must be at least 4 characters long.');
+                isValid = false;
+            }
+
+            // If the form is valid, proceed with the fetch request
+            if (isValid) {
+                fetch('/recruiter/schedule_interview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        candidate_id: candidateId,
+                        interview_time: interviewTime,
+                        room_name: roomName
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Remove the alert message
+                        if (data.message) {
+                            // Display the flash message dynamically
+                            const flashMessage = `<div class="alert alert-success">${data.message}</div>`;
+                            $('.form_container').prepend(flashMessage); // Prepend the message to the form container
+                            $('#interview-form')[0].reset(); // Reset the form
+
+                            // Set a timeout to remove the flash message after 5 seconds
+                            setTimeout(() => {
+                                $('.alert').fadeOut(500, function () {
+                                    $(this).remove(); // Remove the message from the DOM
+                                });
+                            }, 5000); // Change 5000 to the desired duration in milliseconds
+                        } else {
+                            // Handle error if needed
+                            console.error(data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        });
+        });
+    </script>
+</body>
+
+</html>

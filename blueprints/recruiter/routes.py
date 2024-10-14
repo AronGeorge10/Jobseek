@@ -13,6 +13,7 @@ import json
 from apscheduler.schedulers.background import BackgroundScheduler
 import stripe
 from bson import json_util
+import re
 
 stripe.api_key = 'sk_test_51MiftOSIxs4ZUV5mMRwCJZPY6Sa5xxQjwNW7j3NZ7Z0uAMdOZpfkJ8z5PXEvGURVzOkilzvmrTPVpn8vkZT7embw00HJuQCUXf'
 
@@ -30,6 +31,7 @@ collection_applications = db.tbl_job_applications
 collection_resume = db.tbl_resume_details
 collection_notifications = db.tbl_notifications
 collection_payment = db.tbl_payment
+collection_interviews = db.tbl_interviews
 
 @recruiter_bp.route('/index')
 @login_required
@@ -733,3 +735,63 @@ def payment_success():
 def payment_cancel():
     flash('Payment cancelled. Your job has not been posted.', 'warning')
     return redirect(url_for('recruiter.recruiter_index'))
+
+@recruiter_bp.route('/video_interview', methods=['GET'])
+@login_required
+def video_interview():
+    return render_template('recruiter/video_interview.html')
+
+@recruiter_bp.route('/schedule_interview', methods=['GET', 'POST'])
+@login_required
+def schedule_interview():
+    if request.method == 'GET':
+        job_id = request.args.get('job_id')  # Get job_id from query parameters
+        default_candidate_name = request.args.get('candidate_name')
+        
+        # Fetch the job details using job_id
+        job = collection_jobs.find_one({'_id': ObjectId(job_id)})
+        # Fetch shortlisted candidates from collection_applications
+        shortlisted_candidates = collection_applications.find({'job_id': ObjectId(job_id), 'status': 'shortlisted'})
+        candidates = []
+        for candidate in shortlisted_candidates:
+            # Use user_id to find the full_name in collection_resume
+            user_id = candidate['user_id']
+            resume = collection_resume.find_one({'user_id': ObjectId(user_id)})
+            full_name = resume['full_name'] if resume else 'Unknown'  # Default to 'Unknown' if not found
+            candidates.append({'id': str(candidate['_id']), 'name': full_name})
+        return render_template('recruiter/schedule_interview.html', candidates=candidates, job=job, default_candidate_name=default_candidate_name)
+
+    # Handle POST request to schedule the interview
+    data = request.json
+    recruiter_id = current_user.id
+    recruiter = collection_recruiter_registration.find_one({'user_id': ObjectId(recruiter_id)})
+    candidate_id = data.get('candidate_id') 
+    interview_time = data.get('interview_time')
+    room_name = data.get('room_name')
+
+    if not candidate_id or not interview_time or not room_name:
+        return jsonify({'error': 'All fields are required'}), 400
+
+    # Fetch candidate application from the database using candidate_id
+    application = collection_applications.find_one({'_id': ObjectId(candidate_id)})
+
+    # Check if the application exists
+    if not application:
+        return jsonify({'error': 'Candidate not found'}), 404
+
+    # Fetch the full name from collection_resume using user_id
+    resume = collection_resume.find_one({'user_id': ObjectId(application['user_id'])})
+    candidate_name = resume['full_name'] if resume else 'Unknown'  # Default to 'Unknown' if not found
+    
+    interview = {
+        'recruiter_name': str(recruiter['user_id']),
+        'candidate_name': candidate_name,
+        'interview_time': interview_time,
+        'room_name': room_name,
+        'created_at': datetime.utcnow()
+    }
+
+    collection_interviews.insert_one(interview)
+    
+    # Return the message in the JSON response
+    return jsonify({'message': 'Interview scheduled successfully'}), 201

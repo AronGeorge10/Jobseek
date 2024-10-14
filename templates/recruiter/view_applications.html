@@ -32,7 +32,7 @@
 
         /* Add some basic styling for the filter sidebar */
         .sidebar {
-            background-color: #f8f9fa;
+            background-color: #ffffff;
             padding: 20px;
             border-right: 1px solid #dee2e6;
         }
@@ -45,7 +45,7 @@
         .sidebar {
             position: fixed;
             /* Make the sidebar fixed */
-            top: 0;
+            top: 100px;
             /* Align to the top */
             left: 0;
             /* Align to the left */
@@ -59,7 +59,7 @@
 
         .main {
             margin-top: 0%;
-            margin-left: 350px;
+            margin-left: 450px;
             /* Adjust margin to prevent overlap */
         }
     </style>
@@ -123,7 +123,7 @@
                     <div id="applicationsContainer">
                         {% if app %}
                         {% for application in app %}
-                        <div class="card mb-3">
+                        <div class="card mb-3" id="application-{{ application.id }}">
                             <div class="card-body">
                                 <h5 class="card-title d-flex align-items-center">
                                     Applicant: {{ application.applicant_name }}
@@ -146,6 +146,12 @@
                                     Shortlist
                                     {% endif %}
                                 </button>
+                                {% if application.status == 'shortlisted' %}
+                                <a href="{{ url_for('recruiter.schedule_interview', applicant_id=application.user_id, job_id=job._id, candidate_name=application.applicant_name) }}"
+                                    class="btn btn-success schedule-btn">Schedule Meeting</a>
+                                {% else %}
+                                <a href="#" class="btn btn-success schedule-btn" style="display: none;">Schedule Meeting</a>
+                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}
@@ -264,9 +270,13 @@
                         if (response.shortlisted) {
                             currentButton.text('Unshortlist');
                             currentButton.closest('.card-body').find('strong:contains("Status")').next().text('shortlisted');
+                            // Show the Schedule Meeting button
+                            currentButton.closest('.card-body').find('.schedule-btn').show();
                         } else {
                             currentButton.text('Shortlist');
                             currentButton.closest('.card-body').find('strong:contains("Status")').next().text('applied');
+                            // Hide the Schedule Meeting button
+                            currentButton.closest('.card-body').find('.schedule-btn').hide();
                         }
                         $('#shortlistModal').modal('hide');
                     } else {
