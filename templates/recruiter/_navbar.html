@@ -1,4 +1,5 @@
 <!-- templates/_navbar.html -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 <nav class="navbar navbar-expand-xl {{ custom_class }}">
   <div class="container">
     <a class="navbar-brand" href="{{ url_for('recruiter.recruiter_index') }}">
@@ -24,6 +25,9 @@
         </li>
       </ul>
       <ul class="right navbar-nav ms-auto">
+        <li class="nav-card-item-right">
+          <!-- ... (notification dropdown remains unchanged) ... -->
+        </li>
         <li class="nav-card-item-right dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">
@@ -31,6 +35,10 @@
               class="rounded-circle" width="40" height="40">
           </a>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+            <li class="dropdown-item-text">
+              <strong>{{ current_user.full_name }}</strong>
+            </li>
+            <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="{{ url_for('recruiter.post_job') }}">Post a Job</a></li>
             <li><a class="dropdown-item" href="{{ url_for('recruiter.posted_jobs') }}">Posted Jobs</a></li>
             <li><a class="dropdown-item" href="{{ url_for('logout') }}">Sign out</a></li>

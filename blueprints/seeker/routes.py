@@ -5,7 +5,7 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
 import pdfkit
-from datetime import datetime
+from datetime import datetime, timedelta
 import traceback
 import json
 import traceback
@@ -386,67 +386,51 @@ def get_filter_options():
 @seeker_bp.route('/view_job/<job_id>')
 @login_required
 def view_job(job_id):
-    job = collection_jobs.aggregate([
-        {'$match': {'_id': ObjectId(job_id)}},
-        {'$lookup': {
-            'from': 'tbl_recruiter_registration',
-            'localField': 'recruiter_id',
-            'foreignField': 'user_id',
-            'as': 'recruiter_info'
-        }},
-        {'$unwind': '$recruiter_info'},
-        {'$lookup': {
-            'from': 'tbl_job_type',
-            'localField': 'job_type',
-            'foreignField': '_id',
-            'as': 'job_type_info'
-        }},
-        {'$unwind': '$job_type_info'},
-        {'$lookup': {
-            'from': 'tbl_experience_type',
-            'localField': 'experience_level',
-            'foreignField': '_id',
-            'as': 'experience_level_info'
-        }},
-        {'$unwind': '$experience_level_info'},
-        {'$project': {
-            '_id': 1,
-            'title': 1,
-            'location': 1,
-            'job_type': '$job_type_info.type',
-            'description': 1,
-            'company': '$recruiter_info.company_name',
-            'requirements': 1,
-            'responsibilities': 1,
-            'salary_min': 1,
-            'salary_max': 1,
-            'experience': 1,
-            'education': 1,
-            'soft_skills': 1,
-            'technical_skills': 1,
-            'application_deadline': 1,
-            'experience_level': '$experience_level_info.type'
-        }}
-    ]).next()
+    job = db.tbl_jobs.find_one({'_id': ObjectId(job_id)})
+    if not job:
+        flash('Job not found', 'error')
+        return redirect(url_for('seeker.job_listings'))
 
-    if job:
-        # Check if the user has already applied for this job
-        application = db.tbl_job_applications.find_one({
-            'user_id': ObjectId(current_user.id),
+    # Fetch job type and experience level details
+    job_type = db.tbl_job_type.find_one({'_id': ObjectId(job['job_type'])})
+    experience_level = db.tbl_experience_type.find_one({'_id': ObjectId(job['experience_level'])})
+
+    # Add job type and experience level details to the job dictionary
+    job['job_type'] = job_type['type'] if job_type else 'Unknown'
+    job['experience_level'] = experience_level['type'] if experience_level else 'Unknown'
+
+    user_id = current_user.id
+    job_application = db.tbl_job_applications.find_one({
+        'user_id': ObjectId(user_id),
+        'job_id': ObjectId(job_id)
+    })
+    
+    # Fetch recruiter details
+    recruiter=collection_recruiter_registration.find_one({'user_id': ObjectId(job['recruiter_id'])})
+    job['company'] = recruiter['company_name'] if recruiter else 'Unknown'
+    
+    has_applied = job_application is not None
+    is_shortlisted = has_applied and job_application.get('status') == 'shortlisted'
+    meeting_scheduled = has_applied and job_application.get('status') == 'meeting scheduled'
+    
+    interview = None
+    if meeting_scheduled:
+        # Fetch interview details from tbl_interviews
+        interview = db.tbl_interviews.find_one({
+            'candidate_id': ObjectId(user_id),
             'job_id': ObjectId(job_id)
         })
+        if interview and 'interview_time' in interview:
+            interview['interview_time'] = interview['interview_time'].isoformat()
         
-        has_applied = application is not None
-        is_shortlisted = application['status'] == 'shortlisted' if application else False
-        
-        # Convert application_deadline to a readable format
-        if 'application_deadline' in job and job['application_deadline']:
-            job['application_deadline'] = job['application_deadline'].strftime('%Y-%m-%d')
-        
-        return render_template('seeker/view_job.html', job=job, has_applied=has_applied, is_shortlisted=is_shortlisted)
-    else:
-        flash('Job not found', 'error')
-        return redirect(url_for('seeker.job_postings'))
+    print("Interview details:", interview)  # Debug print
+
+    return render_template('seeker/view_job.html', 
+                           job=job, 
+                           has_applied=has_applied, 
+                           is_shortlisted=is_shortlisted,
+                           meeting_scheduled=meeting_scheduled,
+                           interview=interview)
 
 @seeker_bp.route('/apply_job/<job_id>', methods=['POST'])
 @login_required
@@ -691,3 +675,58 @@ def recommendations():
     recommended_jobs = recommended_jobs[:3] if recommended_jobs else []
 
     return render_template('seeker/recommendations.html', recommended_jobs=recommended_jobs)
+
+@seeker_bp.route('/video_interview/<room_name>')
+@login_required
+def video_interview(room_name):
+    # Fetch interview details based on room_name
+    interview = db.tbl_interviews.find_one({'room_name': room_name})
+    if not interview:
+        flash('Interview not found', 'error')
+        return redirect(url_for('seeker.job_postings'))
+
+    job = db.tbl_jobs.find_one({'_id': interview['job_id']})
+
+    # Get existing notes, if any
+    existing_notes = interview.get('seeker_notes', '')
+
+    return render_template('seeker/video_interview.html', 
+                           interview=interview, 
+                           job=job, 
+                           room_name=room_name,
+                           existing_notes=existing_notes)
+
+@seeker_bp.route('/save-interview-notes', methods=['POST'])
+@login_required
+def save_interview_notes():
+    data = request.json
+    interview_id = data.get('interviewId')
+    notes = data.get('notes')
+
+    if not interview_id:
+        return jsonify({'success': False, 'message': 'Interview ID is required'}), 400
+
+    try:
+        # Find the interview document by _id
+        interview = db.tbl_interviews.find_one({
+            '_id': ObjectId(interview_id),
+            'candidate_id': ObjectId(current_user.id)  # Ensure the interview belongs to the current user
+        })
+
+        if interview:
+            # Update the document with the seeker's notes
+            result = db.tbl_interviews.update_one(
+                {'_id': ObjectId(interview_id)},
+                {'$set': {'seeker_notes': notes}}
+            )
+
+            if result.modified_count > 0:
+                return jsonify({'success': True, 'message': 'Notes saved successfully'}), 200
+            else:
+                return jsonify({'success': False, 'message': 'No changes made'}), 400
+        else:
+            return jsonify({'success': False, 'message': 'Interview not found or access denied'}), 404
+
+    except Exception as e:
+        current_app.logger.error(f"Error in save_interview_notes: {str(e)}")
+        return jsonify({'success': False, 'message': 'An error occurred while saving notes'}), 500

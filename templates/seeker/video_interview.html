@@ -53,6 +53,15 @@
         }
         #save-notes {
             margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #save-notes:hover {
+            background-color: #45a049;
         }
         #exit-meeting {
             position: fixed;
@@ -141,7 +150,7 @@
     document.getElementById('confirmExit').addEventListener('click', function() {
         // Save notes before exiting
         const notes = document.getElementById('interview-notes').value;
-        fetch('/recruiter/save-interview-notes', {
+        fetch('/seeker/save-interview-notes', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -160,15 +169,15 @@
             }
             // Close the Jitsi Meet connection
             api.dispose();
-            // Redirect to the view applications page
-            window.location.href = '{{ url_for("recruiter.view_applications", job_id=interview.job_id) }}';
+            // Redirect to the job listings or another appropriate page
+            window.location.href = '{{ url_for("seeker.job_postings") }}';
         })
         .catch((error) => {
             console.error('Error:', error);
             // Close the Jitsi Meet connection
             api.dispose();
             // Redirect even if there's an error saving notes
-            window.location.href = '{{ url_for("recruiter.view_applications", job_id=interview.job_id) }}';
+            window.location.href = '{{ url_for("seeker.job_postings") }}';
         });
     });
 
@@ -186,7 +195,7 @@
     // Notes functionality
     document.getElementById('save-notes').addEventListener('click', function() {
         const notes = document.getElementById('interview-notes').value;
-        fetch('/recruiter/save-interview-notes', {
+        fetch('/seeker/save-interview-notes', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

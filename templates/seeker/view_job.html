@@ -20,6 +20,18 @@
             border-radius: 20px;
             font-size: 0.9em;
         }
+        .btn-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-disabled:hover {
+            opacity: 0.6;
+        }
+        .badge {
+            font-size: 0.9em;
+            padding: 0.5em 0.7em;
+            border-radius: 20px;
+        }
     </style>
 </head>
 <body>
@@ -91,10 +103,29 @@
                                 {% if has_applied %}
                                     {% if is_shortlisted %}
                                         <button class="btn btn-success mt-4" disabled>Shortlisted</button>
+                                    {% elif meeting_scheduled %}
+                                        <span id="meeting-status" class="badge bg-info text-white me-2">Meeting Scheduled</span>
+                                        {% if interview and interview.get('interview_time') %}
+                                            <a href="#" 
+                                               id="enter-meeting-btn"
+                                               class="btn btn-primary enter-meeting-btn mt-2" 
+                                               data-meeting-time="{{ interview.get('interview_time', '') }}"
+                                               data-meeting-duration="{{ interview.get('interview_duration', 30) }}"
+                                               data-room-name="{{ interview.get('room_name', '') }}"
+                                               data-toggle="tooltip"
+                                               title="Enter Meeting">
+                                               Enter Meeting
+                                            </a>
+                                        {% else %}
+                                            <p>Interview details are not available. Please contact the recruiter.</p>
+                                        {% endif %}
                                     {% else %}
                                         <button class="btn btn-secondary mt-4" disabled>Applied</button>
                                     {% endif %}
-                                    <button id="cancel-application" class="btn btn-danger mt-4">Cancel Application</button>
+                                    
+                                    {% if not meeting_scheduled %}
+                                        <button id="cancel-application" class="btn btn-danger mt-4">Cancel Application</button>
+                                    {% endif %}
                                 {% else %}
                                     <button id="apply-job" class="btn btn-primary mt-4">Apply Now</button>
                                 {% endif %}
@@ -202,6 +233,74 @@
                     console.error('An error occurred. Please try again.');
                 }
             });
+        });
+    });
+
+    $(document).ready(function() {
+        function updateMeetingStatus() {
+            const $button = $('#enter-meeting-btn');
+            const $meetingStatus = $('#meeting-status');
+            if ($button.length === 0) return;
+
+            const currentTime = new Date();
+            const meetingTimeStr = $button.data('meeting-time');
+            if (!meetingTimeStr) {
+                console.error('No meeting time provided');
+                return;
+            }
+
+            const meetingTime = new Date(meetingTimeStr);
+            const meetingDuration = parseInt($button.data('meeting-duration')) || 30;
+            const meetingEndTime = new Date(meetingTime.getTime() + meetingDuration * 60000);
+
+            const timeDifference = meetingTime.getTime() - currentTime.getTime();
+
+            console.log('Current Time:', currentTime);
+            console.log('Meeting Time:', meetingTime);
+            console.log('Meeting End Time:', meetingEndTime);
+            console.log('Time Difference (ms):', timeDifference);
+
+            if (currentTime >= meetingEndTime) {
+                // Meeting has ended
+                $meetingStatus.remove();
+                $button.prop('disabled', true);
+                $button.addClass('btn-disabled');
+                $button.attr('title', 'Meeting has ended');
+            } else {
+                const shouldBeEnabled = timeDifference <= 5 * 60 * 1000 && currentTime < meetingEndTime;
+
+                console.log('Should Be Enabled:', shouldBeEnabled);
+
+                $button.prop('disabled', !shouldBeEnabled);
+                $button.toggleClass('btn-disabled', !shouldBeEnabled);
+
+                if (timeDifference > 5 * 60 * 1000) {
+                    $button.attr('title', `Meeting starts in ${Math.ceil(timeDifference / 60000)} minutes`);
+                } else {
+                    $button.attr('title', 'Click to enter the meeting');
+                }
+            }
+
+            $button.tooltip('dispose').tooltip();
+        }
+
+        updateMeetingStatus();
+        setInterval(updateMeetingStatus, 60000);
+
+        $('[data-toggle="tooltip"]').tooltip();
+
+        $('#enter-meeting-btn').on('click', function(e) {
+            e.preventDefault();
+            if ($(this).prop('disabled')) {
+                return;
+            }
+            const roomName = $(this).data('room-name');
+            if (roomName) {
+                const videoInterviewUrl = "{{ url_for('seeker.video_interview', room_name='ROOM_NAME_PLACEHOLDER') }}".replace('ROOM_NAME_PLACEHOLDER', roomName);
+                window.location.href = videoInterviewUrl;
+            } else {
+                console.error('Room name is not available');
+            }
         });
     });
     </script>

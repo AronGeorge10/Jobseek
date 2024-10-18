@@ -1,0 +1,29 @@
+<div class="tab-content" id="applicationTabsContent">
+    <!-- All Candidates Tab -->
+    <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+        <div id="allApplicationsContainer">
+            {% with applications = applications %}
+            {% include 'recruiter/_application_cards.html' %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <!-- Shortlisted Candidates Tab -->
+    <div class="tab-pane fade" id="shortlisted" role="tabpanel" aria-labelledby="shortlisted-tab">
+        <div id="shortlistedApplicationsContainer">
+            {% with applications = applications|selectattr('status', 'equalto', 'shortlisted')|list %}
+            {% include 'recruiter/_application_cards.html' %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <!-- Scheduled Meetings Tab -->
+    <div class="tab-pane fade" id="scheduled" role="tabpanel" aria-labelledby="scheduled-tab">
+        <div id="scheduledApplicationsContainer">
+            {% with applications = applications|selectattr('status', 'equalto', 'meeting scheduled')|list %}
+            {% include 'recruiter/_application_cards.html' %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+

@@ -15,11 +15,17 @@
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
-            display: flex;
+            /* Remove or modify these properties */
+            /* display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            height: 100vh; */
+        }
+
+        /* Add this new style for the main content */
+        .main-content {
+            padding-top: 0px; /* Adjust this value based on your navbar height */
         }
 
         .form_container {
@@ -79,56 +85,324 @@
             margin-top: -10px;
             margin-bottom: 10px;
         }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: -10px;
+        }
+
+        .col-md-6 {
+            flex: 0 0 50%;
+            max-width: 50%;
+            padding: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .col-md-6 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+
+        #existing-schedules {
+            margin-top: 20px;
+        }
+
+        .list-group-item {
+            margin-bottom: 10px;
+        }
+
+        .notebook-container {
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notebook-page {
+            background-color: #fff;
+            background-image: 
+                linear-gradient(90deg, transparent 79px, #abced4 79px, #abced4 81px, transparent 81px),
+                linear-gradient(#eee .1em, transparent .1em);
+            background-size: 100% 1.2em;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            padding: 20px 20px 20px 100px;
+            position: relative;
+            min-height: 580px;
+        }
+
+        .notebook-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 79px;
+            height: 100%;
+            width: 1px;
+            background-color: #db4034;
+        }
+
+        .notebook-page h2 {
+            margin-top: 0;
+            color: #333;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .notebook-page ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .notebook-page li {
+            margin-bottom: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.2em;
+        }
+
+        .notebook-page li strong {
+            color: #db4034;
+        }
+
+        .no-schedules {
+            font-family: 'Courier New', Courier, monospace;
+            color: #666;
+            font-style: italic;
+        }
+
+        #notebook-date {
+            font-family: 'Courier New', Courier, monospace;
+            margin-bottom: 20px;
+        }
+
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        .alert-success {
+            color: #3c763d;
+            background-color: #dff0d8;
+            border-color: #d6e9c6;
+        }
+        .alert-warning {
+            color: #8a6d3b;
+            background-color: #fcf8e3;
+            border-color: #faebcc;
+        }
+        .alert-error {
+            color: #a94442;
+            background-color: #f2dede;
+            border-color: #ebccd1;
+        }
     </style>
 </head>
 
 <body>
     {% include 'recruiter/_navbar.html' %}
 
-    <div class="form_container">
-        <h1>Schedule Interview</h1>
+    <div class="main-content">
+        <div class="container">
+            <div class="row">
+                <!-- Left section: Schedule form -->
+                <div class="col-md-6">
+                    <div class="form_container">
+                        <h1>Schedule Interview</h1>
 
-        <!-- Flash message display -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="alert alert-dismissible fade show" role="alert">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
+                        <!-- Flash message display -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                        <div class="flash-messages">
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+
+                        <form id="interview-form">
+                            <select id="candidate_name" required>
+                                <option value="">Select Candidate</option>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                            <div class="error" id="candidate_name_error"></div>
+                            <input type="datetime-local" id="interview_time" required min="">
+                            <div class="error" id="interview_time_error"></div>
+                            <input type="text" id="room_name" placeholder="Room Name" required>
+                            <div class="error" id="room_name_error"></div>
+                            
+                            <!-- New duration field -->
+                            <input type="number" id="interview_duration" placeholder="Interview Duration (minutes)" required min="15" max="180">
+                            <div class="error" id="interview_duration_error"></div>
+                            
+                            <button type="submit" id="schedule-button" disabled>Schedule Interview</button>
+                        </form>
+                        <div class="footer">Powered by <b>JobSeek</b></div>
+                    </div>
+                </div>
+
+                <!-- Right section: Existing schedules -->
+                <div class="col-md-6">
+                    <div class="notebook-container">
+                        <div class="notebook-page">
+                            <h2>Existing Schedules</h2>
+                            <input type="date" id="notebook-date" class="form-control">
+                            <div id="existing-schedules">
+                                <!-- Schedules will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
-        {% endwith %}
-
-        <form id="interview-form">
-            <select id="candidate_name" required>
-                <option value="">Select Candidate</option>
-                <!-- Options will be populated dynamically -->
-            </select>
-            <div class="error" id="candidate_name_error"></div>
-            <input type="datetime-local" id="interview_time" required>
-            <div class="error" id="interview_time_error"></div>
-            <input type="text" id="room_name" placeholder="Room Name" required>
-            <div class="error" id="room_name_error"></div>
-            <button type="submit" id="schedule-button" disabled>Schedule Interview</button>
-        </form>
-        <div class="footer">Powered by <b>JobSeek</b></div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        $(document).ready(function () {
-            // Use the candidates passed from the Flask route
-            const candidates = {{ candidates | tojson
-        }}; // Convert candidates to JSON
+    $(document).ready(function () {
+        // Use the candidates passed from the Flask route
+        const candidates = {{ candidates | tojson }}; // Convert candidates to JSON
         const defaultCandidateName = "{{ default_candidate_name }}"; // Get the default candidate name from the URL
 
+        // Populate candidates list
+        populateCandidatesList(candidates, defaultCandidateName);
+
+        // Set today's date as the default for the notebook date input
+        const today = new Date().toISOString().split('T')[0];
+        $('#notebook-date').val(today);
+        fetchExistingSchedules(today);
+
+        // Add event listener for notebook-date change
+        $('#notebook-date').on('change', function() {
+            const selectedDate = $(this).val();
+            fetchExistingSchedules(selectedDate);
+        });
+
+        // Add event listeners for form inputs
+        $('#candidate_name').on('change', function() { validateField($(this), validateCandidate); });
+        $('#interview_time').on('change', function() { validateField($(this), validateInterviewTime); });
+        $('#room_name').on('input', function() { validateField($(this), validateRoomName); });
+        $('#interview_duration').on('input', function() { validateField($(this), validateDuration); });
+
+        // Form submission
+        $('#interview-form').on('submit', function (event) {
+            event.preventDefault();
+            if (validateAllFields()) {
+                submitInterviewForm();
+            }
+        });
+
+        // Set minimum date and time for the interview
+        function setMinDateTime() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const minDateTime = now.toISOString().slice(0, 16);
+            $('#interview_time').attr('min', minDateTime);
+        }
+
+        // Call the function initially
+        setMinDateTime();
+
+        // Update the minimum date and time every minute
+        setInterval(setMinDateTime, 60000);
+    });
+
+    function validateField($field, validationFunction) {
+        const isValid = validationFunction($field);
+        updateSubmitButton();
+        return isValid;
+    }
+
+    function validateCandidate($field) {
+        const value = $field.val();
+        const $error = $('#candidate_name_error');
+        if (!value) {
+            $error.text('Please select a candidate');
+            return false;
+        }
+        $error.text('');
+        return true;
+    }
+
+    function validateInterviewTime($field) {
+        const value = $field.val();
+        const $error = $('#interview_time_error');
+        if (!value) {
+            $error.text('Please select an interview time');
+            return false;
+        }
+        $error.text('');
+        return true;
+    }
+
+    function validateRoomName($field) {
+        const value = $field.val().trim();
+        const $error = $('#room_name_error');
+        const roomNamePattern = /^[a-zA-Z][a-zA-Z0-9\s]*$/;
+        if (!value) {
+            $error.text('Please enter a room name');
+            return false;
+        } else if (!roomNamePattern.test(value) || value.length < 4) {
+            $error.text('Room name must start with a letter, be at least 4 characters long, and contain only letters, numbers, and spaces');
+            return false;
+        }
+        $error.text('');
+        return true;
+    }
+
+    function validateDuration($field) {
+        const value = $field.val();
+        const $error = $('#interview_duration_error');
+        if (!value) {
+            $error.text('Please enter an interview duration');
+            return false;
+        } else if (value < 15 || value > 180) {
+            $error.text('Duration must be between 15 and 180 minutes');
+            return false;
+        }
+        $error.text('');
+        return true;
+    }
+
+    function validateAllFields() {
+        const candidateValid = validateField($('#candidate_name'), validateCandidate);
+        const timeValid = validateField($('#interview_time'), validateInterviewTime);
+        const roomValid = validateField($('#room_name'), validateRoomName);
+        const durationValid = validateField($('#interview_duration'), validateDuration);
+        return candidateValid && timeValid && roomValid && durationValid;
+    }
+
+    function updateSubmitButton() {
+        const allFieldsFilled = $('#candidate_name').val() && 
+                                $('#interview_time').val() && 
+                                $('#room_name').val().trim() && 
+                                $('#interview_duration').val();
+        $('#schedule-button').prop('disabled', !allFieldsFilled);
+    }
+
+    function populateCandidatesList(candidates, defaultCandidateName) {
         if (candidates && candidates.length > 0) {
-            // Populate the dropdown with candidates
+            const candidateSelect = $('#candidate_name');
+            candidateSelect.empty().append('<option value="">Select Candidate</option>');
             candidates.forEach(candidate => {
                 const option = new Option(candidate.name, candidate.id);
-                $('#candidate_name').append(option);
-
-                // Set the default candidate as selected if it matches
+                candidateSelect.append(option);
                 if (candidate.name === defaultCandidateName) {
                     option.selected = true;
                 }
@@ -136,133 +410,72 @@
         } else {
             console.error('No candidates found or incorrect data format');
         }
+    }
 
-        // Disable previous dates for the interview time
-        const today = new Date();
-        const minDate = today.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
-        $('#interview_time').attr('min', minDate);
+    function submitInterviewForm() {
+        const formData = {
+            candidate_id: $('#candidate_name').val(),
+            interview_time: $('#interview_time').val(),
+            room_name: $('#room_name').val().trim(),
+            interview_duration: $('#interview_duration').val()
+        };
 
-        // Validate candidate selection on change
-        $('#candidate_name').on('change', function () {
-            const candidateId = $(this).val();
-            if (!candidateId) {
-                $('#candidate_name_error').text('Please select a candidate.');
+        fetch('/recruiter/schedule_interview', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    // If no redirect, update the notebook schedules
+                    const selectedDate = $('#notebook-date').val();
+                    fetchExistingSchedules(selectedDate);
+                    $('#interview-form')[0].reset();
+                    validateAllFields(); // Re-validate the form to disable the submit button
+                }
             } else {
-                $('#candidate_name_error').text(''); // Clear error
+                // Handle error case
+                window.location.href = data.redirect;
             }
-            validateForm();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            flash('An error occurred while scheduling the interview. Please try again.', 'error');
         });
+    }
 
-        // Validate interview time on change
-        $('#interview_time').on('change', function () {
-            const interviewTime = $(this).val();
-            if (!interviewTime) {
-                $('#interview_time_error').text('Please select a valid interview time.');
-            } else {
-                $('#interview_time_error').text(''); // Clear error
-            }
-            validateForm();
-        });
+    function fetchExistingSchedules(date) {
+        console.log('Fetching schedules for date:', date); // Debug log
+        fetch(`/recruiter/get_schedules?date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Received data:', data); // Debug log
+                const schedulesContainer = $('#existing-schedules');
+                schedulesContainer.empty();
 
-        // Validate room name on input
-        $('#room_name').on('input', function () {
-            const roomName = $(this).val().trim();
-            // Updated regex: starts with a letter, allows letters, numbers, and spaces
-            const roomNamePattern = /^[a-zA-Z][a-zA-Z0-9\s]*$/;
-            if (!roomNamePattern.test(roomName)) {
-                $('#room_name_error').text('Room name must start with a letter and can only contain letters, numbers, and spaces.');
-            } else if (roomName.length < 4) {
-                $('#room_name_error').text('Room name must be at least 4 characters long.');
-            } else {
-                $('#room_name_error').text(''); // Clear error
-            }
-            validateForm();
-        });
-
-        // Function to validate the form and enable/disable the submit button
-        function validateForm() {
-            const candidateId = $('#candidate_name').val();
-            const interviewTime = $('#interview_time').val();
-            const roomName = $('#room_name').val().trim();
-            const roomNamePattern = /^[a-zA-Z][a-zA-Z0-9\s]*$/;
-
-            const isValid = candidateId && interviewTime && roomNamePattern.test(roomName) && roomName.length >= 4;
-
-            // Enable or disable the submit button based on validation
-            $('#schedule-button').prop('disabled', !isValid);
-        }
-
-        // Handle form submission with validation
-        $('#interview-form').on('submit', function (event) {
-            event.preventDefault();
-
-            const candidateId = $('#candidate_name').val();
-            const interviewTime = $('#interview_time').val();
-            const roomName = $('#room_name').val().trim();
-            let isValid = true;
-
-            // Clear previous error messages
-            $('.error').text('');
-
-            // Validate candidate selection
-            if (!candidateId) {
-                $('#candidate_name_error').text('Please select a candidate.');
-                isValid = false;
-            }
-
-            // Validate interview time
-            if (!interviewTime) {
-                $('#interview_time_error').text('Please select a valid interview time.');
-                isValid = false;
-            }
-
-            // Validate room name (only letters and numbers)
-            const roomNamePattern = /^[a-zA-Z0-9\s]+$/;
-            if (!roomNamePattern.test(roomName)) {
-                $('#room_name_error').text('Room name can only contain letters and numbers.');
-                isValid = false;
-            } else if (roomName.length < 4) {
-                $('#room_name_error').text('Room name must be at least 4 characters long.');
-                isValid = false;
-            }
-
-            // If the form is valid, proceed with the fetch request
-            if (isValid) {
-                fetch('/recruiter/schedule_interview', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        candidate_id: candidateId,
-                        interview_time: interviewTime,
-                        room_name: roomName
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Remove the alert message
-                        if (data.message) {
-                            // Display the flash message dynamically
-                            const flashMessage = `<div class="alert alert-success">${data.message}</div>`;
-                            $('.form_container').prepend(flashMessage); // Prepend the message to the form container
-                            $('#interview-form')[0].reset(); // Reset the form
-
-                            // Set a timeout to remove the flash message after 5 seconds
-                            setTimeout(() => {
-                                $('.alert').fadeOut(500, function () {
-                                    $(this).remove(); // Remove the message from the DOM
-                                });
-                            }, 5000); // Change 5000 to the desired duration in milliseconds
-                        } else {
-                            // Handle error if needed
-                            console.error(data.error);
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-            }
-        });
-        });
+                if (data.schedules && data.schedules.length > 0) {
+                    const schedulesList = $('<ul>');
+                    data.schedules.forEach(schedule => {
+                        schedulesList.append(`
+                            <li>
+                                <strong>Time:</strong> ${schedule.time_range}<br>
+                                <strong>Room:</strong> ${schedule.room_name}
+                            </li>
+                        `);
+                    });
+                    schedulesContainer.append(schedulesList);
+                } else {
+                    schedulesContainer.append('<p class="no-schedules">No schedules for this date.</p>');
+                }
+            })
+            .catch(error => console.error('Error fetching schedules:', error));
+    }
     </script>
 </body>
 

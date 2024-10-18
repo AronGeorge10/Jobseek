@@ -15,7 +15,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='webpage/css/main.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
-        /* ... existing styles ... */
         .profile-btn {
             padding: 5px 10px;
             background-color: #007bff;
@@ -30,7 +29,6 @@
             background-color: #0056b3;
         }
 
-        /* Add some basic styling for the filter sidebar */
         .sidebar {
             background-color: #ffffff;
             padding: 20px;
@@ -41,26 +39,69 @@
             margin-bottom: 20px;
         }
 
-        /* Add this style to make the sidebar fixed */
         .sidebar {
             position: fixed;
             /* Make the sidebar fixed */
             top: 100px;
-            /* Align to the top */
             left: 0;
-            /* Align to the left */
             height: 100%;
-            /* Full height */
             overflow-y: auto;
-            /* Enable scrolling if content overflows */
             z-index: 1000;
-            /* Ensure it stays above other content */
         }
 
         .main {
             margin-top: 0%;
             margin-left: 450px;
-            /* Adjust margin to prevent overlap */
+        }
+
+        .card-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 0.8em;
+            padding: 0.4em 0.6em;
+        }
+
+        .profile-btn {
+            margin-left: 10px;
+        }
+
+        .badge.bg-success {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: normal;
+            line-height: 1;
+            color: #fff;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 10px;
+            background-color: #28a745;
+            text-decoration: none;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .enter-meeting-btn[disabled],
+        .enter-meeting-btn.btn-disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .btn-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -96,10 +137,10 @@
                         </div>
                         <div class="filter-section">
                             <h5>Experience</h5>
-                            <select class="form-select" name="experience">
-                                <option value="">All</option>
+                            <select name="experience" class="form-control">
+                                <option value="">All Experience Levels</option>
                                 <option value="0-2">0-2 years</option>
-                                <option value="3-5">3-5 years</option>
+                                <option value="2-5">2-5 years</option>
                                 <option value="5+">5+ years</option>
                             </select>
                         </div>
@@ -120,44 +161,53 @@
 
                 <!-- Main Content -->
                 <div class="col-md-9">
-                    <div id="applicationsContainer">
-                        {% if app %}
-                        {% for application in app %}
-                        <div class="card mb-3" id="application-{{ application.id }}">
-                            <div class="card-body">
-                                <h5 class="card-title d-flex align-items-center">
-                                    Applicant: {{ application.applicant_name }}
-                                    <a href="{{ url_for('recruiter.view_applicant_profile', applicant_id=application.user_id, job_id=job._id) }}"
-                                        class="profile-btn" title="View Profile">
-                                        <i class="fas fa-user-circle"></i>
-                                    </a>
-                                </h5>
-                                <p class="card-text">
-                                    <strong>Email:</strong> {{ application.applicant_email }}<br>
-                                    <strong>Applied on:</strong> {{ application.applied_at }}<br>
-                                    <strong>Status:</strong> {{ application.status }}
-                                </p>
-                                <a href="{{ url_for('recruiter.view_applications', job_id=job._id) }}"
-                                    class="btn btn-primary">Refresh</a>
-                                <button class="btn shortlist-btn" data-application-id="{{ application.id }}">
-                                    {% if application.status == 'shortlisted' %}
-                                    Unshortlist
-                                    {% else %}
-                                    Shortlist
-                                    {% endif %}
-                                </button>
-                                {% if application.status == 'shortlisted' %}
-                                <a href="{{ url_for('recruiter.schedule_interview', applicant_id=application.user_id, job_id=job._id, candidate_name=application.applicant_name) }}"
-                                    class="btn btn-success schedule-btn">Schedule Meeting</a>
-                                {% else %}
-                                <a href="#" class="btn btn-success schedule-btn" style="display: none;">Schedule Meeting</a>
-                                {% endif %}
+                    <h2 class="mb-4">{{ job.title }}</h2>
+
+                    <!-- Add Tab Navigation -->
+                    <ul class="nav nav-tabs mb-3" id="applicationTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all"
+                                type="button" role="tab" aria-controls="all" aria-selected="true">All
+                                Candidates</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="shortlisted-tab" data-bs-toggle="tab"
+                                data-bs-target="#shortlisted" type="button" role="tab" aria-controls="shortlisted"
+                                aria-selected="false">Shortlisted</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="scheduled-tab" data-bs-toggle="tab" data-bs-target="#scheduled"
+                                type="button" role="tab" aria-controls="scheduled" aria-selected="false">Meeting
+                                Scheduled</button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="applicationTabsContent">
+                        <!-- All Candidates Tab -->
+                        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                            <div id="allApplicationsContainer">
+                                {% include 'recruiter/_application_cards.html' with context %}
                             </div>
                         </div>
-                        {% endfor %}
-                        {% else %}
-                        <p>No applications found for this job.</p>
-                        {% endif %}
+
+                        <!-- Shortlisted Candidates Tab -->
+                        <div class="tab-pane fade" id="shortlisted" role="tabpanel" aria-labelledby="shortlisted-tab">
+                            <div id="shortlistedApplicationsContainer">
+                                {% with app = app|selectattr('status', 'equalto', 'shortlisted')|list %}
+                                {% include 'recruiter/_application_cards.html' with context %}
+                                {% endwith %}
+                            </div>
+                        </div>
+
+                        <!-- Scheduled Meetings Tab -->
+                        <div class="tab-pane fade" id="scheduled" role="tabpanel" aria-labelledby="scheduled-tab">
+                            <div id="scheduledApplicationsContainer">
+                                {% with app = app|selectattr('status', 'equalto', 'meeting scheduled')|list %}
+                                {% include 'recruiter/_application_cards.html' with context %}
+                                {% endwith %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -220,6 +270,7 @@
               -->
             </div>
         </div>
+
     </footer>
     <div class="fb2022-copy">Fbee 2022 copyright</div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
@@ -267,17 +318,45 @@
                 data: { job_id: currentJobId },
                 success: function (response) {
                     if (response.success) {
+                        const cardBody = currentButton.closest('.card-body');
+                        const statusElement = cardBody.find('strong:contains("Status")').next();
+                        const scheduleBtn = cardBody.find('.schedule-btn');
+                        const editMeetingBtn = cardBody.find('.edit-meeting-btn');
+                        const meetingScheduledBadge = cardBody.find('.badge.bg-success');
+
                         if (response.shortlisted) {
                             currentButton.text('Unshortlist');
-                            currentButton.closest('.card-body').find('strong:contains("Status")').next().text('shortlisted');
+                            statusElement.text('shortlisted');
                             // Show the Schedule Meeting button
-                            currentButton.closest('.card-body').find('.schedule-btn').show();
+                            scheduleBtn.show();
+                            // Update the href of the Schedule Meeting button
+                            scheduleBtn.attr('href', `/recruiter/schedule_interview/${response.applicant_id}/${currentJobId}/${encodeURIComponent(response.applicant_name)}`);
                         } else {
                             currentButton.text('Shortlist');
-                            currentButton.closest('.card-body').find('strong:contains("Status")').next().text('applied');
+                            statusElement.text('applied');
                             // Hide the Schedule Meeting button
-                            currentButton.closest('.card-body').find('.schedule-btn').hide();
+                            scheduleBtn.hide();
                         }
+
+                        // Always hide these elements when toggling shortlist status
+                        editMeetingBtn.hide();
+                        meetingScheduledBadge.hide();
+
+                        // Update the application in other tabs
+                        updateApplicationInOtherTabs(currentApplicationId, response.shortlisted);
+
+                        // If shortlisted, clone the card to the shortlisted tab if it doesn't exist there
+                        if (response.shortlisted) {
+                            const shortlistedCard = $(`#shortlistedApplicationsContainer #application-${currentApplicationId}`);
+                            if (shortlistedCard.length === 0) {
+                                const allTabCard = $(`#allApplicationsContainer #application-${currentApplicationId}`);
+                                if (allTabCard.length) {
+                                    const clonedCard = allTabCard.clone();
+                                    $('#shortlistedApplicationsContainer').append(clonedCard);
+                                }
+                            }
+                        }
+
                         $('#shortlistModal').modal('hide');
                     } else {
                         alert('Failed to update shortlist status');
@@ -289,32 +368,160 @@
             });
         });
 
-        $('#filterForm').on('submit', function (event) {
-            event.preventDefault();
-            const formData = $(this).serialize();
-            const jobId = "{{ job._id }}";
+        // Function to update the application in other tabs
+        function updateApplicationInOtherTabs(applicationId, isShortlisted) {
+            const allTabs = ['#allApplicationsContainer', '#shortlistedApplicationsContainer', '#scheduledApplicationsContainer'];
 
-            $.get(`/recruiter/view_applications/${jobId}`, formData, function (data) {
-                $('#applicationsContainer').html(data);
+            allTabs.forEach(tabId => {
+                const applicationCard = $(`${tabId} #application-${applicationId}`);
+                const noApplicationsMessage = $(`${tabId} p:contains("No applications found for this category.")`);
+
+                if (isShortlisted && tabId === '#shortlistedApplicationsContainer') {
+                    // Remove "No applications found" message if it exists
+                    noApplicationsMessage.remove();
+
+                    if (applicationCard.length === 0) {
+                        // If the card doesn't exist in the shortlisted tab, clone it from the all tab
+                        const allTabCard = $(`#allApplicationsContainer #application-${applicationId}`);
+                        if (allTabCard.length) {
+                            const clonedCard = allTabCard.clone();
+                            $(tabId).append(clonedCard);
+                        }
+                    } else {
+                        applicationCard.show();
+                    }
+                } else if (!isShortlisted && tabId === '#shortlistedApplicationsContainer') {
+                    applicationCard.remove();
+
+                    // If no applications left, add the "No applications found" message
+                    if ($(`${tabId} .card`).length === 0) {
+                        $(tabId).append('<p>No applications found for this category.</p>');
+                    }
+                }
+
+                if (applicationCard.length) {
+                    // Update the card content
+                    applicationCard.find('.shortlist-btn').text(isShortlisted ? 'Unshortlist' : 'Shortlist');
+                    applicationCard.find('strong:contains("Status")').next().text(isShortlisted ? 'shortlisted' : 'applied');
+                    applicationCard.find('.schedule-btn').toggle(isShortlisted);
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            $('#filterForm').on('submit', function(event) {
+                event.preventDefault();
+                var formData = $(this).serialize();
+                var jobId = "{{ job._id }}";
+
+                $.ajax({
+                    url: `/recruiter/view_applications/${jobId}`,
+                    type: 'GET',
+                    data: formData,
+                    success: function(response) {
+                        console.log("Received response:", response);
+                        try {
+                            // Parse the returned HTML
+                            var parsedHTML = $(response);
+                            
+                            // Update each tab content
+                            $('#allApplicationsContainer').html(parsedHTML.find('#allApplicationsContainer').html());
+                            $('#shortlistedApplicationsContainer').html(parsedHTML.find('#shortlistedApplicationsContainer').html());
+                            $('#scheduledApplicationsContainer').html(parsedHTML.find('#scheduledApplicationsContainer').html());
+                            
+                            console.log("Updated DOM");
+                            console.log("New all applications content:", $('#allApplicationsContainer').html());
+                            console.log("New shortlisted applications content:", $('#shortlistedApplicationsContainer').html());
+                            console.log("New scheduled applications content:", $('#scheduledApplicationsContainer').html());
+                            
+                            initializeEventListeners();
+                            updateEnterMeetingButtons();
+                        } catch (error) {
+                            console.error("Error updating DOM:", error);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("An error occurred: " + error);
+                    }
+                });
+            });
+
+            $('#clearFilters').on('click', function() {
+                $('#filterForm')[0].reset();
+                $('#filterForm').submit();
+            });
+
+            function initializeEventListeners() {
+                console.log("Initializing event listeners");
+                $('.shortlist-btn').off('click').on('click', function() {
+                    // ... (existing shortlist button code) ...
+                });
+
+                // Add any other event listeners for dynamic content here
+            }
+
+            initializeEventListeners();
+        });
+
+        // Update tab content when switching tabs
+        $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            const target = $(e.target).attr("data-bs-target");
+            $(target).find('.card').show();
+            updateEnterMeetingButtons();
+        });
+
+        // Function to enable/disable the "Enter Meeting" button based on the meeting time
+        function updateEnterMeetingButtons() {
+            const currentTime = new Date();
+
+            $('.enter-meeting-btn').each(function () {
+                const $button = $(this);
+                const meetingTimeStr = $button.data('meeting-time');
+                const meetingTime = new Date(meetingTimeStr);
+                const meetingDuration = parseInt($button.data('meeting-duration')) || 30; // Default to 30 minutes if not set
+                const meetingEndTime = new Date(meetingTime.getTime() + meetingDuration * 60000); // Convert minutes to milliseconds
+
+                const timeDifference = meetingTime.getTime() - currentTime.getTime();
+                const timeAfterMeetingStart = currentTime.getTime() - meetingTime.getTime();
+
+                console.log('Button:', $button);
+                console.log('Button disabled state before:', $button.prop('disabled'));
+                console.log('Current Time:', currentTime);
+                console.log('Meeting Time:', meetingTime);
+                console.log('Meeting End Time:', meetingEndTime);
+                console.log('Time Difference (ms):', timeDifference);
+                console.log('Time After Meeting Start (ms):', timeAfterMeetingStart);
+
+                // Enable the button 5 minutes before the meeting and keep it enabled until the meeting ends
+                const shouldBeEnabled = timeDifference <= 5 * 60 * 1000 && currentTime < meetingEndTime;
+
+                $button.prop('disabled', !shouldBeEnabled);
+                $button.toggleClass('btn-disabled', !shouldBeEnabled);
+
+                console.log('Should be enabled:', shouldBeEnabled);
+                console.log('Button disabled state after:', $button.prop('disabled'));
+                console.log('Button has btn-disabled class:', $button.hasClass('btn-disabled'));
+                console.log('---');
+            });
+        }
+
+        // Call the function initially
+        updateEnterMeetingButtons();
+
+        // Set up an interval to update button states every minute
+        setInterval(updateEnterMeetingButtons, 60000);
+
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                if (mutation.type === 'childList') {
+                    updateEnterMeetingButtons();
+                }
             });
         });
-    </script>
-    <script>
-        // Clear filters functionality
-        document.getElementById('clearFilters').addEventListener('click', function() {
-            // Reset the form
-            document.getElementById('filterForm').reset();
-            
-            // Submit the form to apply the cleared filters
-            const formData = new URLSearchParams(new FormData(document.getElementById('filterForm'))).toString();
-            const jobId = "{{ job._id }}"; // Ensure job ID is available in the template context
 
-            // Make an AJAX request to apply the cleared filters
-            $.get(`/recruiter/view_applications/${jobId}`, formData, function(data) {
-                $('#applicationsContainer').html(data);
-            });
-        });
+        observer.observe(document.body, { childList: true, subtree: true });
     </script>
+
 </body>
 
 </html>

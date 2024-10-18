@@ -15,6 +15,7 @@ from blueprints.admin.routes import admin_bp
 from blueprints.recruiter.routes import recruiter_bp, send_shortlist_notifications
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
+import base64
 
 app = Flask(__name__)
 # Register the blueprint
@@ -51,26 +52,55 @@ app.config['MAIL_DEFAULT_SENDER'] = 'aronayikon10@gmail.com'
 mail = Mail(app)
 
 class User(UserMixin):
-    def __init__(self, id, email, password, user_type, is_admin=False):
+    def __init__(self, id, email, password, user_type, is_admin=False, full_name=None, profile_picture=None):
         self.id = id
         self.email = email
         self.password = password
         self.user_type = user_type
         self.is_admin = is_admin
+        self.full_name = full_name
+        self.profile_picture = profile_picture
 
     @staticmethod
     def get(user_id):
         user_data = collection_login_credentials.find_one({'_id': ObjectId(user_id)})
         if user_data:
-            return User(str(user_data['_id']), user_data['email'], user_data['password'], user_data['user_type'], user_data.get('is_admin', False))
+            full_name, profile_picture = User._fetch_additional_data(user_data)
+            return User(str(user_data['_id']), user_data['email'], user_data['password'], user_data['user_type'], user_data.get('is_admin', False), full_name, profile_picture)
         return None
 
     @staticmethod
     def get_by_email(email):
         user_data = collection_login_credentials.find_one({'email': email})
         if user_data:
-            return User(str(user_data['_id']), user_data['email'], user_data['password'], user_data['user_type'], user_data.get('is_admin', False))
+            full_name, profile_picture = User._fetch_additional_data(user_data)
+            return User(str(user_data['_id']), user_data['email'], user_data['password'], user_data['user_type'], user_data.get('is_admin', False), full_name, profile_picture)
         return None
+
+    @staticmethod
+    def _fetch_additional_data(user_data):
+        full_name = None
+        profile_picture = None
+
+        if user_data['user_type'] == 'seeker':
+            seeker_data = collection_resume_details.find_one({'user_id': user_data['_id']})
+            if seeker_data:
+                full_name = seeker_data.get('full_name')
+                profile_picture = seeker_data.get('profile_picture')
+
+        elif user_data['user_type'] == 'recruiter':
+            recruiter_data = collection_recruiter_registration.find_one({'user_id': user_data['_id']})
+            if recruiter_data:
+                full_name = recruiter_data.get('full_name')
+
+        return full_name, profile_picture
+
+# For profile picture of seeker
+@app.template_filter('b64encode')
+def b64encode_filter(s):
+    if s is None:
+        return None
+    return base64.b64encode(s).decode('utf-8')
 
 @app.route('/check_email', methods=['POST'])
 def check_email():

@@ -4,7 +4,7 @@ from pymongo import MongoClient
 import os
 from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import current_app
 import pdfkit
 from bson.errors import InvalidId
@@ -197,8 +197,6 @@ def view_applications(job_id):
     
     # Get filter parameters
     status = request.args.get('status')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
     technical_skills = request.args.getlist('technical_skills')
     soft_skills = request.args.getlist('soft_skills')
     experience = request.args.get('experience')
@@ -208,13 +206,6 @@ def view_applications(job_id):
     query = {'job_id': ObjectId(job_id)}
     if status:
         query['status'] = status
-    if start_date:
-        query['applied_at'] = {'$gte': datetime.strptime(start_date, '%Y-%m-%d')}
-    if end_date:
-        if 'applied_at' in query:
-            query['applied_at']['$lte'] = datetime.strptime(end_date, '%Y-%m-%d')
-        else:
-            query['applied_at'] = {'$lte': datetime.strptime(end_date, '%Y-%m-%d')}
 
     # Fetch applications for this job, using ObjectId
     applications = list(collection_applications.find(query))
@@ -229,12 +220,16 @@ def view_applications(job_id):
             if soft_skills and not all(skill in resume.get('soft_skills', []) for skill in soft_skills):
                 continue
             if experience:
-                min_exp, max_exp = map(int, experience.split('-'))
-                if min_exp == 5:  # For "5+" option
+                if experience == '5+':
                     if resume.get('total_experience', 0) < 5:
                         continue
-                elif not (min_exp <= resume.get('total_experience', 0) < max_exp):
-                    continue
+                else:
+                    try:
+                        min_exp, max_exp = map(int, experience.split('-'))
+                        if not (min_exp <= resume.get('total_experience', 0) < max_exp):
+                            continue
+                    except ValueError:
+                        pass
             if education and resume.get('highest_education') != education:
                 continue
             
@@ -244,23 +239,36 @@ def view_applications(job_id):
             app['user_id'] = str(app['user_id'])
             app['applied_at'] = app['applied_at'].strftime('%Y-%m-%d %H:%M:%S') if app.get('applied_at') else 'N/A'
             filtered_applications.append(app)
-    
-    # Get technical skills and soft skills for this specific job
-    technical_skills = job.get('technical_skills', [])
-    soft_skills = job.get('soft_skills', [])
-    
-    # Get education levels (you might want to use a predefined list or fetch from a separate collection)
-    education_levels = ['High School', 'Bachelor', 'Master', 'PhD']  # Example list, adjust as needed
+
+    for application in filtered_applications:
+        interview = collection_interviews.find_one({
+            'candidate_id': ObjectId(application['user_id']),
+            'job_id': ObjectId(job_id)
+        })
+        if interview:
+            application['interview_id'] = str(interview['_id'])
+            application['interview'] = interview
+        else:
+            application['interview_id'] = None
+            application['interview'] = None
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return render_template('recruiter/_applications_list.html', app=filtered_applications, job=job)
+        html_content = render_template('recruiter/_application_tabs.html', 
+                                       applications=filtered_applications, 
+                                       job=job,
+                                       now=datetime.utcnow())
+        response = make_response(html_content)
+        response.headers['Content-Type'] = 'text/html'
+        return response
     
+    now = datetime.utcnow()
     return render_template('recruiter/view_applications.html', 
                            job=job, 
-                           app=filtered_applications, 
-                           technical_skills=technical_skills,
-                           soft_skills=soft_skills,
-                           education_levels=education_levels)
+                           applications=filtered_applications, 
+                           technical_skills=job.get('technical_skills', []),
+                           soft_skills=job.get('soft_skills', []),
+                           education_levels=['High School', 'Bachelor', 'Master', 'PhD'],
+                           now=now)
 
 @recruiter_bp.route('/posted_jobs')
 @login_required
@@ -736,10 +744,63 @@ def payment_cancel():
     flash('Payment cancelled. Your job has not been posted.', 'warning')
     return redirect(url_for('recruiter.recruiter_index'))
 
-@recruiter_bp.route('/video_interview', methods=['GET'])
+@recruiter_bp.route('/video_interview/<room_name>', methods=['GET'])
 @login_required
-def video_interview():
-    return render_template('recruiter/video_interview.html')
+def video_interview(room_name):
+    if current_user.user_type != 'recruiter':
+        flash('Access denied. Recruiter privileges required.', 'error')
+        return redirect(url_for('index'))
+
+    interview = db.tbl_interviews.find_one({'room_name': room_name})
+    if not interview:
+        flash('Interview not found', 'error')
+        return redirect(url_for('recruiter.recruiter_index'))
+
+    job = db.tbl_jobs.find_one({'_id': interview['job_id']})
+
+    # Get existing notes, if any
+    existing_notes = interview.get('recruiter_notes', '')
+
+    return render_template('recruiter/video_interview.html', 
+                           interview=interview, 
+                           job=job, 
+                           room_name=room_name,
+                           existing_notes=existing_notes)
+
+@recruiter_bp.route('/save-interview-notes', methods=['POST'])
+@login_required
+def save_interview_notes():
+    if current_user.user_type != 'recruiter':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    data = request.json
+    interview_id = data.get('interviewId')
+    notes = data.get('notes')
+
+    if not interview_id:
+        return jsonify({'success': False, 'message': 'Interview ID is required'}), 400
+
+    try:
+        # Find the interview document by _id
+        interview = db.tbl_interviews.find_one({'_id': ObjectId(interview_id)})
+
+        if interview:
+            # Update the document with the recruiter's notes
+            result = db.tbl_interviews.update_one(
+                {'_id': ObjectId(interview_id)},
+                {'$set': {'recruiter_notes': notes}}
+            )
+
+            if result.modified_count > 0:
+                return jsonify({'success': True, 'message': 'Notes saved successfully'}), 200
+            else:
+                return jsonify({'success': False, 'message': 'No changes made'}), 400
+        else:
+            return jsonify({'success': False, 'message': 'Interview not found'}), 404
+
+    except Exception as e:
+        current_app.logger.error(f"Error in save_interview_notes: {str(e)}")
+        return jsonify({'success': False, 'message': 'An error occurred while saving notes'}), 500
 
 @recruiter_bp.route('/schedule_interview', methods=['GET', 'POST'])
 @login_required
@@ -768,30 +829,175 @@ def schedule_interview():
     candidate_id = data.get('candidate_id') 
     interview_time = data.get('interview_time')
     room_name = data.get('room_name')
+    interview_duration = data.get('interview_duration')
 
-    if not candidate_id or not interview_time or not room_name:
+    if not candidate_id or not interview_time or not room_name or not interview_duration:
         return jsonify({'error': 'All fields are required'}), 400
 
-    # Fetch candidate application from the database using candidate_id
-    application = collection_applications.find_one({'_id': ObjectId(candidate_id)})
+    # Validate interview duration
+    try:
+        interview_duration = int(interview_duration)
+        if interview_duration < 15 or interview_duration > 180:
+            return jsonify({'error': 'Interview duration must be between 15 and 180 minutes'}), 400
+    except ValueError:
+        return jsonify({'error': 'Invalid duration value'}), 400
 
-    # Check if the application exists
+    application = collection_applications.find_one({'_id': ObjectId(candidate_id)})
     if not application:
         return jsonify({'error': 'Candidate not found'}), 404
 
-    # Fetch the full name from collection_resume using user_id
     resume = collection_resume.find_one({'user_id': ObjectId(application['user_id'])})
-    candidate_name = resume['full_name'] if resume else 'Unknown'  # Default to 'Unknown' if not found
     
     interview = {
-        'recruiter_name': str(recruiter['user_id']),
-        'candidate_name': candidate_name,
-        'interview_time': interview_time,
+        'recruiter_id': recruiter['user_id'],
+        'candidate_id': resume['user_id'],
+        'job_id': application['job_id'],
+        'interview_time': datetime.strptime(interview_time, '%Y-%m-%dT%H:%M'),
         'room_name': room_name,
+        'interview_duration': interview_duration,
         'created_at': datetime.utcnow()
     }
 
-    collection_interviews.insert_one(interview)
+    interview_result = collection_interviews.insert_one(interview)
+
+    if interview_result.inserted_id:
+        update_result = collection_applications.update_one(
+            {'_id': ObjectId(candidate_id)},
+            {'$set': {'status': 'meeting scheduled'}}
+        )
+        
+        job = collection_jobs.find_one({'_id': application['job_id']})
+        notification = {
+            'user_id': resume['user_id'],
+            'job_id': application['job_id'],
+            'message': f"An interview has been scheduled for the position of {job['title']} on {interview_time}. The interview will last for {interview_duration} minutes.",
+            'created_at': datetime.utcnow(),
+            'is_read': False
+        }
+        collection_notifications.insert_one(notification)
+
+        if update_result.modified_count > 0:
+            flash('Interview scheduled successfully, application status updated, and candidate notified', 'success')
+        else:
+            flash('Interview scheduled successfully and candidate notified, but failed to update application status', 'warning')
+        
+        return jsonify({
+            'success': True,
+            'redirect': url_for('recruiter.view_applications', job_id=str(application['job_id']))
+        }), 201
+    else:
+        flash('Failed to schedule interview', 'error')
+        return jsonify({
+            'success': False,
+            'redirect': url_for('recruiter.view_applications', job_id=str(application['job_id']))
+        }), 500
+
+@recruiter_bp.route('/edit_interview/<interview_id>', methods=['GET', 'POST'])
+@login_required
+def edit_interview(interview_id):
+    if current_user.user_type != 'recruiter':
+        flash('Access denied. Recruiter privileges required.', 'error')
+        return redirect(url_for('index'))
+
+    if request.method == 'GET':
+        existing_interview = collection_interviews.find_one({'_id': ObjectId(interview_id)})
+        if not existing_interview:
+            flash('Interview not found', 'error')
+            return redirect(url_for('recruiter.view_applications'))
+
+        existing_interview['_id'] = str(existing_interview['_id'])
+        existing_interview['recruiter_id'] = str(existing_interview['recruiter_id'])
+        existing_interview['candidate_id'] = str(existing_interview['candidate_id'])
+        existing_interview['job_id'] = str(existing_interview['job_id'])
+        
+        if isinstance(existing_interview['interview_time'], str):
+            existing_interview['interview_time'] = existing_interview['interview_time']
+        else:
+            existing_interview['interview_time'] = existing_interview['interview_time'].strftime('%Y-%m-%dT%H:%M')
+
+        candidate = collection_resume.find_one({'user_id': ObjectId(existing_interview['candidate_id'])})
+        existing_interview['candidate_name'] = candidate['full_name'] if candidate else 'Unknown'
+        return render_template('recruiter/edit_interview.html', 
+                               existing_interview=existing_interview,
+                               job=collection_jobs.find_one({'_id': ObjectId(existing_interview['job_id'])}))
+
+    # Handle POST request to update the interview
+    data = request.json
+    new_interview_time = data.get('interview_time')
+    new_room_name = data.get('room_name')
+    new_duration = data.get('interview_duration')
     
-    # Return the message in the JSON response
-    return jsonify({'message': 'Interview scheduled successfully'}), 201
+    if not new_interview_time or not new_room_name or not new_duration:
+        return jsonify({'error': 'All fields are required'}), 400
+
+    try:
+        new_duration = int(new_duration)
+        if new_duration < 15 or new_duration > 180:
+            return jsonify({'error': 'Interview duration must be between 15 and 180 minutes'}), 400
+    except ValueError:
+        return jsonify({'error': 'Invalid duration value'}), 400
+
+    existing_interview = collection_interviews.find_one({'_id': ObjectId(interview_id)})
+    if not existing_interview:
+        return jsonify({'error': 'Interview not found'}), 404
+
+    time_changed = existing_interview['interview_time'] != datetime.strptime(new_interview_time, '%Y-%m-%dT%H:%M')
+
+    update_result = collection_interviews.update_one(
+        {'_id': ObjectId(interview_id)},
+        {'$set': {
+            'interview_time': datetime.strptime(new_interview_time, '%Y-%m-%dT%H:%M'),
+            'room_name': new_room_name,
+            'interview_duration': new_duration,
+            'updated_at': datetime.utcnow()
+        }}
+    )
+
+    if update_result.modified_count > 0:
+        job = collection_jobs.find_one({'_id': existing_interview['job_id']})
+        
+        if time_changed:
+            notification = {
+                'user_id': existing_interview['candidate_id'],
+                'job_id': existing_interview['job_id'],
+                'message': f"Your interview for the position of {job['title']} has been rescheduled to {new_interview_time}. The interview will last for {new_duration} minutes.",
+                'created_at': datetime.utcnow(),
+                'is_read': False
+            }
+            collection_notifications.insert_one(notification)
+            return jsonify({'message': 'Interview updated successfully and candidate notified of time change'}), 200
+        else:
+            return jsonify({'message': 'Interview updated successfully.'}), 200
+    else:
+        return jsonify({'error': 'Failed to update interview or no changes were made'}), 500
+
+@recruiter_bp.route('/get_schedules', methods=['GET'])
+@login_required
+def get_schedules():
+    date_str = request.args.get('date')
+    if not date_str:
+        return jsonify({'error': 'Date parameter is required'}), 400
+
+    try:
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d')
+        start_of_day = selected_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = start_of_day + timedelta(days=1)
+
+        recruiter_id = current_user.id
+        schedules = collection_interviews.find({
+            'recruiter_id': ObjectId(recruiter_id),
+            'interview_time': {'$gte': start_of_day, '$lt': end_of_day}
+        })
+
+        schedules_list = []
+        for schedule in schedules:
+            start_time = schedule['interview_time']
+            end_time = start_time + timedelta(minutes=schedule['interview_duration'])
+            schedules_list.append({
+                'time_range': f"{start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')}",
+                'room_name': schedule['room_name']
+            })
+
+        return jsonify({'schedules': schedules_list}), 200
+    except ValueError:
+        return jsonify({'error': 'Invalid date format'}), 400
