@@ -295,40 +295,40 @@ def posted_jobs():
     
     return render_template('recruiter/posted_jobs.html', jobs=jobs, company_name=company_name)
 
-path_to_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
-config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
+# path_to_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+# config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
 
-@recruiter_bp.route('/view_applicant_resume/<applicant_id>')
-@login_required
-def view_applicant_resume(applicant_id):
-    # Check if the current user is a recruiter
-    if current_user.user_type != 'recruiter':
-        flash('Access denied. Recruiter privileges required.', 'error')
-        return redirect(url_for('index'))
+# @recruiter_bp.route('/view_applicant_resume/<applicant_id>')
+# @login_required
+# def view_applicant_resume(applicant_id):
+#     # Check if the current user is a recruiter
+#     if current_user.user_type != 'recruiter':
+#         flash('Access denied. Recruiter privileges required.', 'error')
+#         return redirect(url_for('index'))
 
-    # Retrieve resume document for the applicant
-    resume_document = collection_resume.find_one({"user_id": ObjectId(applicant_id)})
+#     # Retrieve resume document for the applicant
+#     resume_document = collection_resume.find_one({"user_id": ObjectId(applicant_id)})
 
-    if not resume_document:
-        flash('No resume found for the applicant.', 'danger')
-        return redirect(url_for('recruiter.posted_jobs'))
+#     if not resume_document:
+#         flash('No resume found for the applicant.', 'danger')
+#         return redirect(url_for('recruiter.posted_jobs'))
 
-    # Render the HTML template for the resume
-    html = render_template('recruiter/view_applicant_resume.html', resume=resume_document)
+#     # Render the HTML template for the resume
+#     html = render_template('recruiter/view_applicant_resume.html', resume=resume_document)
     
-    try:
-        # Generate PDF from the HTML content
-        pdf = pdfkit.from_string(html, False, configuration=config)
-    except Exception as e:
-        flash(f'An error occurred while generating the PDF: {e}', 'danger')
-        return redirect(url_for('recruiter.posted_jobs'))
+#     try:
+#         # Generate PDF from the HTML content
+#         pdf = pdfkit.from_string(html, False, configuration=config)
+#     except Exception as e:
+#         flash(f'An error occurred while generating the PDF: {e}', 'danger')
+#         return redirect(url_for('recruiter.posted_jobs'))
 
-    # Prepare the response
-    response = make_response(pdf)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = 'inline; filename=applicant_resume.pdf'
+#     # Prepare the response
+#     response = make_response(pdf)
+#     response.headers['Content-Type'] = 'application/pdf'
+#     response.headers['Content-Disposition'] = 'inline; filename=applicant_resume.pdf'
 
-    return response
+#     return response
 
 @recruiter_bp.route('/edit_job/<job_id>', methods=['GET', 'POST'])
 @login_required

@@ -183,8 +183,8 @@ def profile_picture(user_id):
     else:
         return "", 404
 
-path_to_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
-config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
+# path_to_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+# config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
 
 # @seeker_bp.route('/generate_pdf', methods=['GET'])
 # @login_required
