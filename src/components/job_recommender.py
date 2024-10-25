@@ -1,9 +1,13 @@
 import pandas as pd
+import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 def load_jobs_data(file_path):
-    return pd.read_csv(file_path)
+    # Use os.path.join for cross-platform compatibility
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    full_path = os.path.join(base_dir, 'data', 'jobs.csv')
+    return pd.read_csv(full_path)
 
 def preprocess_text(text):
     return ' '.join(word.strip().lower() for word in str(text).split())
@@ -49,7 +53,7 @@ def recommend_jobs(jobs_data, input_skills, num_recommendations=3):
     return recommendations
 
 # Load the jobs data when the module is imported
-jobs_data = load_jobs_data('E:\jobseek\jobs.csv')
+jobs_data = load_jobs_data('jobs.csv')
 
 def get_job_recommendations(skills):
     return recommend_jobs(jobs_data, skills)
