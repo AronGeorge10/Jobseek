@@ -4,10 +4,23 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 def load_jobs_data(file_path):
-    # Use os.path.join for cross-platform compatibility
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    full_path = os.path.join(base_dir, 'data', 'jobs.csv')
-    return pd.read_csv(full_path)
+    # Try multiple possible locations for the file
+    possible_paths = [
+        file_path,
+        os.path.join(os.getcwd(), file_path),
+        os.path.join(os.getcwd(), 'data', file_path),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'data', file_path),
+        '/opt/render/project/src/data/jobs.csv'  # Render-specific path
+    ]
+
+    for path in possible_paths:
+        print(f"Trying path: {path}")
+        if os.path.exists(path):
+            print(f"File found at: {path}")
+            return pd.read_csv(path)
+
+    # If we've tried all paths and still haven't found the file, raise an error
+    raise FileNotFoundError(f"Could not find {file_path} in any of the expected locations")
 
 def preprocess_text(text):
     return ' '.join(word.strip().lower() for word in str(text).split())
@@ -53,7 +66,14 @@ def recommend_jobs(jobs_data, input_skills, num_recommendations=3):
     return recommendations
 
 # Load the jobs data when the module is imported
-jobs_data = load_jobs_data('jobs.csv')
+try:
+    jobs_data = load_jobs_data('jobs.csv')
+except FileNotFoundError as e:
+    print(f"Error: {e}")
+    print("Current working directory:", os.getcwd())
+    print("Contents of current directory:", os.listdir())
+    # You might want to set a default value or raise the error again
+    raise
 
 def get_job_recommendations(skills):
     return recommend_jobs(jobs_data, skills)
