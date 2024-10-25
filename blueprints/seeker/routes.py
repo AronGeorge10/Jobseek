@@ -183,7 +183,13 @@ def profile_picture(user_id):
     else:
         return "", 404
 
-path_to_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+# Define the path for wkhtmltopdf based on the environment
+if os.name == 'nt':  # Windows
+    path_to_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+else:  # Linux (including Render)
+    path_to_wkhtmltopdf = '/usr/local/bin/wkhtmltopdf'
+
+# Use this configuration when initializing pdfkit
 config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
 
 @seeker_bp.route('/generate_pdf', methods=['GET'])
