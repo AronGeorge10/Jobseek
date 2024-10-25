@@ -183,41 +183,35 @@ def profile_picture(user_id):
     else:
         return "", 404
 
-# Define the path for wkhtmltopdf based on the environment
-if os.name == 'nt':  # Windows
-    path_to_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
-else:  # Linux (including Render)
-    path_to_wkhtmltopdf = './bin/wkhtmltopdf'
-
-# Use this configuration when initializing pdfkit
+path_to_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
 config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
 
-@seeker_bp.route('/generate_pdf', methods=['GET'])
-@login_required
-def generate_pdf():
-    # Retrieve resume document for the current user
-    resume_document = collection_resume_details.find_one({"user_id": ObjectId(current_user.id)})
+# @seeker_bp.route('/generate_pdf', methods=['GET'])
+# @login_required
+# def generate_pdf():
+#     # Retrieve resume document for the current user
+#     resume_document = collection_resume_details.find_one({"user_id": ObjectId(current_user.id)})
 
-    if not resume_document:
-        flash('No resume found for the current user.', 'danger')
-        return redirect(url_for('seeker.viewprofile'))
+#     if not resume_document:
+#         flash('No resume found for the current user.', 'danger')
+#         return redirect(url_for('seeker.viewprofile'))
 
-    # Render the HTML template for the resume
-    html = render_template('seeker/resume_template.html', resume=resume_document)
+#     # Render the HTML template for the resume
+#     html = render_template('seeker/resume_template.html', resume=resume_document)
     
-    try:
-        # Generate PDF from the HTML content
-        pdf = pdfkit.from_string(html, False, configuration=config)
-    except Exception as e:
-        flash(f'An error occurred while generating the PDF: {e}', 'danger')
-        return redirect(url_for('seeker.viewprofile'))
+#     try:
+#         # Generate PDF from the HTML content
+#         pdf = pdfkit.from_string(html, False, configuration=config)
+#     except Exception as e:
+#         flash(f'An error occurred while generating the PDF: {e}', 'danger')
+#         return redirect(url_for('seeker.viewprofile'))
 
-    # Prepare the response
-    response = make_response(pdf)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = 'inline; filename=resume.pdf'
+#     # Prepare the response
+#     response = make_response(pdf)
+#     response.headers['Content-Type'] = 'application/pdf'
+#     response.headers['Content-Disposition'] = 'inline; filename=resume.pdf'
 
-    return response
+#     return response
 
 @seeker_bp.route('/job_postings', methods=['GET'])
 @login_required
@@ -736,4 +730,3 @@ def save_interview_notes():
     except Exception as e:
         current_app.logger.error(f"Error in save_interview_notes: {str(e)}")
         return jsonify({'success': False, 'message': 'An error occurred while saving notes'}), 500
-
