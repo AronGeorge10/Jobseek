@@ -187,7 +187,7 @@ def profile_picture(user_id):
 if os.name == 'nt':  # Windows
     path_to_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
 else:  # Linux (including Render)
-    path_to_wkhtmltopdf = '/usr/local/bin/wkhtmltopdf'
+    path_to_wkhtmltopdf = './bin/wkhtmltopdf'
 
 # Use this configuration when initializing pdfkit
 config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
@@ -736,3 +736,4 @@ def save_interview_notes():
     except Exception as e:
         current_app.logger.error(f"Error in save_interview_notes: {str(e)}")
         return jsonify({'success': False, 'message': 'An error occurred while saving notes'}), 500
+
