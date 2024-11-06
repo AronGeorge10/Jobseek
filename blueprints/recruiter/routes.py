@@ -246,11 +246,10 @@ def view_applications(job_id):
             'job_id': ObjectId(job_id)
         })
         if interview:
-            application['interview_id'] = str(interview['_id'])
+            # Add debugging log
+            print(f"Found interview for application {application['_id']}: {interview['_id']}")
             application['interview'] = interview
-        else:
-            application['interview_id'] = None
-            application['interview'] = None
+            application['interview']['_id'] = str(interview['_id'])  # Convert ObjectId to string
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         html_content = render_template('recruiter/_application_tabs.html', 
@@ -744,14 +743,15 @@ def payment_cancel():
     flash('Payment cancelled. Your job has not been posted.', 'warning')
     return redirect(url_for('recruiter.recruiter_index'))
 
-@recruiter_bp.route('/video_interview/<room_name>', methods=['GET'])
+@recruiter_bp.route('/video_interview/<job_id>', methods=['GET'])
 @login_required
-def video_interview(room_name):
+def video_interview(job_id):
     if current_user.user_type != 'recruiter':
         flash('Access denied. Recruiter privileges required.', 'error')
         return redirect(url_for('index'))
-
-    interview = db.tbl_interviews.find_one({'room_name': room_name})
+    
+    print(job_id)
+    interview = db.tbl_interviews.find_one({'job_id': ObjectId(job_id)})
     if not interview:
         flash('Interview not found', 'error')
         return redirect(url_for('recruiter.recruiter_index'))
@@ -764,7 +764,7 @@ def video_interview(room_name):
     return render_template('recruiter/video_interview.html', 
                            interview=interview, 
                            job=job, 
-                           room_name=room_name,
+                           room_name=interview['room_name'],
                            existing_notes=existing_notes)
 
 @recruiter_bp.route('/save-interview-notes', methods=['POST'])
@@ -1001,3 +1001,86 @@ def get_schedules():
         return jsonify({'schedules': schedules_list}), 200
     except ValueError:
         return jsonify({'error': 'Invalid date format'}), 400
+
+@recruiter_bp.route('/get-interview-notes/<interview_id>')
+@login_required
+def get_interview_notes(interview_id):
+    if current_user.user_type != 'recruiter':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        interview = collection_interviews.find_one({
+            '_id': ObjectId(interview_id),
+            'recruiter_id': ObjectId(current_user.id)
+        })
+        
+        if interview:
+            return jsonify({
+                'success': True,
+                'notes': interview.get('recruiter_notes', 'No notes available.')
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Interview not found or access denied'
+            }), 404
+            
+    except Exception as e:
+        current_app.logger.error(f"Error fetching interview notes: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'An error occurred while fetching notes'
+        }), 500
+
+@recruiter_bp.route('/hire_candidate/<application_id>', methods=['POST'])
+@login_required
+def hire_candidate(application_id):
+    if current_user.user_type != 'recruiter':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    job_id = request.form.get('job_id')
+    if not job_id:
+        return jsonify({'success': False, 'message': 'Job ID is required'}), 400
+
+    # Verify that the job belongs to the current recruiter
+    job = collection_jobs.find_one({
+        '_id': ObjectId(job_id), 
+        'recruiter_id': ObjectId(current_user.id)
+    })
+    if not job:
+        return jsonify({'success': False, 'message': 'Job not found or access denied'}), 404
+
+    # Find the application
+    application = collection_applications.find_one({
+        '_id': ObjectId(application_id), 
+        'job_id': ObjectId(job_id)
+    })
+    if not application:
+        return jsonify({'success': False, 'message': 'Application not found'}), 404
+
+    # Update the application status to hired
+    result = collection_applications.update_one(
+        {'_id': ObjectId(application_id)},
+        {'$set': {'status': 'hired'}}
+    )
+
+    if result.modified_count > 0:
+        # Create notification for the candidate
+        notification = {
+            'user_id': application['user_id'],
+            'job_id': ObjectId(job_id),
+            'message': f"Congratulations! You have been hired for the position of {job['title']}.",
+            'created_at': datetime.utcnow(),
+            'is_read': False
+        }
+        collection_notifications.insert_one(notification)
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Candidate hired successfully'
+        })
+    else:
+        return jsonify({
+            'success': False, 
+            'message': 'Failed to update application status'
+        }), 500

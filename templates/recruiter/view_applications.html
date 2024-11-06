@@ -103,6 +103,130 @@
             cursor: not-allowed;
             pointer-events: none;
         }
+
+        .view-notes-btn {
+            margin-left: 5px;
+        }
+        
+        .notes-text {
+            white-space: pre-wrap;
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+        }
+        
+        #notesContent {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .candidate-info {
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+
+        /* Add these styles to your existing CSS */
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .view-notes-btn {
+            margin-left: 5px;
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .view-notes-btn:hover {
+            background-color: #138496;
+            color: white;
+        }
+
+        /* Make sure buttons have proper spacing and alignment */
+        .btn {
+            margin: 2px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Icon styling */
+        .btn i {
+            margin-right: 5px;
+        }
+
+        /* Add to your existing styles */
+        #hireSuccessModal .modal-header {
+            border-radius: 5px 5px 0 0;
+        }
+        
+        #hireSuccessModal .modal-content {
+            border: none;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        #hireSuccessModal .modal-body {
+            padding: 2rem;
+        }
+        
+        #hireSuccessModal .modal-body h4 {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        #hireSuccessModal .modal-body p {
+            color: #666;
+        }
+        
+        #hireSuccessModal .btn-success {
+            padding: 0.5rem 2rem;
+        }
+
+        /* Add to your existing styles */
+        #hireConfirmModal .modal-header,
+        #hireSuccessModal .modal-header {
+            border-radius: 5px 5px 0 0;
+        }
+        
+        #hireConfirmModal .modal-content,
+        #hireSuccessModal .modal-content {
+            border: none;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        #hireConfirmModal .modal-body,
+        #hireSuccessModal .modal-body {
+            padding: 2rem;
+        }
+        
+        #hireConfirmModal .modal-body h4 {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+        
+        #hireConfirmModal .modal-body p {
+            color: #666;
+        }
+        
+        #hireConfirmModal .btn,
+        #hireSuccessModal .btn {
+            padding: 0.5rem 2rem;
+        }
+        
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out;
+        }
+        
+        .modal.show .modal-dialog {
+            transform: none;
+        }
     </style>
 </head>
 
@@ -458,6 +582,88 @@
                 });
 
                 // Add any other event listeners for dynamic content here
+
+                // Add event listener for view notes button
+                $('.view-notes-btn').off('click').on('click', function() {
+                    const interviewId = $(this).data('interview-id');
+                    const candidateName = $(this).data('candidate-name');
+                    
+                    // Update modal title with candidate name
+                    $('#candidateName').text(candidateName);
+                    
+                    // Show loading state
+                    $('#notesContent').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading notes...</div>');
+                    
+                    // Show the modal
+                    $('#interviewNotesModal').modal('show');
+                    
+                    // Fetch notes from server
+                    $.ajax({
+                        url: `/recruiter/get-interview-notes/${interviewId}`,
+                        method: 'GET',
+                        success: function(response) {
+                            if (response.success) {
+                                const notes = response.notes || 'No notes available for this interview.';
+                                $('#notesContent').html(`
+                                    <div class="notes-text">
+                                        ${notes.replace(/\n/g, '<br>')}
+                                    </div>
+                                `);
+                            } else {
+                                $('#notesContent').html('<div class="alert alert-warning">Failed to load notes.</div>');
+                            }
+                        },
+                        error: function() {
+                            $('#notesContent').html('<div class="alert alert-danger">Error loading notes.</div>');
+                        }
+                    });
+                });
+
+                // Update the hire button functionality
+                $('.hire-btn').off('click').on('click', function() {
+                    const applicationId = $(this).data('application-id');
+                    const jobId = $(this).data('job-id');
+                    
+                    // Store the IDs in the confirm button's data attributes
+                    $('#confirmHireBtn').data('application-id', applicationId);
+                    $('#confirmHireBtn').data('job-id', jobId);
+                    
+                    // Show the confirmation modal
+                    const confirmModal = new bootstrap.Modal(document.getElementById('hireConfirmModal'));
+                    confirmModal.show();
+                });
+
+                // Handle the confirm hire button click
+                $('#confirmHireBtn').on('click', function() {
+                    const applicationId = $(this).data('application-id');
+                    const jobId = $(this).data('job-id');
+                    
+                    // Hide the confirmation modal
+                    $('#hireConfirmModal').modal('hide');
+                    
+                    $.ajax({
+                        url: `/recruiter/hire_candidate/${applicationId}`,
+                        method: 'POST',
+                        data: { job_id: jobId },
+                        success: function(response) {
+                            if (response.success) {
+                                // Show the success modal
+                                const successModal = new bootstrap.Modal(document.getElementById('hireSuccessModal'));
+                                successModal.show();
+                                
+                                // Reload the page after success modal is closed
+                                $('#hireSuccessModal').on('hidden.bs.modal', function () {
+                                    location.reload();
+                                });
+                            } else {
+                                alert('Failed to hire candidate: ' + response.message);
+                            }
+                        },
+                        error: function() {
+                            alert('An error occurred while processing your request.');
+                        }
+                    });
+                });
             }
 
             initializeEventListeners();
@@ -520,7 +726,108 @@
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
+
+        function updateMeetingStatus() {
+            $('.enter-meeting-btn').each(function () {
+                const $button = $(this);
+                const meetingTime = new Date($button.data('meeting-time'));
+                const meetingDuration = parseInt($button.data('meeting-duration')) || 30;
+                const meetingEndTime = new Date(meetingTime.getTime() + meetingDuration * 60000);
+                const currentTime = new Date();
+
+                if (currentTime > meetingEndTime) {
+                    // Update status badge
+                    const $card = $button.closest('.card');
+                    $card.find('.badge')
+                        .removeClass('bg-success')
+                        .addClass('bg-danger')
+                        .text('Meeting Ended');
+                    
+                    // Disable enter meeting button
+                    $button.prop('disabled', true);
+                    
+                    // Update status text
+                    $card.find('strong:contains("Status:")').next().text('meeting ended');
+                }
+            });
+        }
+
+        // Call initially and set interval
+        updateMeetingStatus();
+        setInterval(updateMeetingStatus, 60000);
     </script>
+
+    <!-- Interview Notes Modal -->
+    <div class="modal fade" id="interviewNotesModal" tabindex="-1" aria-labelledby="interviewNotesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="interviewNotesModalLabel">Interview Notes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="candidate-info mb-3">
+                        <h6>Candidate: <span id="candidateName"></span></h6>
+                    </div>
+                    <div class="notes-content">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="notesContent" class="border p-3 bg-light">
+                                    <!-- Notes will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="hireSuccessModal" tabindex="-1" aria-labelledby="hireSuccessModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="hireSuccessModalLabel">
+                        <i class="fas fa-check-circle me-2"></i>Success
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <h4 class="mb-3">Candidate Hired Successfully!</h4>
+                    <p class="mb-0">The candidate has been notified of their selection.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="hireConfirmModal" tabindex="-1" aria-labelledby="hireConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="hireConfirmModalLabel">
+                        <i class="fas fa-user-check me-2"></i>Confirm Hiring
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <h4 class="mb-3">Confirm Candidate Selection</h4>
+                    <p class="mb-0">Are you sure you want to hire this candidate? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmHireBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 

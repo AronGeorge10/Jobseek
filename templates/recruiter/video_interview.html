@@ -161,6 +161,7 @@
             // Close the Jitsi Meet connection
             api.dispose();
             // Redirect to the view applications page
+            console.log('{{ interview.job_id }}');
             window.location.href = '{{ url_for("recruiter.view_applications", job_id=interview.job_id) }}';
         })
         .catch((error) => {

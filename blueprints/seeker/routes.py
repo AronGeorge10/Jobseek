@@ -11,6 +11,12 @@ import json
 import traceback
 from src.components.job_recommender import get_job_recommendations
 import pandas as pd
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, ListFlowable, ListItem
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from io import BytesIO
 
 # Use environment variables for sensitive information
 MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://AronJain:4E1zkxYGeaWZQCL8@cluster0.qy4jgjm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
@@ -183,35 +189,132 @@ def profile_picture(user_id):
     else:
         return "", 404
 
-# path_to_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
-# config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
-
-# @seeker_bp.route('/generate_pdf', methods=['GET'])
-# @login_required
-# def generate_pdf():
-#     # Retrieve resume document for the current user
-#     resume_document = collection_resume_details.find_one({"user_id": ObjectId(current_user.id)})
-
-#     if not resume_document:
-#         flash('No resume found for the current user.', 'danger')
-#         return redirect(url_for('seeker.viewprofile'))
-
-#     # Render the HTML template for the resume
-#     html = render_template('seeker/resume_template.html', resume=resume_document)
+@seeker_bp.route('/generate_pdf', methods=['GET'])
+@login_required
+def generate_pdf():
+    # Reference to HTML template structure:
+    # templates/seeker/resume_template.html lines 1-95
     
-#     try:
-#         # Generate PDF from the HTML content
-#         pdf = pdfkit.from_string(html, False, configuration=config)
-#     except Exception as e:
-#         flash(f'An error occurred while generating the PDF: {e}', 'danger')
-#         return redirect(url_for('seeker.viewprofile'))
+    resume_document = collection_resume_details.find_one({"user_id": ObjectId(current_user.id)})
+    if not resume_document:
+        flash('No resume found for the current user.', 'danger')
+        return redirect(url_for('seeker.viewprofile'))
 
-#     # Prepare the response
-#     response = make_response(pdf)
-#     response.headers['Content-Type'] = 'application/pdf'
-#     response.headers['Content-Disposition'] = 'inline; filename=resume.pdf'
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=72
+    )
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(
+        name='CustomHeading1',
+        parent=styles['Heading1'],
+        fontSize=24,
+        spaceAfter=30,
+        alignment=1  # Center alignment
+    ))
+    styles.add(ParagraphStyle(
+        name='SectionHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceBefore=15,
+        spaceAfter=10,
+        borderWidth=1,
+        borderPadding=5,
+        borderColor=colors.black,
+        textColor=colors.black
+    ))
 
-#     return response
+    # Build the document content
+    story = []
+    
+    # Header section
+    story.append(Paragraph(resume_document.get('full_name', ''), styles['CustomHeading1']))
+    story.append(Paragraph(resume_document.get('job_title', ''), styles['Heading2']))
+    story.append(Spacer(1, 20))
+
+    # Contact Information
+    story.append(Paragraph('Contact Information', styles['SectionHeading']))
+    contact_info = [
+        f"Email: {resume_document.get('email', '')}",
+        f"Phone: {resume_document.get('phone', '')}",
+        f"Address: {resume_document.get('address', '')}",
+        f"LinkedIn: {resume_document.get('linkedin', '')}"
+    ]
+    for info in contact_info:
+        story.append(Paragraph(info, styles['Normal']))
+    story.append(Spacer(1, 15))
+
+    # Professional Summary
+    story.append(Paragraph('Professional Summary', styles['SectionHeading']))
+    story.append(Paragraph(resume_document.get('summary', ''), styles['Normal']))
+    story.append(Spacer(1, 15))
+
+    # Work Experience
+    story.append(Paragraph('Work Experience', styles['SectionHeading']))
+    for job in resume_document.get('work_experience', []):
+        story.append(Paragraph(job.get('job_title', ''), styles['Heading3']))
+        story.append(Paragraph(
+            f"{job.get('company', '')} - {job.get('duration', '')} days",
+            styles['Normal']
+        ))
+        story.append(Paragraph(job.get('responsibility', ''), styles['Normal']))
+        story.append(Spacer(1, 10))
+
+    # Education
+    story.append(Paragraph('Education', styles['SectionHeading']))
+    for edu in resume_document.get('education', []):
+        story.append(Paragraph(edu.get('degree', ''), styles['Heading3']))
+        story.append(Paragraph(
+            f"{edu.get('university', '')} - {edu.get('graduation_year', '')}",
+            styles['Normal']
+        ))
+        story.append(Spacer(1, 10))
+
+    # Skills
+    story.append(Paragraph('Skills', styles['SectionHeading']))
+    technical_skills = resume_document.get('technical_skills', [])
+    soft_skills = resume_document.get('soft_skills', [])
+    
+    if technical_skills:
+        story.append(Paragraph('Technical Skills:', styles['Heading4']))
+        skills_list = ListFlowable(
+            [ListItem(Paragraph(skill, styles['Normal'])) for skill in technical_skills],
+            bulletType='bullet'
+        )
+        story.append(skills_list)
+    
+    if soft_skills:
+        story.append(Paragraph('Soft Skills:', styles['Heading4']))
+        skills_list = ListFlowable(
+            [ListItem(Paragraph(skill, styles['Normal'])) for skill in soft_skills],
+            bulletType='bullet'
+        )
+        story.append(skills_list)
+
+    # Projects
+    story.append(Paragraph('Projects', styles['SectionHeading']))
+    for project in resume_document.get('projects', []):
+        story.append(Paragraph(project.get('project_name', ''), styles['Heading3']))
+        story.append(Paragraph(project.get('description', ''), styles['Normal']))
+        story.append(Spacer(1, 10))
+
+    # Build PDF
+    doc.build(story)
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename={resume_document.get("full_name", "resume")}.pdf'
+    
+    return response
 
 @seeker_bp.route('/job_postings', methods=['GET'])
 @login_required
@@ -412,6 +515,7 @@ def view_job(job_id):
     has_applied = job_application is not None
     is_shortlisted = has_applied and job_application.get('status') == 'shortlisted'
     meeting_scheduled = has_applied and job_application.get('status') == 'meeting scheduled'
+    is_hired = has_applied and job_application.get('status') == 'hired'
     
     interview = None
     if meeting_scheduled:
@@ -430,6 +534,7 @@ def view_job(job_id):
                            has_applied=has_applied, 
                            is_shortlisted=is_shortlisted,
                            meeting_scheduled=meeting_scheduled,
+                           is_hired=is_hired,
                            interview=interview)
 
 @seeker_bp.route('/apply_job/<job_id>', methods=['POST'])

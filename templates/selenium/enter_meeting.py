@@ -12,7 +12,7 @@ import os
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-class TestApplyJob(unittest.TestCase):
+class TestEnterMeeting(unittest.TestCase):
     def setUp(self):
         # Set up Chrome options for full-screen mode
         chrome_options = Options()
@@ -22,15 +22,11 @@ class TestApplyJob(unittest.TestCase):
         self.driver = webdriver.Chrome(options=chrome_options)
         logging.info("Chrome browser initialized with maximized window")
         
-        # Alternative method to set full screen after browser is opened
-        self.driver.maximize_window()
-        logging.info("Browser window maximized")
-        
         self.driver.get("http://127.0.0.1:5000/")  # Assuming this is the URL for index.html
         logging.info("Navigated to the application URL")
         self.wait = WebDriverWait(self.driver, 10)
 
-    def test_apply_job(self):
+    def test_enter_meeting(self):
         try:
             # Login
             email_input = self.find_element_with_wait(By.ID, "email")
@@ -61,31 +57,26 @@ class TestApplyJob(unittest.TestCase):
             # Click "View Details" on the first job listing
             view_details_button = self.find_element_with_wait(By.XPATH, "//a[contains(@class, 'btn-primary') and contains(text(), 'View Details')]")
             view_details_button.click()
+            logging.info("Clicked on 'View Details' for the first job")
 
             # Wait for job details page to load
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "job-details")))
-
+            logging.info("Job details page loaded")
+            
             # Scroll down to the bottom of the page
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             
-            # Add a small delay to allow the page to settle after scrolling
             import time
             time.sleep(1)
 
-            # Now find and click the "Apply Now" button
-            apply_now_button = self.find_element_with_wait(By.ID, "apply-job")
-            apply_now_button.click()
+            # Click on the "Enter Meeting" button
+            enter_meeting_button = self.wait.until(
+                EC.element_to_be_clickable((By.ID, "enter-meeting-btn"))
+            )
+            enter_meeting_button.click()
+            logging.info("Clicked on 'Enter Meeting' button")
 
-            # Wait for the button to change to "Applied" or for the cancel button to appear
-            self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "button.btn-secondary[disabled]")))
-
-            # Assert that the application was successful by checking for the "Applied" button
-            applied_button = self.driver.find_element(By.CSS_SELECTOR, "button.btn-secondary[disabled]")
-            self.assertEqual(applied_button.text, "Applied")
-
-            # Check if the "Cancel Application" button is present
-            cancel_button = self.driver.find_element(By.ID, "cancel-application")
-            self.assertIsNotNone(cancel_button)
+            # Add any additional assertions or actions here
 
         except (TimeoutException, NoSuchElementException) as e:
             self.fail(f"Test failed: {str(e)}\nCurrent URL: {self.driver.current_url}\n"
@@ -112,4 +103,4 @@ def run_tests_without_stderr():
     return result
 
 if __name__ == "__main__":
-    run_tests_without_stderr()
+    run_tests_without_stderr() 

@@ -18,8 +18,13 @@
             {% elif application.status == 'shortlisted' %}
                 <a href="{{ url_for('recruiter.schedule_interview', applicant_id=application.user_id, job_id=job._id, candidate_name=application.applicant_name) }}"
                    class="btn btn-success schedule-btn">Schedule Meeting</a>
+            {% elif application.status == 'meeting ended' %}
+                <span class="badge bg-danger">Meeting Ended</span>
+            {% else %}
+                <span class="badge bg-primary">{{ application.status|title }}</span>
             {% endif %}
         </h5>
+
         <p class="card-text">
             <strong>Email:</strong> {{ application.applicant_email }}<br>
             <strong>Applied on:</strong> {{ application.applied_at }}<br>
@@ -28,26 +33,54 @@
                 <strong>Meeting Time:</strong> {{ application.interview.interview_time.strftime('%Y-%m-%d %H:%M') }}
             {% endif %}
         </p>
-        <a href="{{ url_for('recruiter.view_applications', job_id=job._id) }}"
-            class="btn btn-primary">Refresh</a>
-        
-        {% if application.status != 'meeting scheduled' %}
-            <button class="btn shortlist-btn" data-application-id="{{ application.id }}">
-                {% if application.status == 'shortlisted' %}
-                    Unshortlist
-                {% else %}
-                    Shortlist
+
+        <div class="button-group mt-2">
+            <a href="{{ url_for('recruiter.view_applications', job_id=job._id) }}"
+                class="btn btn-primary">Refresh</a>
+            
+            {% if application.status == 'meeting ended' %}
+                <button class="btn btn-success hire-btn" 
+                        data-application-id="{{ application.id }}"
+                        data-job-id="{{ job._id }}">
+                    <i class="fas fa-user-check"></i> Hire Candidate
+                </button>
+                
+                {% if application.interview %}
+                    <button type="button" 
+                            class="btn btn-info view-notes-btn" 
+                            data-interview-id="{{ application.interview._id }}"
+                            data-candidate-name="{{ application.applicant_name }}">
+                        <i class="fas fa-sticky-note"></i> View Notes
+                    </button>
                 {% endif %}
-            </button>
-        {% endif %}
-        
-        {% if application.status == 'meeting scheduled' and application.interview %}
-            <a href="{{ url_for('recruiter.edit_interview', interview_id=application.interview._id) }}" class="btn btn-warning edit-meeting-btn">Edit Meeting</a>
-            <a href="{{ url_for('recruiter.video_interview', room_name=application.interview.room_name) }}" 
-               class="btn btn-success enter-meeting-btn" 
-               data-meeting-time="{{ application.interview.interview_time.isoformat() }}"
-               data-meeting-duration="{{ application.interview.interview_duration }}">Enter Meeting</a>
-        {% endif %}
+            {% elif application.status != 'meeting scheduled' and application.status != 'hired' %}
+                <button class="btn shortlist-btn" data-application-id="{{ application.id }}">
+                    {% if application.status == 'shortlisted' %}
+                        Unshortlist
+                    {% else %}
+                        Shortlist
+                    {% endif %}
+                </button>
+            {% endif %}
+            
+            {% if application.status == 'meeting scheduled' and application.interview %}
+                <a href="{{ url_for('recruiter.edit_interview', interview_id=application.interview._id) }}" 
+                   class="btn btn-warning edit-meeting-btn">Edit Meeting</a>
+                
+                <a href="{{ url_for('recruiter.video_interview', job_id=application.job_id, room_name=room_name ) }}" 
+                   class="btn btn-success enter-meeting-btn" 
+                   data-meeting-time="{{ application.interview.interview_time.isoformat() }}"
+                   data-meeting-duration="{{ application.interview.interview_duration }}"
+                   data-job-id="{{ application.job_id }}">Enter Meeting</a>
+                
+                <button type="button" 
+                        class="btn btn-info view-notes-btn" 
+                        data-interview-id="{{ application.interview._id }}"
+                        data-candidate-name="{{ application.applicant_name }}">
+                    <i class="fas fa-sticky-note"></i> View Notes
+                </button>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endfor %}
