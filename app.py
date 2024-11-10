@@ -374,32 +374,91 @@ def  google_login():
 def auth_receiver():
     try:
         token = oauth.myApp.authorize_access_token()
-    except OAuthError as error:
-        error_description = error.description if hasattr(error, 'description') else 'Unknown error'
-        flash(f'Authentication failed: {error_description}', 'error')
-        return redirect(url_for("login"))
-    
-    if token is None:
-        flash('Google authentication failed: no token received.', 'error')
-        return redirect(url_for("login"))
-   
-    session["user"] = token
-    user_info = token.get("userinfo")
-    user_email = user_info.get('email')
+        session["user"] = token
+        user_info = token.get("userinfo")
+        user_email = user_info.get('email')
+        user_name = user_info.get('name')
 
-    # Check if the email exists in your database
-    user = collection_login_credentials.find_one({'email': user_email})
-    if user:
-        login_user(User(str(user['_id']), user['email'], user['password'], user['user_type'], user.get('is_admin', False)))
-        session['user_id'] = str(user['_id'])
-        session['email'] = user['email']
-        user_details = collection_seeker_registration.find_one({'_id': user['registration_id']})
-        if user_details:
-            session['full_name'] = user_details['full_name']
-        return redirect(url_for("index"))
-    else:
-        flash('Email not registered with this application. Please register first.', 'warning')
-        return redirect(url_for("register"))
+        # Check if the email exists in your database
+        user = collection_login_credentials.find_one({'email': user_email})
+        
+        if user:
+            # Existing user - log them in
+            login_user(User(str(user['_id']), user['email'], user['password'], user['user_type'], user.get('is_admin', False)))
+            session['user_id'] = str(user['_id'])
+            session['email'] = user['email']
+            
+            # Redirect based on user type
+            if user['user_type'] == 'recruiter':
+                return redirect(url_for('recruiter.recruiter_index'))
+            else:
+                return redirect(url_for('index'))
+        else:
+            # New user - redirect to user type selection
+            return render_template('select_user_type.html', email=user_email, name=user_name)
+
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'error')
+        return redirect(url_for("login"))
+
+@app.route("/complete_google_signup", methods=['POST'])
+def complete_google_signup():
+    try:
+        email = request.form.get('email')
+        name = request.form.get('name')
+        user_type = request.form.get('user_type')
+
+        # Create login credentials
+        user_login_credentials = {
+            "email": email,
+            "password": bcrypt.generate_password_hash("google_auth").decode('utf-8'),
+            "user_type": user_type
+        }
+        result = collection_login_credentials.insert_one(user_login_credentials)
+        user_id = result.inserted_id
+
+        if user_type == 'seeker':
+            # Create seeker registration
+            user_registration = {
+                "full_name": name,
+                "user_id": user_id
+            }
+            collection_seeker_registration.insert_one(user_registration)
+            
+            # Create resume details
+            user_resume = {
+                "full_name": name,
+                "email": email,
+                "user_id": user_id
+            }
+            collection_resume_details.insert_one(user_resume)
+        
+        elif user_type == 'recruiter':
+            # Create recruiter registration
+            recruiter_registration = {
+                "full_name": name,
+                "email": email,
+                "user_id": user_id
+            }
+            collection_recruiter_registration.insert_one(recruiter_registration)
+
+        # Log in the new user
+        new_user = User(str(user_id), email, user_login_credentials['password'], user_type, False)
+        login_user(new_user)
+        session['user_id'] = str(user_id)
+        session['email'] = email
+        
+        flash('Account created successfully!', 'success')
+        
+        # Redirect based on user type
+        if user_type == 'seeker':
+            return redirect(url_for('index'))
+        else:
+            return redirect(url_for('recruiter.recruiter_index'))
+
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'error')
+        return redirect(url_for("login"))
 
 @app.route("/blog")
 def blog():
