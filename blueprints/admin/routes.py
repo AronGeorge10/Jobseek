@@ -162,8 +162,12 @@ def view_recruiter(recruiter_id):
     if login_info:
         recruiter.update(login_info)
 
-    # Fetch jobs posted by this recruiter
-    jobs = list(collection_jobs.find({"recruiter_id": ObjectId(recruiter_id)}))
+    # Fetch jobs using user_id
+    jobs = list(collection_jobs.find({"recruiter_id": recruiter["user_id"]}))
+    
+    # Add debug print
+    print(f"Found {len(jobs)} jobs for recruiter {recruiter_id}")
+    print(f"Recruiter user_id: {recruiter['user_id']}")
     
     # Count applications for each job
     for job in jobs:
@@ -171,6 +175,16 @@ def view_recruiter(recruiter_id):
         
         # Ensure status is present, set to 'Active' if not
         job["status"] = job.get("status", "Active")
+        
+        # Convert ObjectId to string for the template
+        job["_id"] = str(job["_id"])
+        
+        # Format the date using created_at instead of posted_date
+        if "created_at" in job:
+            if isinstance(job["created_at"], str):
+                job["created_at"] = job["created_at"]
+            else:
+                job["created_at"] = job["created_at"].strftime('%Y-%m-%d')
     
     return render_template('admin/view_recruiter.html', recruiter=recruiter, jobs=jobs)
 

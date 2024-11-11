@@ -16,6 +16,8 @@ from blueprints.recruiter.routes import recruiter_bp, send_shortlist_notificatio
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 import base64
+from werkzeug.utils import secure_filename
+from base64 import b64encode
 
 app = Flask(__name__)
 # Register the blueprint
@@ -50,6 +52,42 @@ app.config['MAIL_PASSWORD'] = 'wzqx pywr lkfk fmnn'
 app.config['MAIL_DEFAULT_SENDER'] = 'aronayikon10@gmail.com'
 # Initialize Flask-Mail
 mail = Mail(app)
+
+# Define upload folder path
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', 'company_logos')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+# Configure Flask app
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Create upload directory if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Add template filters
+@app.template_filter('objectid')
+def objectid_filter(value):
+    if isinstance(value, str):
+        return ObjectId(value)
+    return value
+
+@app.template_filter('b64encode')
+def b64encode_filter(data):
+    if data is None:
+        return ''
+    return b64encode(data).decode('utf-8')
+
+# Add context processor for MongoDB collections
+@app.context_processor
+def utility_processor():
+    return {
+        'collection_recruiter_registration': collection_recruiter_registration,
+        'ObjectId': ObjectId
+    }
+    
+# Helper function to check allowed file extensions
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 class User(UserMixin):
     def __init__(self, id, email, password, user_type, is_admin=False, full_name=None, profile_picture=None):
@@ -432,30 +470,85 @@ def complete_google_signup():
                 "user_id": user_id
             }
             collection_resume_details.insert_one(user_resume)
-        
+            
+            # Log in the seeker
+            new_user = User(str(user_id), email, user_login_credentials['password'], user_type, False)
+            login_user(new_user)
+            session['user_id'] = str(user_id)
+            session['email'] = email
+            return redirect(url_for('index'))
+            
         elif user_type == 'recruiter':
-            # Create recruiter registration
-            recruiter_registration = {
-                "full_name": name,
-                "email": email,
-                "user_id": user_id
-            }
-            collection_recruiter_registration.insert_one(recruiter_registration)
+            # Store temporary data in session
+            session['temp_user_id'] = str(user_id)
+            session['temp_email'] = email
+            session['temp_name'] = name
+            
+            # Get industries for the form
+            industries = list(collection_industries.find({}, {'_id': 0, 'name': 1}))
+            return render_template('recruiter/complete_registration.html', 
+                                email=email, 
+                                name=name, 
+                                industries=industries)
 
-        # Log in the new user
-        new_user = User(str(user_id), email, user_login_credentials['password'], user_type, False)
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'error')
+        return redirect(url_for("login"))
+
+@app.route("/complete_recruiter_registration", methods=['POST'])
+def complete_recruiter_registration():
+    try:
+        # Get form data
+        company_name = request.form.get('company_name')
+        company_email = request.form.get('company_email')
+        company_website = request.form.get('company_website')
+        industry = request.form.get('industry')
+        email = request.form.get('email')
+        name = request.form.get('name')
+        
+        # Handle logo upload
+        company_logo = None
+        if 'company_logo' in request.files:
+            file = request.files['company_logo']
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(f"{company_name}_{file.filename}")  # Add company name prefix
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+                company_logo = f"uploads/company_logos/{filename}"  # Store relative path
+        
+        # Get the user_id from session
+        user_id = ObjectId(session.get('temp_user_id'))
+        
+        # Create recruiter registration with company website
+        recruiter_registration = {
+            "full_name": name,
+            "email": email,
+            "user_id": user_id,
+            "company_name": company_name,
+            "company_email": company_email,
+            "company_website": company_website,
+            "company_logo": company_logo,
+            "industry": industry
+        }
+        collection_recruiter_registration.insert_one(recruiter_registration)
+        
+        # Log in the recruiter
+        user = collection_login_credentials.find_one({'_id': user_id})
+        new_user = User(str(user_id), email, user['password'], 'recruiter', False)
         login_user(new_user)
+        
+        # Set session variables
         session['user_id'] = str(user_id)
         session['email'] = email
         
-        flash('Account created successfully!', 'success')
+        # Clear temporary session data
+        session.pop('temp_user_id', None)
+        session.pop('temp_email', None)
+        session.pop('temp_name', None)
         
-        # Redirect based on user type
-        if user_type == 'seeker':
-            return redirect(url_for('index'))
-        else:
-            return redirect(url_for('recruiter.recruiter_index'))
-
+        flash('Registration completed successfully!', 'success')
+        return redirect(url_for('recruiter.recruiter_index'))
+        
     except Exception as e:
         flash(f'An error occurred: {str(e)}', 'error')
         return redirect(url_for("login"))
@@ -488,6 +581,15 @@ scheduler.start()
 
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
+
+# @app.context_processor
+# def utility_processor():
+#     return {
+#         'collection_recruiter_registration': collection_recruiter_registration,
+#         'objectid': ObjectId
+#     }
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

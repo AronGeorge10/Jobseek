@@ -63,10 +63,10 @@
                                             <td>{{ job.title }}</td>
                                             <td>{{ job.status }}</td>
                                             <td>
-                                                {% if job.posted_date is string %}
-                                                    {{ job.posted_date }}
+                                                {% if job.created_at is string %}
+                                                    {{ job.created_at }}
                                                 {% else %}
-                                                    {{ job.posted_date.strftime('%Y-%m-%d') }}
+                                                    {{ job.created_at.strftime('%Y-%m-%d') }}
                                                 {% endif %}
                                             </td>
                                             <td>{{ job.application_count }}</td>

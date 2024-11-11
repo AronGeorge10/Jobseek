@@ -105,22 +105,40 @@
                                         <button class="btn btn-success mt-4" disabled>Shortlisted</button>
                                     {% elif meeting_scheduled %}
                                         <span id="meeting-status" class="badge bg-info text-white me-2">Meeting Scheduled</span>
-                                        {% if interview and interview.get('interview_time') %}
-                                            <a href="#" 
-                                               id="enter-meeting-btn"
-                                               class="btn btn-primary enter-meeting-btn mt-2" 
-                                               data-meeting-time="{{ interview.get('interview_time', '') }}"
-                                               data-meeting-duration="{{ interview.get('interview_duration', 30) }}"
-                                               data-room-name="{{ interview.get('room_name', '') }}"
-                                               data-toggle="tooltip"
-                                               title="Enter Meeting">
-                                               Enter Meeting
-                                            </a>
-                                        {% else %}
-                                            <p>Interview details are not available. Please contact the recruiter.</p>
+                                        {% if interview %}
+                                            <div class="mt-2">
+                                                <a href="#" 
+                                                   id="enter-meeting-btn"
+                                                   class="btn btn-primary enter-meeting-btn" 
+                                                   data-meeting-time="{{ interview.get('interview_time', '') }}"
+                                                   data-meeting-duration="{{ interview.get('interview_duration', 30) }}"
+                                                   data-room-name="{{ interview.get('room_name', '') }}"
+                                                   data-toggle="tooltip"
+                                                   title="Enter Meeting">
+                                                   Enter Meeting
+                                                </a>
+                                                
+                                                <button type="button" 
+                                                        class="btn btn-info view-notes-btn ms-2" 
+                                                        data-job-id="{{ job._id }}"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#notesModal">
+                                                    <i class="fas fa-sticky-note"></i> View Notes
+                                                </button>
+                                            </div>
                                         {% endif %}
                                     {% elif is_hired %}
-                                        <span class="badge bg-success text-white me-2"><i class="fas fa-check-circle"></i> You Have Been Hired</span>
+                                        <span class="badge bg-success text-white me-2">
+                                            <i class="fas fa-check-circle"></i> You Have Been Hired
+                                        </span>
+                                        
+                                        <button type="button" 
+                                                class="btn btn-info view-notes-btn mt-2" 
+                                                data-job-id="{{ job._id }}"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#notesModal">
+                                            <i class="fas fa-sticky-note"></i> View Notes
+                                        </button>
                                     {% else %}
                                         <button class="btn btn-secondary mt-4" disabled>Applied</button>
                                     {% endif %}
@@ -305,6 +323,54 @@
             }
         });
     });
+
+    $(document).ready(function() {
+        $('.view-notes-btn').on('click', function() {
+            const jobId = $(this).data('job-id');
+            
+            // Show loading state
+            $('#notes-content').html('Loading...');
+            
+            // Fetch notes using AJAX
+            $.ajax({
+                url: `/seeker/get_interview_notes/${jobId}`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        if (response.notes) {
+                            // Replace newlines with <br> tags for proper formatting
+                            const formattedNotes = response.notes.replace(/\n/g, '<br>');
+                            $('#notes-content').html(formattedNotes);
+                        } else {
+                            $('#notes-content').html('<p class="text-muted">No notes available.</p>');
+                        }
+                    } else {
+                        $('#notes-content').html(`<p class="text-danger">${response.message}</p>`);
+                    }
+                },
+                error: function(xhr) {
+                    $('#notes-content').html('<p class="text-danger">Failed to load notes. Please try again later.</p>');
+                }
+            });
+        });
+    });
     </script>
+    <!-- Notes Modal -->
+    <div class="modal fade" id="notesModal" tabindex="-1" aria-labelledby="notesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notesModalLabel">Interview Notes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="notes-content">Loading...</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

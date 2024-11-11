@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile | JobSeek</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-design-iconic-font/2.2.0/css/material-design-iconic-font.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 40px 0;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+            padding: 40px 30px;
+            text-align: center;
+            border: none;
+        }
+
+        .card-header h2 {
+            color: white;
+            font-weight: 600;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .card-header p {
+            color: rgba(255,255,255,0.8);
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        .card-body {
+            padding: 40px;
+            background: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #f0f0f0;
+            margin-bottom: 30px;
+            border-radius: 2px;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-with-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 20px;
+        }
+
+        .form-control {
+            height: 55px;
+            padding-left: 45px;
+            font-size: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: none;
+        }
+
+        select.form-control {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%236c757d' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 20px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        .btn-primary {
+            height: 55px;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+            border: none;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 13px;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .error-message:before {
+            content: "!";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            margin-right: 6px;
+            font-size: 12px;
+        }
+
+        .valid-message {
+            color: #28a745;
+            font-size: 13px;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .valid-message:before {
+            content: "✓";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            margin-right: 6px;
+            font-size: 12px;
+        }
+
+        .company-logo-upload {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 15px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            border: 2px dashed #dee2e6;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logo-preview:hover {
+            border-color: #3498db;
+        }
+
+        .logo-preview i {
+            font-size: 40px;
+            color: #adb5bd;
+        }
+
+        #logo-upload {
+            display: none;
+        }
+
+        .upload-text {
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Complete Your Profile</h2>
+                        <p>Let's get your company set up on JobSeek</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress-bar">
+                            <div class="progress" id="registration-progress"></div>
+                        </div>
+
+                        <form method="POST" action="{{ url_for('complete_recruiter_registration') }}" id="recruiter-complete-form" enctype="multipart/form-data">
+                            <div class="company-logo-upload">
+                                <label for="logo-upload" class="logo-preview">
+                                    <i class="zmdi zmdi-image"></i>
+                                </label>
+                                <input type="file" id="logo-upload" name="company_logo" accept="image/*">
+                                <p class="upload-text">Upload your company logo (optional)</p>
+                                <span class="error-company-logo"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="input-with-icon">
+                                    <i class="zmdi zmdi-case"></i>
+                                    <input type="text" name="company_name" id="company_name" 
+                                           class="form-control" placeholder="Company Name" required />
+                                </div>
+                                <span class="error-company-name error-message"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="input-with-icon">
+                                    <i class="zmdi zmdi-email"></i>
+                                    <input type="email" name="company_email" id="company_email" 
+                                           class="form-control" placeholder="Company Email" required />
+                                </div>
+                                <span class="error-company-email error-message"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="input-with-icon">
+                                    <i class="zmdi zmdi-globe"></i>
+                                    <input type="text" name="company_website" id="company_website" 
+                                           class="form-control" placeholder="Company Website" required />
+                                </div>
+                                <span class="error-company-website error-message"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="input-with-icon">
+                                    <i class="zmdi zmdi-pin"></i>
+                                    <select name="industry" id="industry" class="form-control" required>
+                                        <option value="">Select Industry</option>
+                                        {% for industry in industries %}
+                                            <option value="{{ industry.name }}">{{ industry.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <span class="error-industry error-message"></span>
+                            </div>
+
+                            <input type="hidden" name="email" value="{{ email }}">
+                            <input type="hidden" name="name" value="{{ name }}">
+
+                            <div class="form-group mb-0">
+                                <button type="submit" class="btn btn-primary w-100" id="complete-registration-btn" disabled>
+                                    Complete Registration
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Validation functions
+            function validateCompanyName() {
+                var companyName = $('#company_name').val();
+                const errorSpan = $('.error-company-name');
+                if (!/^[a-zA-Z0-9\s]{2,}$/.test(companyName)) {
+                    errorSpan.text("Company name should be at least 2 characters long and contain only letters, numbers, and spaces");
+                    errorSpan.removeClass('valid-message').addClass('error-message');
+                    return false;
+                }
+                errorSpan.text("Company name is valid");
+                errorSpan.removeClass('error-message').addClass('valid-message');
+                return true;
+            }
+
+            function validateCompanyEmail() {
+                var email = $('#company_email').val();
+                const errorSpan = $('.error-company-email');
+                if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+                    errorSpan.text("Enter a valid company email address");
+                    errorSpan.removeClass('valid-message').addClass('error-message');
+                    return false;
+                }
+                errorSpan.text("Email is valid");
+                errorSpan.removeClass('error-message').addClass('valid-message');
+                return true;
+            }
+
+            function validateCompanyWebsite() {
+                var website = $('#company_website').val();
+                const errorSpan = $('.error-company-website');
+                if (!/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(website)) {
+                    errorSpan.text("Enter a valid website URL");
+                    errorSpan.removeClass('valid-message').addClass('error-message');
+                    return false;
+                }
+                errorSpan.text("Website URL is valid");
+                errorSpan.removeClass('error-message').addClass('valid-message');
+                return true;
+            }
+
+            function validateIndustry() {
+                var industry = $('#industry').val();
+                const errorSpan = $('.error-industry');
+                if (!industry) {
+                    errorSpan.text("Please select an industry");
+                    errorSpan.removeClass('valid-message').addClass('error-message');
+                    return false;
+                }
+                errorSpan.text("Industry selected");
+                errorSpan.removeClass('error-message').addClass('valid-message');
+                return true;
+            }
+
+            function validateLogo() {
+                var file = $('#logo-upload')[0].files[0];
+                const errorSpan = $('.error-company-logo');
+                
+                // If no file is selected, remove any validation message and return true
+                if (!file) {
+                    errorSpan.text("").removeClass('error-message valid-message');
+                    return true;
+                }
+                
+                // Validate file if one is selected
+                if (file.size > 5242880) {
+                    errorSpan.text("File size should be less than 5MB");
+                    errorSpan.removeClass('valid-message').addClass('error-message');
+                    return false;
+                }
+                if (!file.type.match('image.*')) {
+                    errorSpan.text("Please upload an image file");
+                    errorSpan.removeClass('valid-message').addClass('error-message');
+                    return false;
+                }
+                
+                // File is valid
+                errorSpan.text("Logo is valid");
+                errorSpan.removeClass('error-message').addClass('valid-message');
+                return true;
+            }
+
+            // Update progress bar
+            function updateProgress() {
+                let totalFields = 4; // Required fields
+                let completedFields = 0;
+                
+                // Only count fields that have been interacted with and are valid
+                if ($('#company_name').val() && validateCompanyName()) completedFields++;
+                if ($('#company_email').val() && validateCompanyEmail()) completedFields++;
+                if ($('#company_website').val() && validateCompanyWebsite()) completedFields++;
+                if ($('#industry').val() && validateIndustry()) completedFields++;
+                
+                let progress = (completedFields / totalFields) * 100;
+                $('.progress').css('width', progress + '%');
+                
+                // Enable/disable submit button
+                $('#complete-registration-btn').prop('disabled', completedFields !== totalFields);
+            }
+
+            // Initial state
+            updateProgress(); // This will show 0% as no fields are filled
+
+            // Event listeners
+            $('#company_name').on('input', function() {
+                validateCompanyName();
+                updateProgress();
+            });
+
+            $('#company_email').on('input', function() {
+                validateCompanyEmail();
+                updateProgress();
+            });
+
+            $('#company_website').on('input', function() {
+                validateCompanyWebsite();
+                updateProgress();
+            });
+
+            $('#industry').on('change', function() {
+                validateIndustry();
+                updateProgress();
+            });
+
+            $('#logo-upload').on('change', function() {
+                const file = this.files[0];
+                const preview = $('.logo-preview');
+                
+                // Reset preview if no file is selected
+                if (!file) {
+                    preview.html('<i class="zmdi zmdi-image"></i>');
+                    $('.error-company-logo').text("").removeClass('error-message valid-message');
+                    return;
+                }
+                
+                // Validate and preview if file is selected
+                if (validateLogo()) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.html(`<img src="${e.target.result}" style="max-width: 100%; max-height: 100%; border-radius: 12px;">`);
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.html('<i class="zmdi zmdi-image"></i>');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

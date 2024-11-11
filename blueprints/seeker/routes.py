@@ -517,25 +517,35 @@ def view_job(job_id):
     meeting_scheduled = has_applied and job_application.get('status') == 'meeting scheduled'
     is_hired = has_applied and job_application.get('status') == 'hired'
     
+    print("Application status:", {
+        "has_applied": has_applied,
+        "is_shortlisted": is_shortlisted,
+        "meeting_scheduled": meeting_scheduled,
+        "is_hired": is_hired,
+        "application_status": job_application.get('status') if job_application else None
+    })
+    
     interview = None
-    if meeting_scheduled:
+    if meeting_scheduled or is_hired:  # Check for both meeting_scheduled and hired status
         # Fetch interview details from tbl_interviews
         interview = db.tbl_interviews.find_one({
             'candidate_id': ObjectId(user_id),
             'job_id': ObjectId(job_id)
         })
-        if interview and 'interview_time' in interview:
-            interview['interview_time'] = interview['interview_time'].isoformat()
+        print("Found interview:", interview)  # Debug print
         
-    print("Interview details:", interview)  # Debug print
-
+        if interview:
+            interview['_id'] = str(interview['_id'])
+            if 'interview_time' in interview:
+                interview['interview_time'] = interview['interview_time'].isoformat()
+    
     return render_template('seeker/view_job.html', 
-                           job=job, 
-                           has_applied=has_applied, 
-                           is_shortlisted=is_shortlisted,
-                           meeting_scheduled=meeting_scheduled,
-                           is_hired=is_hired,
-                           interview=interview)
+                         job=job, 
+                         has_applied=has_applied, 
+                         is_shortlisted=is_shortlisted,
+                         meeting_scheduled=meeting_scheduled,
+                         is_hired=is_hired,
+                         interview=interview)
 
 @seeker_bp.route('/apply_job/<job_id>', methods=['POST'])
 @login_required
@@ -835,3 +845,38 @@ def save_interview_notes():
     except Exception as e:
         current_app.logger.error(f"Error in save_interview_notes: {str(e)}")
         return jsonify({'success': False, 'message': 'An error occurred while saving notes'}), 500
+
+@seeker_bp.route('/get_interview_notes/<job_id>')
+@login_required
+def get_interview_notes(job_id):
+    try:
+        user_id = current_user.id
+        
+        # First check if there's an interview for this job and user
+        interview = db.tbl_interviews.find_one({
+            'candidate_id': ObjectId(user_id),
+            'job_id': ObjectId(job_id)
+        })
+        
+        if interview:
+            # Convert ObjectId to string for JSON serialization
+            interview['_id'] = str(interview['_id'])
+            notes = interview.get('seeker_notes', '')
+            
+            return jsonify({
+                'success': True,
+                'notes': notes,
+                'interview_id': interview['_id']
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'No interview found'
+            }), 404
+
+    except Exception as e:
+        current_app.logger.error(f"Error in get_interview_notes: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'An error occurred while retrieving notes'
+        }), 500
