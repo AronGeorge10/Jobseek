@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Job Portal Chatbot</title>
+    <style>
+        /* Chat toggle button with animated avatar */
+        .chat-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 240px;
+            height: 240px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border: none;
+            padding: 0;
+            background: none;
+        }
+
+        .chat-toggle img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .chat-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        .chat-toggle.hidden {
+            display: none;
+        }
+
+        /* Chat container with improved styling */
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            height: 550px;
+            border: 1px solid #eee;
+            border-radius: 15px;
+            background: white;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+            z-index: 999;
+            display: none;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .chat-container.active {
+            display: block;
+        }
+
+        /* Improved header styling */
+        .chat-header {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-header img {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+        }
+
+        .close-chat {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+            margin-left: auto;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .close-chat:hover {
+            opacity: 1;
+        }
+
+        /* Messages area styling */
+        .chat-messages {
+            height: 380px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 12px 16px;
+            border-radius: 15px;
+            max-width: 80%;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .user-message {
+            background-color: #e3f2fd;
+            margin-left: auto;
+            color: #1565c0;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message {
+            background-color: white;
+            margin-right: auto;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            position: relative;
+            padding-left: 55px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .bot-message::before {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background-image: url('/static/webpage/img/chatbuddy-transparent.gif');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        /* Input area styling */
+        .chat-input {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            transition: border-color 0.3s ease;
+            font-size: 14px;
+        }
+
+        #userInput:focus {
+            border-color: #4CAF50;
+        }
+
+        .send-button {
+            padding: 12px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .send-button:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Chat toggle with animated avatar -->
+    <button class="chat-toggle" onclick="toggleChat()">
+        <img src="{{ url_for('static', filename='webpage/img/chatbuddy-transparent.gif') }}" alt="Chat Buddy">
+    </button>
+
+    <!-- Chat interface -->
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            <img src="{{ url_for('static', filename='webpage/img/avatar.png') }}" alt="Chat Buddy">
+            <span>JobSy</span>
+            <button class="close-chat" onclick="toggleChat()">×</button>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your message..." style="width: 75%">
+            <button class="send-button" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <!-- Add Font Awesome for the chat icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <script>
+        function toggleChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            const chatToggle = document.querySelector('.chat-toggle');
+            
+            chatContainer.classList.toggle('active');
+            chatToggle.classList.toggle('hidden'); // Toggle visibility of the avatar
+        }
+
+        function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            
+            if (!message) return;
+
+            addMessage(message, 'user-message');
+            userInput.value = '';
+
+            // Add debugging logs
+            console.log('Sending message:', message);
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message }),
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                addMessage(data.response, 'bot-message');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addMessage('Sorry, something went wrong.', 'bot-message');
+            });
+        }
+
+        function addMessage(message, className) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            messageDiv.textContent = message;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html> 

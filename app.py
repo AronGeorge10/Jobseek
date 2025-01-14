@@ -18,6 +18,7 @@ import atexit
 import base64
 from werkzeug.utils import secure_filename
 from base64 import b64encode
+from chatbot import JobPortalChatbot
 
 app = Flask(__name__)
 # Register the blueprint
@@ -589,7 +590,24 @@ atexit.register(lambda: scheduler.shutdown())
 #         'objectid': ObjectId
 #     }
 
+# Initialize the chatbot
+chatbot = JobPortalChatbot()
 
+# Add the chat endpoint
+@app.route('/chat', methods=['POST'])
+def chat():
+    try:
+        data = request.json
+        user_message = data.get('message', '')
+        
+        if not user_message:
+            return jsonify({'error': 'No message provided'}), 400
+        
+        response = chatbot.get_response(user_message)
+        return jsonify({'response': response})
+    except Exception as e:
+        print(f"Chat error: {str(e)}")  # For debugging
+        return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
