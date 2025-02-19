@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Builder - JobSeek</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <!-- jQuery (required for Select2) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Select2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <style>
+    .sidebar {
+      width: 300px;
+      position: fixed;
+      height: 100vh;
+      background: #f8f9fa;
+      padding: 2rem 0;
+    }
+
+    .resume-section {
+      display: none;
+    }
+
+    .resume-section.active {
+      display: block;
+    }
+
+    .progress-path {
+      position: relative;
+      padding-left: 3rem;
+    }
+
+    .progress-item {
+      position: relative;
+      padding: 1rem 0;
+      padding-left: 1.5rem;
+      cursor: pointer;
+      color: #6c757d;
+    }
+
+    /* Vertical line */
+    .progress-path::before {
+      content: "";
+      position: absolute;
+      left: 2.35rem;
+      top: 0;
+      height: 100%;
+      width: 2px;
+      background: #dee2e6;
+    }
+
+    /* Circle */
+    .progress-item::before {
+      content: attr(data-step);
+      position: absolute;
+      left: -1.5rem;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid #dee2e6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+    }
+
+    /* Active state */
+    .progress-item.active {
+      color: #0d6efd;
+      font-weight: 500;
+    }
+
+    .progress-item.active::before {
+      background: #0d6efd;
+      border-color: #0d6efd;
+      color: white;
+    }
+
+    /* Completed state */
+    .progress-item.completed::before {
+      background: #198754;
+      border-color: #198754;
+      color: white;
+    }
+
+    .main-content {
+      margin-left: 300px;
+      padding: 2rem;
+    }
+
+    .navigation-buttons {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      gap: 1rem;
+      z-index: 1000;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      font-weight: 500;
+    }
+
+    .iti {
+      width: 100%;
+    }
+
+    .select2-container {
+      width: 100% !important;
+    }
+
+    .navigation-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .toast {
+      background: white;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Left Sidebar -->
+  <div class="sidebar">
+    <div class="progress-path">
+      <div class="progress-item active" data-step="1">
+        Personal Information
+      </div>
+      <div class="progress-item" data-step="2">Professional Summary</div>
+      <div class="progress-item" data-step="3">Education</div>
+      <div class="progress-item" data-step="4">Skills</div>
+      <div class="progress-item" data-step="5">Work Experience</div>
+      <div class="progress-item" data-step="6">Projects</div>
+      <div class="progress-item" data-step="7">Languages</div>
+      <div class="progress-item" data-step="8">Achievements</div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Personal Information Section -->
+    <div class="resume-section active" id="section-1">
+      <h3 class="mb-4">Personal Information</h3>
+      <form>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-control" required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" required />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Position</label>
+            <input type="text" class="form-control" required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">LinkedIn</label>
+            <input type="url" class="form-control" required />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-7">
+            <label class="form-label">Address</label>
+            <input type="text" class="form-control" required />
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Phone Number</label>
+            <input id="phone" type="tel" class="form-control" name="phone" required />
+          </div>
+        </div>
+        <!-- Add more personal info fields -->
+      </form>
+    </div>
+
+    <!-- Professional Summary Section -->
+    <div class="resume-section" id="section-2">
+      <h3 class="mb-4">Professional Summary</h3>
+      <form>
+        <div class="mb-3">
+          <label class="form-label">Summary</label>
+          <textarea class="form-control" rows="4"
+            placeholder="Write a compelling summary of your professional background, key achievements, and career goals"></textarea>
+        </div>
+      </form>
+    </div>
+
+    <!-- Education Section -->
+    <div class="resume-section" id="section-3">
+      <h3 class="mb-4">Education</h3>
+      <form>
+        <div class="education-entry mb-4">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Degree/Certificate</label>
+              <input type="text" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Institution</label>
+              <select id="institution" class="form-control">
+                <option value="" disabled selected>Select a university</option>
+              </select>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Start Date</label>
+              <input type="month" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End Date</label>
+              <input type="month" class="form-control" required />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" rows="3"
+              placeholder="Describe your academic achievements, relevant coursework, etc."></textarea>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-plus"></i> Add Another Education
+        </button>
+      </form>
+    </div>
+
+    <!-- Skills Section -->
+    <div class="resume-section" id="section-4">
+      <h3 class="mb-4">Skills</h3>
+      <form>
+        <div class="mb-3">
+          <label class="form-label">Technical Skills</label>
+          <input type="text" class="form-control" placeholder="e.g., Python, JavaScript, React" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Soft Skills</label>
+          <input type="text" class="form-control" placeholder="e.g., Leadership, Communication, Problem Solving" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Tools & Technologies</label>
+          <input type="text" class="form-control" placeholder="e.g., Git, Docker, AWS" />
+        </div>
+      </form>
+    </div>
+
+    <!-- Work Experience Section -->
+    <div class="resume-section" id="section-5">
+      <h3 class="mb-4">Work Experience</h3>
+      <form>
+        <div class="experience-entry mb-4">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Job Title</label>
+              <input type="text" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Company</label>
+              <input type="text" class="form-control" required />
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Start Date</label>
+              <input type="month" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End Date</label>
+              <input type="month" class="form-control" />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Responsibilities & Achievements</label>
+            <textarea class="form-control" rows="4"></textarea>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-plus"></i> Add Another Experience
+        </button>
+      </form>
+    </div>
+
+    <!-- Projects Section -->
+    <div class="resume-section" id="section-6">
+      <h3 class="mb-4">Projects</h3>
+      <form>
+        <div class="project-entry mb-4">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Project Name</label>
+              <input type="text" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Technologies Used</label>
+              <input type="text" class="form-control" required />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Project Description</label>
+            <textarea class="form-control" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Project URL (if any)</label>
+            <input type="url" class="form-control" />
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-plus"></i> Add Another Project
+        </button>
+      </form>
+    </div>
+
+    <!-- Languages Section -->
+    <div class="resume-section" id="section-7">
+      <h3 class="mb-4">Languages</h3>
+      <form>
+        <div class="language-entry mb-4">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Language</label>
+              <input type="text" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Proficiency Level</label>
+              <select class="form-select">
+                <option>Native</option>
+                <option>Fluent</option>
+                <option>Advanced</option>
+                <option>Intermediate</option>
+                <option>Basic</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-plus"></i> Add Another Language
+        </button>
+      </form>
+    </div>
+
+    <!-- Achievements Section -->
+    <div class="resume-section" id="section-8">
+      <h3 class="mb-4">Achievements</h3>
+      <form>
+        <div class="achievement-entry mb-4">
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input type="text" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Date</label>
+            <input type="month" class="form-control" />
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-plus"></i> Add Another Achievement
+        </button>
+      </form>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons mt-4">
+      <button class="btn btn-outline-primary" onclick="previousSection()" id="prevBtn">
+        <i class="fas fa-arrow-left me-2"></i>Previous
+      </button>
+      <button class="btn btn-success" onclick="saveProgress()" id="saveBtn">
+        <i class="fas fa-save me-2"></i>Save Progress
+      </button>
+      <button class="btn btn-primary" onclick="nextSection()" id="nextBtn">
+        Next<i class="fas fa-arrow-right ms-2"></i>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let currentSection = 1;
+    const totalSections = 8;
+
+    function updateProgress() {
+      document.querySelectorAll(".progress-item").forEach((item, index) => {
+        const step = index + 1;
+        item.classList.remove("active", "completed");
+        if (step === currentSection) {
+          item.classList.add("active");
+        } else if (step < currentSection) {
+          item.classList.add("completed");
+        }
+      });
+    }
+
+    function showSection(sectionNumber) {
+      document.querySelectorAll(".resume-section").forEach((section) => {
+        section.classList.remove("active");
+      });
+      document
+        .getElementById(`section-${sectionNumber}`)
+        .classList.add("active");
+
+      // Update buttons
+      document.getElementById("prevBtn").style.display =
+        sectionNumber === 1 ? "none" : "block";
+      document.getElementById("nextBtn").textContent =
+        sectionNumber === totalSections ? "Finish" : "Next";
+    }
+
+    function nextSection() {
+      if (currentSection < totalSections) {
+        currentSection++;
+        showSection(currentSection);
+        updateProgress();
+      }
+    }
+
+    function previousSection() {
+      if (currentSection > 1) {
+        currentSection--;
+        showSection(currentSection);
+        updateProgress();
+      }
+    }
+
+    // Allow clicking on progress items to navigate
+    document.querySelectorAll(".progress-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        const step = parseInt(item.getAttribute("data-step"));
+        if (step <= currentSection) {
+          currentSection = step;
+          showSection(step);
+          updateProgress();
+        }
+      });
+    });
+
+    // Initialize phone input after DOM is loaded
+    document.addEventListener("DOMContentLoaded", function () {
+      const phoneInputField = document.querySelector("#phone");
+      const phoneInput = window.intlTelInput(phoneInputField, {
+        utilsScript:
+          "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["us", "gb", "in"],
+        separateDialCode: true,
+      });
+    });
+
+    // Initialize Select2
+    $(document).ready(function () {
+      $('#institution').select2({
+        placeholder: 'Select a university',
+        ajax: {
+          url: 'http://universities.hipolabs.com/search',
+          dataType: 'json',
+          delay: 250,
+          data: function (params) {
+            return {
+              name: params.term, // search term
+              country: ''  // optional: can add country filter
+            };
+          },
+          processResults: function (data) {
+            return {
+              results: data.map(function (item) {
+                return {
+                  id: item.name,  // changed from web_pages[0] to name
+                  text: item.name + ' (' + item.country + ')'
+                };
+              })
+            };
+          },
+          cache: true
+        },
+        minimumInputLength: 3,
+        allowClear: true
+      });
+    });
+
+    function collectFormData() {
+      const personalInfo = {
+        fullName: document.querySelector('input[name="fullName"]')?.value,
+        email: document.querySelector('input[name="email"]')?.value,
+        phone: document.querySelector('input[name="phone"]')?.value,
+        // Add other personal info fields
+      };
+
+      const professionalSummary = document.querySelector('textarea[name="summary"]')?.value;
+
+      const education = Array.from(document.querySelectorAll('.education-entry')).map(entry => ({
+        degree: entry.querySelector('input[name="degree"]')?.value,
+        institution: entry.querySelector('select[name="institution"]')?.value,
+        startDate: entry.querySelector('input[name="eduStartDate"]')?.value,
+        endDate: entry.querySelector('input[name="eduEndDate"]')?.value,
+        description: entry.querySelector('textarea[name="eduDescription"]')?.value
+      }));
+
+      // Collect data from other sections similarly
+
+      return {
+        template: '{{ template }}',
+        personal_info: personalInfo,
+        professional_summary: professionalSummary,
+        education: education,
+        // Add other sections
+        last_updated: new Date().toISOString()
+      };
+    }
+
+    function saveProgress() {
+      const saveBtn = document.getElementById('saveBtn');
+      const originalText = saveBtn.innerHTML;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+      saveBtn.disabled = true;
+
+      const formData = collectFormData();
+
+      fetch('/seeker/save-resume', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            // Show success message
+            const toast = `
+              <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                <div class="toast show" role="alert">
+                  <div class="toast-header bg-success text-white">
+                    <strong class="me-auto">Success</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                  </div>
+                  <div class="toast-body">
+                    Progress saved successfully!
+                  </div>
+                </div>
+              </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', toast);
+            setTimeout(() => {
+              document.querySelector('.toast').remove();
+            }, 3000);
+          } else {
+            alert('Error saving progress: ' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error saving progress');
+        })
+        .finally(() => {
+          saveBtn.innerHTML = originalText;
+          saveBtn.disabled = false;
+        });
+    }
+
+    // Add this to your existing DOMContentLoaded event
+    document.addEventListener('DOMContentLoaded', function () {
+      // Load existing data if available
+      fetch('/seeker/get-resume')
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success' && data.data) {
+            // Populate form fields with existing data
+            populateFormFields(data.data);
+          }
+        })
+        .catch(error => console.error('Error loading resume data:', error));
+    });
+
+    function populateFormFields(data) {
+      // Populate personal info
+      if (data.personal_info) {
+        document.querySelector('input[name="fullName"]').value = data.personal_info.fullName || '';
+        document.querySelector('input[name="email"]').value = data.personal_info.email || '';
+        document.querySelector('input[name="phone"]').value = data.personal_info.phone || '';
+        // Populate other fields
+      }
+
+      // Populate other sections
+      if (data.professional_summary) {
+        document.querySelector('textarea[name="summary"]').value = data.professional_summary;
+      }
+
+      // Add population logic for other sections
+    }
+  </script>
+</body>
+
+</html>

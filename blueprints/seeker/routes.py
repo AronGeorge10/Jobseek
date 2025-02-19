@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, request, render_template, redirect, url_for, flash, make_response, jsonify, current_app, render_template_string
+from flask import Blueprint, request, render_template, redirect, url_for, flash, make_response, jsonify, current_app, render_template_string, g
 from flask_login import current_user, login_required
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -880,3 +880,44 @@ def get_interview_notes(job_id):
             'success': False,
             'message': 'An error occurred while retrieving notes'
         }), 500
+
+@seeker_bp.before_request
+def check_profile_status():
+    """Check if the user has completed their profile setup"""
+    if current_user.is_authenticated:
+        resume = collection_resume_details.find_one({"user_id": ObjectId(current_user.id)})
+        # Consider profile complete if it exists and has basic required fields
+        g.has_profile = bool(resume and resume.get('full_name') and resume.get('email'))
+    else:
+        g.has_profile = False
+
+# Add this to your existing context processor if you have one, or create a new one
+@seeker_bp.context_processor
+def utility_processor():
+    return {
+        'has_profile': lambda: getattr(g, 'has_profile', False)
+    }
+
+@seeker_bp.route('/delete_notification/<notification_id>', methods=['DELETE'])
+@login_required
+def delete_notification(notification_id):
+    try:
+        result = collection_notifications.delete_one({
+            '_id': ObjectId(notification_id),
+            'user_id': ObjectId(current_user.id)
+        })
+        return jsonify({'success': result.deleted_count > 0})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@seeker_bp.route('/clear_viewed_notifications', methods=['DELETE'])
+@login_required
+def clear_viewed_notifications():
+    try:
+        result = collection_notifications.delete_many({
+            'user_id': ObjectId(current_user.id),
+            'is_read': True
+        })
+        return jsonify({'success': result.deleted_count > 0})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})

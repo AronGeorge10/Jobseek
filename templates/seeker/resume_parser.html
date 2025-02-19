@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Parser</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .parser-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--secondary-color);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            background: var(--light-bg);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-color);
+            background: #fff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .btn-parse {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-parse:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .parsed-content {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 10px;
+            background: var(--light-bg);
+            display: none;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .alert {
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .file-info {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .progress {
+            height: 0.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="parser-container">
+            <h1 class="text-center mb-4">Resume Parser</h1>
+            
+            <div class="upload-area" id="dropZone">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <h3>Drag & Drop your resume</h3>
+                <p>or</p>
+                <input type="file" id="fileInput" class="d-none" accept=".pdf,.doc,.docx">
+                <button class="btn btn-parse" onclick="document.getElementById('fileInput').click()">
+                    Browse Files
+                </button>
+                <div class="file-info" id="fileInfo"></div>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" 
+                         aria-valuenow="0" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Parsing your resume...</p>
+            </div>
+
+            <div class="parsed-content" id="parsedContent">
+                <h2 class="section-title">Parsed Information</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>Personal Information</h4>
+                        <ul class="list-unstyled" id="personalInfo">
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Skills</h4>
+                        <ul class="list-unstyled" id="skills">
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h4>Experience</h4>
+                    <div id="experience">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h4>Education</h4>
+                    <div id="education">
+                    </div>
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-parse" onclick="confirmAndSave()">
+                        Save to Profile
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const parsedContent = document.getElementById('parsedContent');
+        const progressBar = document.querySelector('.progress');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        // Highlight drop zone when dragging over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        // Handle dropped files
+        dropZone.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFiles, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight(e) {
+            dropZone.classList.add('bg-light');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('bg-light');
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles({ target: { files: files } });
+        }
+
+        function handleFiles(e) {
+            const files = e.target.files;
+            if (files.length) {
+                const file = files[0];
+                // Validate file type
+                const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                if (!allowedTypes.includes(file.type)) {
+                    console.error('Invalid file type:', file.type);
+                    console.log('Allowed types:', allowedTypes);
+                    return;
+                }
+                // Validate file size (10MB limit)
+                if (file.size > 10 * 1024 * 1024) {
+                    console.error('File too large:', `${(file.size / 1024 / 1024).toFixed(2)}MB`);
+                    return;
+                }
+                updateFileInfo(file);
+                parseResume(file);
+            }
+        }
+
+        function updateFileInfo(file) {
+            fileInfo.innerHTML = `
+                <p>File: ${file.name}</p>
+                <p>Size: ${(file.size / 1024).toFixed(2)} KB</p>
+            `;
+            progressBar.style.display = 'block';
+        }
+
+        function parseResume(file) {
+            loadingSpinner.style.display = 'block';
+            parsedContent.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Log file details for debugging
+            console.log('Attempting to upload file:', {
+                name: file.name,
+                type: file.type,
+                size: `${(file.size / 1024).toFixed(2)} KB`
+            });
+
+            // Start progress bar animation
+            let progress = 0;
+            const progressElement = document.querySelector('.progress-bar');
+            progressElement.style.width = '0%';
+            progressBar.style.display = 'block';
+            
+            const interval = setInterval(() => {
+                if (progress < 90) {
+                    progress += 10;
+                    progressElement.style.width = `${progress}%`;
+                    progressElement.setAttribute('aria-valuenow', progress);
+                }
+            }, 200);
+
+            // Updated URL to match the blueprint registration
+            fetch('/seeker/parse-resume', {  // Changed to match blueprint url_prefix
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('Server error response:', text);
+                        throw new Error(`Server error: ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                clearInterval(interval);
+                progressElement.style.width = '100%';
+                progressElement.setAttribute('aria-valuenow', 100);
+
+                console.log('Server response:', data);
+
+                setTimeout(() => {
+                    loadingSpinner.style.display = 'none';
+                    progressBar.style.display = 'none';
+                    
+                    if (data.status === 'success') {
+                        parsedContent.style.display = 'block';
+                        displayParsedData(data.data);
+                        console.log('Resume parsed successfully:', data.data);
+                    } else {
+                        console.error('Parse error:', data.message);
+                        throw new Error(data.message || 'Error parsing resume');
+                    }
+                }, 500);
+            })
+            .catch(error => {
+                clearInterval(interval);
+                loadingSpinner.style.display = 'none';
+                progressBar.style.display = 'none';
+                console.error('Upload error:', {
+                    message: error.message,
+                    stack: error.stack
+                });
+            });
+        }
+
+        function displayParsedData(data) {
+            // Display personal information
+            document.getElementById('personalInfo').innerHTML = `
+                <li><strong>Name:</strong> ${data.personal_info.name || 'Not found'}</li>
+                <li><strong>Email:</strong> ${data.personal_info.email || 'Not found'}</li>
+                <li><strong>Phone:</strong> ${data.personal_info.phone || 'Not found'}</li>
+            `;
+
+            // Display skills
+            const skillsHtml = [];
+            if (data.skills.technical.length > 0) {
+                skillsHtml.push('<h5>Technical Skills</h5>');
+                skillsHtml.push(data.skills.technical
+                    .map(skill => `<span class="badge bg-primary me-2 mb-2">${skill}</span>`)
+                    .join(''));
+            }
+            if (data.skills.soft.length > 0) {
+                skillsHtml.push('<h5 class="mt-3">Soft Skills</h5>');
+                skillsHtml.push(data.skills.soft
+                    .map(skill => `<span class="badge bg-secondary me-2 mb-2">${skill}</span>`)
+                    .join(''));
+            }
+            document.getElementById('skills').innerHTML = skillsHtml.join('');
+
+            // Display experience
+            document.getElementById('experience').innerHTML = data.work_experience
+                .map(exp => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">${exp.title || 'Position'}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">${exp.company || 'Company'}</h6>
+                            <p class="card-text">${exp.duration || ''}</p>
+                            ${exp.responsibilities ? `
+                                <div class="mt-2">
+                                    <strong>Responsibilities:</strong>
+                                    <ul>
+                                        ${exp.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('') || '<p>No work experience found</p>';
+
+            // Display education
+            document.getElementById('education').innerHTML = data.education
+                .map(edu => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">${edu.degree || 'Degree'}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">
+                                ${edu.institution || 'Institution'}
+                            </h6>
+                            <p class="card-text">${edu.graduation_year || ''}</p>
+                        </div>
+                    </div>
+                `).join('') || '<p>No education details found</p>';
+        }
+
+        function confirmAndSave() {
+            if (confirm('Are you sure you want to save this information to your profile?')) {
+                window.location.href = '/resume-maker';  // Redirect to resume maker with parsed data
+            }
+        }
+    </script>
+</body>
+</html> 

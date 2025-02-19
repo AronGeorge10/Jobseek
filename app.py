@@ -12,6 +12,7 @@ import logging
 from authlib.integrations.flask_client import OAuth,OAuthError
 from blueprints.seeker.routes import seeker_bp
 from blueprints.admin.routes import admin_bp
+from blueprints.customer_care.routes import customer_care_bp
 from blueprints.recruiter.routes import recruiter_bp, send_shortlist_notifications
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
@@ -19,12 +20,15 @@ import base64
 from werkzeug.utils import secure_filename
 from base64 import b64encode
 from chatbot import JobPortalChatbot
+from blueprints.seeker.resume_maker import resume_maker_bp
 
 app = Flask(__name__)
 # Register the blueprint
 app.register_blueprint(seeker_bp, url_prefix='/seeker')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(recruiter_bp, url_prefix='/recruiter')
+app.register_blueprint(resume_maker_bp, url_prefix='/seeker')
+app.register_blueprint(customer_care_bp, url_prefix='/customer_care')
 
 app.secret_key = os.urandom(24)  # Required for flashing messages
 
@@ -285,6 +289,8 @@ def login():
                     return redirect(url_for('recruiter.recruiter_index'))
                 elif user['user_type'] == 'admin':
                     return redirect(url_for('admin.admin_dashboard'))
+                elif user['user_type'] == 'customer_care':
+                    return redirect(url_for('customer_care.dashboard'))
             else:
                 flash('Invalid email or password. Try Again', 'warning')
         else:

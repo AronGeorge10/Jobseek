@@ -98,9 +98,10 @@
             margin: 10px 0;
             padding: 12px 16px;
             border-radius: 15px;
-            max-width: 80%;
+            max-width: 85%;
             line-height: 1.5;
             font-size: 14px;
+            white-space: pre-line;
         }
 
         .user-message {
@@ -131,6 +132,15 @@
             background-image: url('/static/webpage/img/chatbuddy-transparent.gif');
             background-size: contain;
             background-repeat: no-repeat;
+        }
+
+        .bot-message ul, .bot-message ol {
+            margin-left: 20px;
+            padding-left: 0;
+        }
+
+        .bot-message p {
+            margin: 8px 0;
         }
 
         /* Input area styling */
@@ -172,6 +182,36 @@
             background: #45a049;
             transform: translateY(-1px);
         }
+
+        /* Add styles for action buttons in chat */
+        .chat-action-button {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 5px 5px 5px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .chat-action-button:hover {
+            background-color: #45a049;
+            transform: translateY(-1px);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Style for button container in messages */
+        .button-container {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
@@ -198,12 +238,53 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
     <script>
+        // Add a variable to store user type
+        const isRecruiter = {{ 'true' if current_user.user_type == 'recruiter' else 'false' }};
+
         function toggleChat() {
             const chatContainer = document.getElementById('chatContainer');
             const chatToggle = document.querySelector('.chat-toggle');
+            const chatMessages = document.getElementById('chatMessages');
             
             chatContainer.classList.toggle('active');
-            chatToggle.classList.toggle('hidden'); // Toggle visibility of the avatar
+            chatToggle.classList.toggle('hidden');
+            
+            // Add welcome message when opening chat for the first time
+            if (chatContainer.classList.contains('active') && chatMessages.children.length === 0) {
+                if (isRecruiter) {
+                    addMessage(`👋 Hi! I'm JobSy, your recruitment assistant.
+
+I can help you with the following services:
+
+- Post New Job Listings
+- Manage Posted Jobs
+- View Job Applications
+- Candidate Search
+- Profile Management
+
+What would you like help with?
+
+[[Post a Job|/recruiter/post_job]]
+[[Posted Jobs|/recruiter/posted_jobs]]
+[[View Applications|/recruiter/applications]]`, 'bot-message');
+                } else {
+                    addMessage(`👋 Hi! I'm JobSy, your personal job assistant.
+
+I can help you with the following services:
+
+- Job Search and Applications
+- Profile Management
+- Resume Building
+- Interview Preparation
+- Career Guidance
+
+What would you like help with?
+
+[[Browse Jobs|/seeker/job_postings]]
+[[My Profile|/seeker/viewprofile]]
+[[Recommendation|/seeker/recommendations]]`, 'bot-message');
+                }
+            }
         }
 
         function sendMessage() {
@@ -215,9 +296,6 @@
             addMessage(message, 'user-message');
             userInput.value = '';
 
-            // Add debugging logs
-            console.log('Sending message:', message);
-
             fetch('/chat', {
                 method: 'POST',
                 headers: {
@@ -225,12 +303,8 @@
                 },
                 body: JSON.stringify({ message: message }),
             })
-            .then(response => {
-                console.log('Response status:', response.status);
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log('Response data:', data);
                 addMessage(data.response, 'bot-message');
             })
             .catch(error => {
@@ -243,9 +317,54 @@
             const chatMessages = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${className}`;
-            messageDiv.textContent = message;
+            
+            if (className === 'bot-message') {
+                // Check for special commands in the message
+                const { text, buttons } = parseMessageForButtons(message);
+                
+                // Add the text content
+                messageDiv.innerHTML = text;
+                
+                // Add buttons if present
+                if (buttons.length > 0) {
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'button-container';
+                    
+                    buttons.forEach(button => {
+                        const buttonElement = document.createElement('a');
+                        buttonElement.href = button.url;
+                        buttonElement.className = 'chat-action-button';
+                        buttonElement.textContent = button.text;
+                        buttonContainer.appendChild(buttonElement);
+                    });
+                    
+                    messageDiv.appendChild(buttonContainer);
+                }
+            } else {
+                messageDiv.textContent = message;
+            }
+            
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function parseMessageForButtons(message) {
+            // Split message into text and button commands
+            const parts = message.split('[[');
+            let text = parts[0];
+            const buttons = [];
+            
+            // Parse button commands
+            for (let i = 1; i < parts.length; i++) {
+                const buttonPart = parts[i].split(']]')[0];
+                const [buttonText, buttonUrl] = buttonPart.split('|');
+                buttons.push({
+                    text: buttonText.trim(),
+                    url: buttonUrl.trim()
+                });
+            }
+            
+            return { text, buttons };
         }
 
         document.getElementById('userInput').addEventListener('keypress', function(e) {

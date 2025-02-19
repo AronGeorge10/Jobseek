@@ -1,0 +1,131 @@
+{% extends "customer_care/base.html" %}
+
+{% block title %}Customer Care - We're Here to Help{% endblock %}
+
+{% block content %}
+    <div class="header">
+        <h1>Customer Care</h1>
+        <p>We're here to help you 24/7</p>
+    </div>
+
+    <div class="container">
+        <div class="contact-options">
+            <div class="contact-card">
+                <i class="fas fa-phone-alt"></i>
+                <h2>Call Us</h2>
+                <p>Speak directly with our support team</p>
+                <p>1-800-123-4567</p>
+                <a href="tel:18001234567" class="btn">Call Now</a>
+            </div>
+
+            <div class="contact-card">
+                <i class="fas fa-envelope"></i>
+                <h2>Email Support</h2>
+                <p>Send us your queries</p>
+                <p>support@company.com</p>
+                <a href="mailto:support@company.com" class="btn">Email Us</a>
+            </div>
+
+            <div class="contact-card">
+                <i class="fas fa-comments"></i>
+                <h2>Live Chat</h2>
+                <p>Chat with our support team</p>
+                <p>Average response time: 2 minutes</p>
+                <a href="{{ url_for('customer_care.live_chat') }}" class="btn">Start Chat</a>
+            </div>
+        </div>
+
+        <div class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <p class="faq-question">How can I track my order?</p>
+                <p>You can track your order by logging into your account and visiting the order history section.</p>
+            </div>
+            <div class="faq-item">
+                <p class="faq-question">What is your return policy?</p>
+                <p>We offer a 30-day return policy for all unused items in their original packaging.</p>
+            </div>
+            <div class="faq-item">
+                <p class="faq-question">How long does shipping take?</p>
+                <p>Standard shipping typically takes 3-5 business days within the continental US.</p>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .contact-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .contact-card {
+            background-color: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .contact-card i {
+            font-size: 2.5rem;
+            color: #3498db;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .faq-section {
+            margin-top: 4rem;
+        }
+
+        .faq-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .faq-question {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+{% endblock %}

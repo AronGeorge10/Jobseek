@@ -1,9 +1,13 @@
-from flask import Blueprint, request, render_template, redirect, url_for, flash
+from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
 from pymongo import MongoClient
 import os
 from bson import ObjectId
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, validators
+from flask_bcrypt import Bcrypt  # Import Bcrypt directly
+from datetime import datetime
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -17,6 +21,9 @@ collection_jobs = db.tbl_jobs
 collection_applications = db.tbl_job_applications
 collection_notifications = db.tbl_notifications
 collection_industries = db.tbl_industries
+
+# Create a new Bcrypt instance
+bcrypt = Bcrypt()
 
 def admin_check():
     if not current_user.is_authenticated or current_user.user_type != 'admin':
@@ -41,6 +48,7 @@ def dashboard():
 @admin_bp.route('/job_listings')
 @login_required
 def job_listings():
+    
     admin_check()
     
     # Fetch all job listings from the database
@@ -242,5 +250,77 @@ def add_industry():
     industries = list(collection_industries.find())
     
     return render_template('admin/add_industry.html', industries=industries)
+
+class CustomerCareRegistrationForm(FlaskForm):
+    full_name = StringField('Full Name', [validators.Length(min=4, max=50)])
+    email = StringField('Email', [validators.Email()])
+    password = PasswordField('Password', [
+        validators.DataRequired(),
+        validators.Length(min=6),
+        validators.EqualTo('confirm_password', message='Passwords must match')
+    ])
+    confirm_password = PasswordField('Confirm Password')
+    phone = StringField('Phone Number', [validators.Length(min=10, max=15)])
+
+@admin_bp.route('/check-customer-care-email', methods=['POST'])
+@login_required
+def check_customer_care_email():
+    email = request.form.get('email')
+    existing_user = collection_login_credentials.find_one({"email": email})
+    return jsonify(exists=bool(existing_user))
+
+@admin_bp.route('/register-customer-care', methods=['GET', 'POST'])
+@login_required
+def register_customer_care():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        # Debug print
+        print(f"Received registration request for email: {email}")
+        
+        # Server-side validation
+        if not email or not password:
+            flash('All fields are required', 'error')
+            return redirect(url_for('admin.register_customer_care'))
+            
+        # Check if email already exists
+        existing_user = collection_login_credentials.find_one({"email": email})
+        if existing_user:
+            flash('Email already registered', 'error')
+            return redirect(url_for('admin.register_customer_care'))
+            
+        try:
+            # Use bcrypt for password hashing
+            hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+            new_user = {
+                'email': email,
+                'password': hashed_password,
+                'user_type': 'customer_care',
+                'created_at': datetime.utcnow(),
+                'is_active': True
+            }
+            
+            # Debug print
+            print(f"Attempting to insert user: {new_user}")
+            
+            result = collection_login_credentials.insert_one(new_user)
+            
+            # Debug print
+            print(f"Insert result: {result.inserted_id}")
+            
+            if result.inserted_id:
+                flash('Customer Care user registered successfully!', 'success')
+                return redirect(url_for('admin.dashboard'))
+            else:
+                flash('Error registering user: Database insert failed', 'error')
+                return redirect(url_for('admin.register_customer_care'))
+            
+        except Exception as e:
+            print(f"Error during registration: {str(e)}")  # Debug print
+            flash(f'Error registering user: {str(e)}', 'error')
+            return redirect(url_for('admin.register_customer_care'))
+    
+    return render_template('admin/register_customer_care.html')
 
 # Add more admin routes as needed

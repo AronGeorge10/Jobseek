@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Resume Template - JobConnect</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --background-color: #f5f6fa;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .template-card {
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .template-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .template-card.selected {
+            border: 3px solid var(--secondary-color);
+        }
+
+        .template-preview {
+            height: 300px;
+            background-size: cover;
+            background-position: top center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .template-info {
+            padding: 1.5rem;
+        }
+
+        .template-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .template-description {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .template-tags {
+            margin-top: 1rem;
+        }
+
+        .tag {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .header-section {
+            background-color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-continue {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-continue:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-continue:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-section">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-3">Choose Your Resume Template</h2>
+                <p class="text-muted">Select a template that best represents your professional style</p>
+            </div>
+            <button id="continueBtn" class="btn btn-continue" disabled>
+                Continue with Selected Template
+                <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="row g-4">
+            <!-- Template 1 -->
+            <div class="col-md-4">
+                <div class="template-card card" data-template="modern">
+                    <div class="template-preview" style="background-image: url('{{ url_for('static', filename='webpage/img/cv-distinct.png') }}')"></div>
+                    <div class="template-info">
+                        <h5 class="template-title">Modern Professional</h5>
+                        <p class="template-description">Clean and contemporary design with a focus on readability and visual hierarchy.</p>
+                        <div class="template-tags">
+                            <span class="tag">Modern</span>
+                            <span class="tag">Professional</span>
+                            <span class="tag">Clean</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Template 2 -->
+            <div class="col-md-4">
+                <div class="template-card card" data-template="creative">
+                    <div class="template-preview" style="background-image: url('{{ url_for('static', filename='webpage/img/cv-bold.png') }}')"></div>
+                    <div class="template-info">
+                        <h5 class="template-title">Creative Portfolio</h5>
+                        <p class="template-description">Bold and creative design perfect for showcasing your portfolio and achievements.</p>
+                        <div class="template-tags">
+                            <span class="tag">Creative</span>
+                            <span class="tag">Portfolio</span>
+                            <span class="tag">Bold</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Template 3 -->
+            <div class="col-md-4">
+                <div class="template-card card" data-template="minimal">
+                    <div class="template-preview" style="background-image: url('{{ url_for('static', filename='webpage/img/cv-ats.png') }}')"></div>
+                    <div class="template-info">
+                        <h5 class="template-title">ATS Friendly</h5>
+                        <p class="template-description">Minimalist design focusing on content with elegant typography.</p>
+                        <div class="template-tags">
+                            <span class="tag">Minimal</span>
+                            <span class="tag">Classic</span>
+                            <span class="tag">Elegant</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const templates = document.querySelectorAll('.template-card');
+            const continueBtn = document.getElementById('continueBtn');
+            let selectedTemplate = null;
+
+            templates.forEach(template => {
+                template.addEventListener('click', function() {
+                    // Remove selected class from all templates
+                    templates.forEach(t => t.classList.remove('selected'));
+                    
+                    // Add selected class to clicked template
+                    this.classList.add('selected');
+                    
+                    // Enable continue button
+                    continueBtn.removeAttribute('disabled');
+                    
+                    // Store selected template
+                    selectedTemplate = this.dataset.template;
+                });
+            });
+
+            continueBtn.addEventListener('click', function() {
+                if (selectedTemplate) {
+                    // Redirect to resume maker with selected template
+                    window.location.href = `/seeker/resume-maker?template=${selectedTemplate}`;
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

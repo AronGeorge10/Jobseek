@@ -71,6 +71,7 @@
         <div class="sub-menu {{ 'show' if request.endpoint.startswith('admin.users') else '' }}">
             <a href="{{ url_for('admin.list_seekers') }}" class="{{ 'active' if request.endpoint == 'admin.users_seekers' else '' }}">Seekers</a>
             <a href="{{ url_for('admin.list_recruiters') }}" class="{{ 'active' if request.endpoint == 'admin.users_recruiters' else '' }}">Recruiters</a>
+            <a href="{{ url_for('admin.register_customer_care') }}" class="{{ 'active' if request.endpoint == 'admin.register_customer_care' else '' }}">Add Customer Care</a>
         </div>
         <a href="{{ url_for('admin.job_listings') }}" class="{{ 'active' if request.endpoint == 'admin.job_listings' else '' }}">Job Listings</a>
         <a href="{{ url_for('admin.add_industry') }}" class="{{ 'active' if request.endpoint == 'admin.add_industry' else '' }}">Add Industry</a>
@@ -78,7 +79,7 @@
         <a href="{{ url_for('logout') }}">Logout</a>
     </div>
     <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
