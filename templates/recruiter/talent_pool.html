@@ -479,6 +479,12 @@
     <!-- Custom JavaScript -->
     <script>
       document.addEventListener("DOMContentLoaded", function () {
+        // Reset all chat buttons on page load
+        document.querySelectorAll(".initiate-chat").forEach((button) => {
+          button.innerHTML = '<i class="fas fa-comment-dots me-1"></i> Chat';
+          button.disabled = false;
+        });
+
         // Save notes functionality
         document.querySelectorAll(".save-notes").forEach((button) => {
           button.addEventListener("click", async function () {
@@ -754,6 +760,19 @@
               button.disabled = false;
             }
           });
+        });
+
+        // Add this to handle browser back button navigation
+        window.addEventListener("pageshow", function (event) {
+          // Check if the page is loaded from cache (back/forward navigation)
+          if (event.persisted) {
+            // Reset all chat buttons
+            document.querySelectorAll(".initiate-chat").forEach((button) => {
+              button.innerHTML =
+                '<i class="fas fa-comment-dots me-1"></i> Chat';
+              button.disabled = false;
+            });
+          }
         });
       });
     </script>

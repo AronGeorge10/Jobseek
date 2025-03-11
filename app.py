@@ -21,6 +21,7 @@ from werkzeug.utils import secure_filename
 from base64 import b64encode
 from chatbot import JobPortalChatbot
 from blueprints.seeker.resume_maker import resume_maker_bp
+from blueprints.messages.routes import messages_bp
 
 app = Flask(__name__)
 # Register the blueprint
@@ -29,6 +30,7 @@ app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(recruiter_bp, url_prefix='/recruiter')
 app.register_blueprint(resume_maker_bp, url_prefix='/seeker')
 app.register_blueprint(customer_care_bp, url_prefix='/customer_care')
+app.register_blueprint(messages_bp, url_prefix='/messages')
 
 
 app.secret_key = os.urandom(24)  # Required for flashing messages

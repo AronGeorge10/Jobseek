@@ -1446,6 +1446,10 @@ def initiate_chat(seeker_id):
         
         current_app.logger.info(f"Found seeker user_id: {seeker_user_id}")
         
+        # Get recruiter information
+        recruiter_info = collection_recruiter_registration.find_one({'user_id': ObjectId(current_user.id)})
+        recruiter_name = recruiter_info.get('company_name', 'Recruiter') if recruiter_info else 'Recruiter'
+        
         # Check if a conversation already exists
         existing_conversation = collection_conversations.find_one({
             '$or': [
@@ -1477,7 +1481,7 @@ def initiate_chat(seeker_id):
             notification_data = {
                 'user_id': ObjectId(seeker_user_id),
                 'type': 'chat',
-                'message': f'Recruiter {current_user.name} has started a conversation with you',
+                'message': f'Recruiter {recruiter_name} has started a conversation with you',
                 'is_read': False,
                 'created_at': datetime.now()
             }

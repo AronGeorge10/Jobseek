@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conversation with {{ other_user.name }} | JobSeek</title>
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #1a4731;
+        --secondary-color: #2ecc71;
+        --accent-color: #27ae60;
+        --light-bg: #f4f8f6;
+        --text-color: #2c3e50;
+        --border-color: #e2e8f0;
+      }
+
+      body {
+        background-color: var(--light-bg);
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        color: var(--text-color);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .navbar {
+        background-color: var(--primary-color);
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .navbar-brand {
+        color: white !important;
+        font-weight: 600;
+        font-size: 1.5rem;
+      }
+
+      .nav-link {
+        color: rgba(255, 255, 255, 0.8) !important;
+        transition: color 0.3s ease;
+      }
+
+      .nav-link:hover {
+        color: white !important;
+      }
+
+      .chat-container {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        height: calc(100vh - 180px);
+      }
+
+      .chat-header {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        background-color: white;
+      }
+
+      .profile-img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: #e9ecef;
+      }
+
+      .chat-messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .message {
+        max-width: 75%;
+        padding: 0.75rem 1rem;
+        border-radius: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+      }
+
+      .message-self {
+        align-self: flex-end;
+        background-color: var(--accent-color);
+        color: white;
+        border-bottom-right-radius: 0.25rem;
+      }
+
+      .message-other {
+        align-self: flex-start;
+        background-color: #f1f1f1;
+        border-bottom-left-radius: 0.25rem;
+      }
+
+      .message-time {
+        font-size: 0.7rem;
+        margin-top: 0.25rem;
+        opacity: 0.7;
+        text-align: right;
+      }
+
+      .chat-input {
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+        background-color: white;
+      }
+
+      .form-control:focus {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 0.25rem rgba(46, 204, 113, 0.25);
+      }
+
+      .btn-send {
+        background-color: var(--accent-color);
+        color: white;
+        border: none;
+      }
+
+      .btn-send:hover {
+        background-color: var(--primary-color);
+      }
+
+      .empty-chat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6c757d;
+      }
+
+      .empty-chat i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #adb5bd;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">JobSeek</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('index') }}">
+                <i class="fas fa-home me-1"></i> Home
+              </a>
+            </li>
+            {% if current_user.user_type == 'recruiter' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('recruiter.network') }}">
+                <i class="fas fa-users me-1"></i> Network
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="{{ url_for('recruiter.view_talent_pool') }}"
+              >
+                <i class="fas fa-star me-1"></i> Talent Pool
+              </a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+              <a
+                class="nav-link active"
+                href="{{ url_for('messages.messages_list') }}"
+              >
+                <i class="fas fa-envelope me-1"></i> Messages
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <a
+              href="{{ url_for('messages.messages_list') }}"
+              class="btn btn-outline-secondary btn-sm"
+            >
+              <i class="fas fa-arrow-left me-1"></i> Back to Messages
+            </a>
+          </div>
+
+          <div class="chat-container">
+            <!-- Chat Header -->
+            <div class="chat-header">
+              <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                  {% if other_user.profile_pic %}
+                  <img
+                    src="{{ other_user.profile_pic }}"
+                    alt="Profile"
+                    class="profile-img"
+                  />
+                  {% else %}
+                  <div
+                    class="profile-img d-flex align-items-center justify-content-center bg-light"
+                  >
+                    <i class="fas fa-user text-secondary"></i>
+                  </div>
+                  {% endif %}
+                </div>
+                <div class="flex-grow-1 ms-3">
+                  <h5 class="mb-0">{{ other_user.name }}</h5>
+                  <small class="text-muted">
+                    {% if other_user.user_type == 'recruiter' %} Recruiter {%
+                    else %} Job Seeker {% endif %}
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="messageContainer">
+              {% if messages %} {% for message in messages %}
+              <div
+                class="message {% if message.is_self %}message-self{% else %}message-other{% endif %}"
+              >
+                {{ message.content }}
+                <div class="message-time">{{ message.timestamp }}</div>
+              </div>
+              {% endfor %} {% else %}
+              <div class="empty-chat">
+                <i class="fas fa-comments"></i>
+                <h4>No messages yet</h4>
+                <p>Start the conversation by sending a message</p>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input">
+              <form id="messageForm">
+                <div class="input-group">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="messageInput"
+                    placeholder="Type your message..."
+                    required
+                  />
+                  <button class="btn btn-send" type="submit">
+                    <i class="fas fa-paper-plane"></i>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const messageContainer = document.getElementById("messageContainer");
+        const messageForm = document.getElementById("messageForm");
+        const messageInput = document.getElementById("messageInput");
+
+        // Scroll to bottom of messages
+        function scrollToBottom() {
+          messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+
+        // Scroll to bottom on page load
+        scrollToBottom();
+
+        // Handle message submission
+        messageForm.addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const message = messageInput.value.trim();
+          if (!message) return;
+
+          try {
+            const formData = new FormData();
+            formData.append("message", message);
+
+            const response = await fetch(
+              '{{ url_for("messages.send_message", conversation_id=conversation_id) }}',
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+              // Clear input
+              messageInput.value = "";
+
+              // Add message to UI
+              const messageElement = document.createElement("div");
+              messageElement.className = "message message-self";
+              messageElement.innerHTML = `
+                            ${message}
+                            <div class="message-time">${data.timestamp}</div>
+                        `;
+
+              // Remove empty state if it exists
+              const emptyChat = messageContainer.querySelector(".empty-chat");
+              if (emptyChat) {
+                emptyChat.remove();
+              }
+
+              // Add message to container
+              messageContainer.appendChild(messageElement);
+
+              // Scroll to bottom
+              scrollToBottom();
+            } else {
+              console.error("Failed to send message:", data.message);
+            }
+          } catch (error) {
+            console.error("Error sending message:", error);
+          }
+        });
+
+        // Focus input on page load
+        messageInput.focus();
+      });
+    </script>
+  </body>
+</html>
