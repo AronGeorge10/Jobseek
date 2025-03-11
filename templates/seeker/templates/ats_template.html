@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ resume.personal_info.name }} - Resume</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .name {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .contact-info {
+        margin-bottom: 20px;
+      }
+
+      .section {
+        margin-bottom: 25px;
+      }
+
+      .section-title {
+        font-size: 18px;
+        font-weight: bold;
+        border-bottom: 2px solid #333;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+      }
+
+      .entry {
+        margin-bottom: 15px;
+      }
+
+      .entry-title {
+        font-weight: bold;
+      }
+
+      .entry-subtitle {
+        color: #666;
+      }
+
+      .entry-date {
+        float: right;
+        color: #666;
+      }
+
+      .skills-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .skill {
+        background-color: #f0f0f0;
+        padding: 5px 10px;
+        border-radius: 3px;
+        white-space: nowrap;
+        display: inline-block;
+      }
+
+      @media print {
+        body {
+          margin: 0;
+          padding: 20px;
+        }
+
+        .no-print {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="name">{{ resume.personal_info.name }}</div>
+      <div class="contact-info">
+        {{ resume.personal_info.email }} | {{ resume.personal_info.phone }} {%
+        if resume.personal_info.location %}| {{ resume.personal_info.location
+        }}{% endif %}
+      </div>
+    </div>
+
+    {% if resume.professional_summary %}
+    <div class="section">
+      <div class="section-title">PROFESSIONAL SUMMARY</div>
+      <p>{{ resume.professional_summary }}</p>
+    </div>
+    {% endif %} {% if resume.work_experience %}
+    <div class="section">
+      <div class="section-title">WORK EXPERIENCE</div>
+      {% for exp in resume.work_experience %}
+      <div class="entry">
+        <div class="entry-title">{{ exp.title }}</div>
+        <div class="entry-subtitle">
+          {{ exp.company }}
+          <span class="entry-date"
+            >{{ exp.start_date }} - {{ exp.end_date or 'Present' }}</span
+          >
+        </div>
+        <p>{{ exp.responsibilities }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% if resume.education %}
+    <div class="section">
+      <div class="section-title">EDUCATION</div>
+      {% for edu in resume.education %}
+      <div class="entry">
+        <div class="entry-title">{{ edu.degree }}</div>
+        <div class="entry-subtitle">
+          {{ edu.institution }}
+          <span class="entry-date"
+            >{{ edu.start_date }} - {{ edu.end_date or 'Present' }}</span
+          >
+        </div>
+        {% if edu.description %}
+        <p>{{ edu.description }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% if resume.skills %}
+    <div class="section">
+      <div class="section-title">SKILLS</div>
+      {% if resume.skills.technical %}
+      <div class="entry">
+        <div class="entry-title">Technical Skills</div>
+        <div class="skills-list">
+          {% for skill in resume.skills.technical %}
+          <div class="skill">{{ skill }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %} {% if resume.skills.soft %}
+      <div class="entry">
+        <div class="entry-title">Soft Skills</div>
+        <div class="skills-list">
+          {% for skill in resume.skills.soft %}
+          <div class="skill">{{ skill }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %} {% if resume.skills.tools %}
+      <div class="entry">
+        <div class="entry-title">Technologies & Tools</div>
+        <div class="skills-list">
+          {% for tool in resume.skills.tools %}
+          <div class="skill">{{ tool }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %} {% if resume.projects %}
+    <div class="section">
+      <div class="section-title">PROJECTS</div>
+      {% for project in resume.projects %}
+      <div class="entry">
+        <div class="entry-title">{{ project.name }}</div>
+        <div class="entry-subtitle">{{ project.technologies }}</div>
+        <p>{{ project.description }}</p>
+        {% if project.url %}<a href="{{ project.url }}" target="_blank"
+          >{{ project.url }}</a
+        >{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% if resume.achievements %}
+    <div class="section">
+      <div class="section-title">ACHIEVEMENTS</div>
+      {% for achievement in resume.achievements %}
+      <div class="entry">
+        <div class="entry-title">{{ achievement.title }}</div>
+        <div class="entry-date">{{ achievement.date }}</div>
+        <p>{{ achievement.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% if resume.languages %}
+    <div class="section">
+      <div class="section-title">LANGUAGES</div>
+      <div class="skills-list">
+        {% for lang in resume.languages %}
+        <span class="skill">{{ lang.language }} ({{ lang.proficiency }})</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="no-print" style="text-align: center; margin-top: 30px">
+      <button
+        onclick="window.print()"
+        style="padding: 10px 20px; cursor: pointer"
+      >
+        Print Resume
+      </button>
+    </div>
+  </body>
+</html>

@@ -30,6 +30,7 @@ app.register_blueprint(recruiter_bp, url_prefix='/recruiter')
 app.register_blueprint(resume_maker_bp, url_prefix='/seeker')
 app.register_blueprint(customer_care_bp, url_prefix='/customer_care')
 
+
 app.secret_key = os.urandom(24)  # Required for flashing messages
 
 # MongoDB connection URI

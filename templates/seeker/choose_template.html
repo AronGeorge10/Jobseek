@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Choose Resume Template</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      .template-container {
+        padding: 30px 0;
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+      }
+
+      .template-card {
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-bottom: 20px;
+        background-color: white;
+      }
+
+      .template-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        border-color: #0d6efd;
+      }
+
+      .template-card.selected {
+        border-color: #198754;
+        box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.3);
+      }
+
+      .template-image {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      .template-info {
+        padding: 15px;
+        text-align: center;
+      }
+
+      .template-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #212529;
+      }
+
+      .template-description {
+        color: #6c757d;
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .page-title {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .page-title h1 {
+        font-size: 2rem;
+        color: #212529;
+        margin-bottom: 10px;
+      }
+
+      .page-title p {
+        color: #6c757d;
+        font-size: 1rem;
+      }
+
+      .action-buttons {
+        text-align: center;
+        margin-top: 30px;
+      }
+
+      .btn-continue {
+        padding: 10px 25px;
+        font-size: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="template-container">
+      <div class="container">
+        <div class="page-title">
+          <h1>Choose Your Resume Template</h1>
+          <p>Select a template that best represents your professional style</p>
+        </div>
+
+        <div class="row">
+          <!-- ATS Template -->
+          <div class="col-md-4">
+            <div class="template-card" data-template="ats">
+              <img
+                src="{{ url_for('static', filename='webpage/img/cv-ats.png') }}"
+                alt="ATS Template"
+                class="template-image"
+              />
+              <div class="template-info">
+                <div class="template-name">ATS-Friendly Template</div>
+                <div class="template-description">
+                  Optimized for Applicant Tracking Systems. Clean and
+                  professional layout.
+                </div>
+                <button
+                  class="btn btn-outline-primary select-template"
+                  data-template="ats"
+                >
+                  Select Template
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bold Template -->
+          <div class="col-md-4">
+            <div class="template-card" data-template="bold">
+              <img
+                src="{{ url_for('static', filename='webpage/img/cv-bold.png') }}"
+                alt="Bold Template"
+                class="template-image"
+              />
+              <div class="template-info">
+                <div class="template-name">Bold & Modern</div>
+                <div class="template-description">
+                  Stand out with a bold design. Perfect for creative
+                  professionals.
+                </div>
+                <button
+                  class="btn btn-outline-primary select-template"
+                  data-template="bold"
+                >
+                  Select Template
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Distinct Template -->
+          <div class="col-md-4">
+            <div class="template-card" data-template="distinct">
+              <img
+                src="{{ url_for('static', filename='webpage/img/cv-distinct.png') }}"
+                alt="Distinct Template"
+                class="template-image"
+              />
+              <div class="template-info">
+                <div class="template-name">Distinct Style</div>
+                <div class="template-description">
+                  Unique and professional. Balanced design with modern elements.
+                </div>
+                <button
+                  class="btn btn-outline-primary select-template"
+                  data-template="distinct"
+                >
+                  Select Template
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button
+            class="btn btn-success btn-continue"
+            id="continueBtn"
+            disabled
+          >
+            Generate
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        let selectedTemplate = null;
+        const continueBtn = document.getElementById("continueBtn");
+
+        // Handle template selection
+        document.querySelectorAll(".select-template").forEach((button) => {
+          button.addEventListener("click", function () {
+            // Remove selected class from all cards
+            document.querySelectorAll(".template-card").forEach((card) => {
+              card.classList.remove("selected");
+            });
+            // Reset all buttons
+            document.querySelectorAll(".select-template").forEach((btn) => {
+              btn.classList.remove("btn-primary");
+              btn.classList.add("btn-outline-primary");
+              btn.textContent = "Select Template";
+            });
+
+            // Update selected template
+            selectedTemplate = this.dataset.template;
+
+            // Update selected card and button
+            const card = this.closest(".template-card");
+            card.classList.add("selected");
+            this.classList.remove("btn-outline-primary");
+            this.classList.add("btn-primary");
+            this.textContent = "Selected";
+
+            // Enable continue button
+            continueBtn.disabled = false;
+          });
+        });
+
+        // Handle generate button click
+        continueBtn.addEventListener("click", function () {
+          if (selectedTemplate) {
+            // Store selected template in session storage
+            sessionStorage.setItem("selectedTemplate", selectedTemplate);
+            // Redirect to the selected template's page
+            window.location.href = `/seeker/generate-resume/${selectedTemplate}`;
+          }
+        });
+      });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

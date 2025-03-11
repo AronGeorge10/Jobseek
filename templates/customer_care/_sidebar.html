@@ -1,109 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Customer Care Dashboard</title>
     <!-- Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
     <!-- Custom CSS -->
     <style>
-        body {
-            display: flex;
-            min-height: 100vh;
-            flex-direction: column;
-        }
+      body {
+        display: flex;
+        min-height: 100vh;
+        flex-direction: column;
+      }
 
-        .content {
-            flex: 1;
-        }
+      .content {
+        flex: 1;
+      }
 
-        .sidebar {
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            background-color: #343a40;
-            padding-top: 20px;
-        }
+      .sidebar {
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 250px;
+        background-color: #343a40;
+        padding-top: 20px;
+      }
 
-        .sidebar a {
-            color: white;
-            padding: 15px;
-            text-decoration: none;
-            display: block;
-        }
+      .sidebar a {
+        color: white;
+        padding: 15px;
+        text-decoration: none;
+        display: block;
+      }
 
-        .sidebar a i {
-            margin-right: 10px;
-            width: 20px;
-        }
+      .sidebar a i {
+        margin-right: 10px;
+        width: 20px;
+      }
 
-        .sidebar a:hover {
-            background-color: #007bff;
-        }
+      .sidebar a:hover {
+        background-color: #007bff;
+      }
 
-        .sidebar a.active {
-            background-color: #007bff;
-        }
+      .sidebar a.active {
+        background-color: #007bff;
+      }
 
-        .main {
-            margin-left: 250px;
-            padding: 20px;
-        }
+      .main {
+        margin-left: 250px;
+        padding: 20px;
+      }
 
-        .sidebar .sub-menu {
-            display: none;
-            padding-left: 20px;
-        }
+      .sidebar .sub-menu {
+        display: none;
+        padding-left: 20px;
+      }
 
-        .sidebar .sub-menu.show {
-            display: block;
-        }
+      .sidebar .sub-menu.show {
+        display: block;
+      }
 
-        .sidebar .sub-menu a {
-            padding: 10px 15px;
-        }
+      .sidebar .sub-menu a {
+        padding: 10px 15px;
+      }
     </style>
-</head>
+    <script>
+      // Prevent going back after logout
+      (function () {
+        if (window.history && window.history.pushState) {
+          window.history.pushState("forward", null, window.location.href);
+          window.onpopstate = function () {
+            window.history.pushState("forward", null, window.location.href);
+          };
+        }
+      })();
 
-<body>
+      // Disable caching for the page
+      window.onload = function () {
+        if (typeof window.history.pushState == "function") {
+          window.history.pushState({}, "Hide", window.location.href);
+        }
+      };
+      window.onunload = function () {}; // Clear the cache when the user leaves the page
+
+      // Additional security: Check login status
+      function checkLoginStatus() {
+        fetch("/check-login-status")
+          .then((response) => {
+            if (!response.ok) {
+              window.location.href = "/login";
+            }
+          })
+          .catch(() => {
+            window.location.href = "/login";
+          });
+      }
+
+      // Check login status periodically
+      setInterval(checkLoginStatus, 60000); // Check every minute
+    </script>
+  </head>
+
+  <body>
     <div class="sidebar">
-        <a href="{{ url_for('customer_care.dashboard') }}" class="{{ 'active' if request.endpoint == 'customer_care.support_landing' else '' }}">
-            <i class="fas fa-home"></i>Dashboard
-        </a>
-        
-        <a href="{{ url_for('customer_care.ticket_list') }}" class="{{ 'active' if request.endpoint == 'customer_care.ticket_list' else '' }}">
-            <i class="fas fa-ticket-alt"></i>Support Tickets
-        </a>
-        
-        <a href="#" class="{{ 'active' if request.endpoint.startswith('customer_care.contact') else '' }}">
-            <i class="fas fa-envelope"></i>Contact Management
-        </a>
-        <div class="sub-menu {{ 'show' if request.endpoint.startswith('customer_care.contact') else '' }}">
-            <a href="{{ url_for('customer_care.contact') }}" class="{{ 'active' if request.endpoint == 'customer_care.contact' else '' }}">
-                <i class="fas fa-paper-plane"></i>Contact Form
-            </a>
-            <a href="{{ url_for('customer_care.live_chat') }}" class="{{ 'active' if request.endpoint == 'customer_care.live_chat' else '' }}">
-                <i class="fas fa-comments"></i>Live Chat
-            </a>
-        </div>
+      <a
+        href="{{ url_for('customer_care.dashboard') }}"
+        class="{{ 'active' if request.endpoint == 'customer_care.support_landing' else '' }}"
+      >
+        <i class="fas fa-home"></i>Dashboard
+      </a>
 
-        <a href="{{ url_for('customer_care.faq') }}" class="{{ 'active' if request.endpoint == 'customer_care.faq' else '' }}">
-            <i class="fas fa-question-circle"></i>FAQ Management
-        </a>
+      <a
+        href="{{ url_for('customer_care.ticket_list') }}"
+        class="{{ 'active' if request.endpoint == 'customer_care.ticket_list' else '' }}"
+      >
+        <i class="fas fa-ticket-alt"></i>Support Tickets
+      </a>
 
-        <a href="{{ url_for('customer_care.create_ticket') }}" class="{{ 'active' if request.endpoint == 'customer_care.create_ticket' else '' }}">
-            <i class="fas fa-plus-circle"></i>Create Ticket
+      <a
+        href="#"
+        class="{{ 'active' if request.endpoint.startswith('customer_care.contact') else '' }}"
+      >
+        <i class="fas fa-envelope"></i>Contact Management
+      </a>
+      <div
+        class="sub-menu {{ 'show' if request.endpoint.startswith('customer_care.contact') else '' }}"
+      >
+        <a
+          href="{{ url_for('customer_care.contact') }}"
+          class="{{ 'active' if request.endpoint == 'customer_care.contact' else '' }}"
+        >
+          <i class="fas fa-paper-plane"></i>Contact Form
         </a>
+        <a
+          href="{{ url_for('customer_care.live_chat') }}"
+          class="{{ 'active' if request.endpoint == 'customer_care.live_chat' else '' }}"
+        >
+          <i class="fas fa-comments"></i>Live Chat
+        </a>
+      </div>
 
-        <a href="{{ url_for('logout') }}">
-            <i class="fas fa-sign-out-alt"></i>Logout
-        </a>
+      <a
+        href="{{ url_for('customer_care.faq') }}"
+        class="{{ 'active' if request.endpoint == 'customer_care.faq' else '' }}"
+      >
+        <i class="fas fa-question-circle"></i>FAQ Management
+      </a>
+
+      <a
+        href="{{ url_for('customer_care.create_ticket') }}"
+        class="{{ 'active' if request.endpoint == 'customer_care.create_ticket' else '' }}"
+      >
+        <i class="fas fa-plus-circle"></i>Create Ticket
+      </a>
+
+      <a href="{{ url_for('logout') }}">
+        <i class="fas fa-sign-out-alt"></i>Logout
+      </a>
     </div>
 
     <!-- Bootstrap JS and dependencies -->
@@ -111,13 +174,14 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        document.querySelectorAll('.sidebar a[href="#"]').forEach(function(element) {
-            element.addEventListener('click', function(e) {
-                e.preventDefault();
-                this.nextElementSibling.classList.toggle('show');
-            });
+      document
+        .querySelectorAll('.sidebar a[href="#"]')
+        .forEach(function (element) {
+          element.addEventListener("click", function (e) {
+            e.preventDefault();
+            this.nextElementSibling.classList.toggle("show");
+          });
         });
     </script>
-</body>
-
-</html> 
+  </body>
+</html>

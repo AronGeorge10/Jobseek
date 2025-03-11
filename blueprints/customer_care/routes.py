@@ -22,7 +22,23 @@ collection_industries = db.tbl_industries
 @customer_care_bp.route('/dashboard', methods=['GET'])
 def dashboard():
     """Landing page for customer support dashboard"""
-    return render_template('customer_care/dashboard.html')
+    try:
+        # Fetch FAQs from database and sort by category
+        faqs = list(db.tbl_faq.find().sort([("category", 1), ("created_at", -1)]))
+        print("Fetched FAQs:", faqs)  # Debug print 
+        
+        # Convert ObjectId to string for each FAQ
+        for faq in faqs:
+            faq['_id'] = str(faq['_id'])
+        
+        print("Number of FAQs:", len(faqs))  # Debug print
+        print("Categories:", set(faq['category'] for faq in faqs))  # Debug print
+            
+    except Exception as e:
+        print(f"Error fetching FAQs: {str(e)}")
+        faqs = []
+    
+    return render_template('customer_care/dashboard.html', faqs=faqs)
 
 @customer_care_bp.route('/tickets', methods=['GET'])
 @login_required

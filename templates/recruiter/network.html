@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talent Pool | Find Top Talent</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #1a4731;     /* Darker green */
+            --secondary-color: #2ecc71;    /* Bright green */
+            --accent-color: #27ae60;       /* Medium green */
+            --light-bg: #f4f8f6;           /* Light greenish background */
+            --text-color: #2c3e50;         /* Dark text color */
+            --border-color: #e2e8f0;       /* Light border color */
+        }
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--text-color);
+        }
+
+        .navbar {
+            background-color: var(--primary-color);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: white !important;
+        }
+
+        .search-section {
+            position: relative;
+            overflow: hidden;  /* Contains the glow effect */
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .search-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;  /* Start outside the container */
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            animation: scanning 3s linear infinite;
+        }
+
+        @keyframes scanning {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 200%;  /* Move past the container */
+            }
+        }
+
+        /* Make form elements stand out against the animation */
+        .search-section .input-group {
+            position: relative;
+            z-index: 1;  /* Ensure forms stay above the glow */
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: white;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 20px rgba(46, 204, 113, 0.15);
+        }
+
+        .profile-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border: 3px solid var(--border-color);
+        }
+
+        .badge {
+            font-size: 0.8rem;
+            padding: 0.5em 1em;
+            margin: 0.2rem;
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            transition: all 0.3s ease;
+        }
+
+        .badge:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-network {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-network:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2);
+        }
+
+        .btn-network:disabled {
+            background-color: #95a5a6;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .input-group-text {
+            background-color: white;
+            border-right: none;
+            color: var(--accent-color);
+        }
+
+        .form-control {
+            border-left: none;
+            border-color: var(--border-color);
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-color);
+            box-shadow: none;
+        }
+
+        .btn-light {
+            background-color: white;
+            border-color: var(--border-color);
+            color: var(--accent-color);
+            transition: all 0.3s ease;
+        }
+
+        .btn-light:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .card-title {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .text-muted {
+            color: #6c757d !important;
+        }
+
+        /* Add subtle animation for loading states */
+        .btn-network.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .btn-network.loading:after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin: -8px 0 0 -8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s infinite linear;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('recruiter.recruiter_index') }}">
+                <i class="fas fa-briefcase me-2"></i>JobSeek
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('recruiter.recruiter_index') }}">
+                            <i class="fas fa-home me-1"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('recruiter.view_talent_pool') }}">
+                            <i class="fas fa-star me-1"></i> My Talent Pool
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="container">
+            <h2 class="mb-4"><i class="fas fa-search me-2"></i>Find Top Talent</h2>
+            <form method="GET" action="{{ url_for('recruiter.network') }}" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-code"></i></span>
+                        <input type="text" class="form-control" name="skills" placeholder="Search by skills..." value="{{ request.args.get('skills', '') }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
+                        <select class="form-control" name="experience">
+                            <option value="">Experience Level</option>
+                            <option value="0-2" {% if request.args.get('experience') == '0-2' %}selected{% endif %}>0-2 years</option>
+                            <option value="2-5" {% if request.args.get('experience') == '2-5' %}selected{% endif %}>2-5 years</option>
+                            <option value="5+" {% if request.args.get('experience') == '5+' %}selected{% endif %}>5+ years</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                        <input type="text" class="form-control" name="location" placeholder="Location..." value="{{ request.args.get('location', '') }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-light w-100">
+                        <i class="fas fa-search me-1"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Talent List -->
+    <div class="container mb-5">
+        <div class="row">
+            {% for seeker in seekers %}
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="{{ url_for('static', filename=seeker.profile_photo or 'webpage/img/profile.png') }}" 
+                                 class="profile-img rounded-circle me-3" 
+                                 alt="{{ seeker.full_name }}">
+                            <div>
+                                <h5 class="card-title mb-1">{{ seeker.full_name }}</h5>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-briefcase me-1"></i>
+                                    {{ seeker.position or 'Professional' }}
+                                </p>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    {{ seeker.location or 'Location not specified' }}
+                                </p>
+                            </div>
+                        </div>
+                        <p class="card-text">{{ seeker.about }}</p>
+                        <div class="skills mb-3">
+                            {% for skill in seeker.technical_skills[:3] %}
+                            <span class="badge"><i class="fas fa-code me-1"></i>{{ skill }}</span>
+                            {% endfor %}
+                            {% for skill in seeker.soft_skills[:2] %}
+                            <span class="badge"><i class="fas fa-star me-1"></i>{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                        <button class="btn btn-network pool-btn {% if seeker.in_pool %}btn-secondary{% endif %}" 
+                                data-seeker-id="{{ seeker._id }}"
+                                {% if seeker.in_pool %}disabled{% endif %}>
+                            {% if seeker.in_pool %}
+                                ✓ Added to Pool
+                            {% else %}
+                                <i class="fas fa-plus-circle me-1"></i> Add to Pool
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Network Request Script -->
+    <script>
+        document.querySelectorAll('.pool-btn').forEach(button => {
+            button.addEventListener('click', async function() {
+                const seekerId = this.dataset.seekerId;
+                try {
+                    const response = await fetch('/recruiter/add-to-pool', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ seeker_id: seekerId })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.textContent = '✓ Added to Pool';
+                        this.disabled = true;
+                        this.classList.add('btn-secondary');
+                    } else {
+                        alert(data.message || 'Failed to add to pool');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while adding to pool');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

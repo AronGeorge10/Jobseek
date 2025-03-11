@@ -18,7 +18,7 @@ class JobPortalChatbot:
         genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
         
         # Initialize the model
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
         
         # Set up initial context
         self.context = """

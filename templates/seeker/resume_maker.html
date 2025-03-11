@@ -1,611 +1,1573 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Builder - JobSeek</title>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resume Builder - JobSeek</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <!-- Select2 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+      rel="stylesheet"
+    />
+    <!-- jQuery (required for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
-  <!-- Select2 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-  <!-- jQuery (required for Select2) -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <!-- Select2 JS -->
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+      .sidebar {
+        width: 300px;
+        position: fixed;
+        height: 100vh;
+        background: #f8f9fa;
+        padding: 2rem 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        padding-bottom: 20px;
+      }
 
-  <style>
-    .sidebar {
-      width: 300px;
-      position: fixed;
-      height: 100vh;
-      background: #f8f9fa;
-      padding: 2rem 0;
-    }
+      .resume-section {
+        display: none;
+      }
 
-    .resume-section {
-      display: none;
-    }
+      .resume-section.active {
+        display: block;
+      }
 
-    .resume-section.active {
-      display: block;
-    }
+      .progress-path {
+        position: relative;
+        padding-left: 3rem;
+      }
 
-    .progress-path {
-      position: relative;
-      padding-left: 3rem;
-    }
+      .progress-item {
+        position: relative;
+        padding: 1rem 0;
+        padding-left: 1.5rem;
+        cursor: pointer;
+        color: #6c757d;
+      }
 
-    .progress-item {
-      position: relative;
-      padding: 1rem 0;
-      padding-left: 1.5rem;
-      cursor: pointer;
-      color: #6c757d;
-    }
+      /* Vertical line */
+      .progress-path::before {
+        content: "";
+        position: absolute;
+        left: 2.35rem;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background: #dee2e6;
+      }
 
-    /* Vertical line */
-    .progress-path::before {
-      content: "";
-      position: absolute;
-      left: 2.35rem;
-      top: 0;
-      height: 100%;
-      width: 2px;
-      background: #dee2e6;
-    }
+      /* Circle */
+      .progress-item::before {
+        content: attr(data-step);
+        position: absolute;
+        left: -1.5rem;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+      }
 
-    /* Circle */
-    .progress-item::before {
-      content: attr(data-step);
-      position: absolute;
-      left: -1.5rem;
-      width: 2rem;
-      height: 2rem;
-      border-radius: 50%;
-      background: white;
-      border: 2px solid #dee2e6;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.875rem;
-      transition: all 0.3s ease;
-    }
+      /* Active state */
+      .progress-item.active {
+        color: #0d6efd;
+        font-weight: 500;
+      }
 
-    /* Active state */
-    .progress-item.active {
-      color: #0d6efd;
-      font-weight: 500;
-    }
+      .progress-item.active::before {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+      }
 
-    .progress-item.active::before {
-      background: #0d6efd;
-      border-color: #0d6efd;
-      color: white;
-    }
+      /* Completed state */
+      .progress-item.completed::before {
+        background: #198754;
+        border-color: #198754;
+        color: white;
+      }
 
-    /* Completed state */
-    .progress-item.completed::before {
-      background: #198754;
-      border-color: #198754;
-      color: white;
-    }
+      .main-content {
+        margin-left: 300px;
+        padding: 2rem;
+      }
 
-    .main-content {
-      margin-left: 300px;
-      padding: 2rem;
-    }
+      .navigation-buttons {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        display: flex;
+        gap: 1rem;
+        z-index: 1000;
+      }
 
-    .navigation-buttons {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      display: flex;
-      gap: 1rem;
-      z-index: 1000;
-    }
+      .btn {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+      }
 
-    .btn {
-      padding: 0.75rem 1.5rem;
-      font-weight: 500;
-    }
+      .iti {
+        width: 100%;
+      }
 
-    .iti {
-      width: 100%;
-    }
+      .select2-container {
+        width: 100% !important;
+      }
 
-    .select2-container {
-      width: 100% !important;
-    }
+      .navigation-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+      }
 
-    .navigation-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-    }
+      .toast {
+        background: white;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      }
 
-    .toast {
-      background: white;
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    }
-  </style>
-</head>
+      /* Add these new styles */
+      .education-entry,
+      .experience-entry,
+      .project-entry,
+      .language-entry,
+      .achievement-entry {
+        position: relative;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
 
-<body>
-  <!-- Left Sidebar -->
-  <div class="sidebar">
-    <div class="progress-path">
-      <div class="progress-item active" data-step="1">
-        Personal Information
-      </div>
-      <div class="progress-item" data-step="2">Professional Summary</div>
-      <div class="progress-item" data-step="3">Education</div>
-      <div class="progress-item" data-step="4">Skills</div>
-      <div class="progress-item" data-step="5">Work Experience</div>
-      <div class="progress-item" data-step="6">Projects</div>
-      <div class="progress-item" data-step="7">Languages</div>
-      <div class="progress-item" data-step="8">Achievements</div>
-    </div>
-  </div>
+      .education-entry:hover,
+      .experience-entry:hover,
+      .project-entry:hover,
+      .language-entry:hover,
+      .achievement-entry:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-color: #dee2e6;
+      }
 
-  <!-- Main Content -->
-  <div class="main-content">
-    <!-- Personal Information Section -->
-    <div class="resume-section active" id="section-1">
-      <h3 class="mb-4">Personal Information</h3>
-      <form>
-        <div class="row mb-3">
-          <div class="col-md-6">
-            <label class="form-label">Full Name</label>
-            <input type="text" class="form-control" required />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" required />
-          </div>
-        </div>
-        <div class="row mb-3">
-          <div class="col-md-6">
-            <label class="form-label">Position</label>
-            <input type="text" class="form-control" required />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">LinkedIn</label>
-            <input type="url" class="form-control" required />
-          </div>
-        </div>
-        <div class="row mb-3">
-          <div class="col-md-7">
-            <label class="form-label">Address</label>
-            <input type="text" class="form-control" required />
-          </div>
-          <div class="col-md-5">
-            <label class="form-label">Phone Number</label>
-            <input id="phone" type="tel" class="form-control" name="phone" required />
-          </div>
-        </div>
-        <!-- Add more personal info fields -->
-      </form>
-    </div>
+      /* Optional: Add a subtle left border accent */
+      .education-entry {
+        border-left: 4px solid #0d6efd;
+      }
 
-    <!-- Professional Summary Section -->
-    <div class="resume-section" id="section-2">
-      <h3 class="mb-4">Professional Summary</h3>
-      <form>
-        <div class="mb-3">
-          <label class="form-label">Summary</label>
-          <textarea class="form-control" rows="4"
-            placeholder="Write a compelling summary of your professional background, key achievements, and career goals"></textarea>
-        </div>
-      </form>
-    </div>
+      .experience-entry {
+        border-left: 4px solid #198754;
+      }
 
-    <!-- Education Section -->
-    <div class="resume-section" id="section-3">
-      <h3 class="mb-4">Education</h3>
-      <form>
-        <div class="education-entry mb-4">
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Degree/Certificate</label>
-              <input type="text" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Institution</label>
-              <select id="institution" class="form-control">
-                <option value="" disabled selected>Select a university</option>
-              </select>
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Start Date</label>
-              <input type="month" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">End Date</label>
-              <input type="month" class="form-control" required />
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Description</label>
-            <textarea class="form-control" rows="3"
-              placeholder="Describe your academic achievements, relevant coursework, etc."></textarea>
-          </div>
-        </div>
-        <button type="button" class="btn btn-outline-secondary btn-sm">
-          <i class="fas fa-plus"></i> Add Another Education
-        </button>
-      </form>
-    </div>
+      .project-entry {
+        border-left: 4px solid #6f42c1;
+      }
 
-    <!-- Skills Section -->
-    <div class="resume-section" id="section-4">
-      <h3 class="mb-4">Skills</h3>
-      <form>
-        <div class="mb-3">
-          <label class="form-label">Technical Skills</label>
-          <input type="text" class="form-control" placeholder="e.g., Python, JavaScript, React" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Soft Skills</label>
-          <input type="text" class="form-control" placeholder="e.g., Leadership, Communication, Problem Solving" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Tools & Technologies</label>
-          <input type="text" class="form-control" placeholder="e.g., Git, Docker, AWS" />
-        </div>
-      </form>
-    </div>
+      .language-entry {
+        border-left: 4px solid #fd7e14;
+      }
 
-    <!-- Work Experience Section -->
-    <div class="resume-section" id="section-5">
-      <h3 class="mb-4">Work Experience</h3>
-      <form>
-        <div class="experience-entry mb-4">
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Job Title</label>
-              <input type="text" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Company</label>
-              <input type="text" class="form-control" required />
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Start Date</label>
-              <input type="month" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">End Date</label>
-              <input type="month" class="form-control" />
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Responsibilities & Achievements</label>
-            <textarea class="form-control" rows="4"></textarea>
-          </div>
-        </div>
-        <button type="button" class="btn btn-outline-secondary btn-sm">
-          <i class="fas fa-plus"></i> Add Another Experience
-        </button>
-      </form>
-    </div>
+      .achievement-entry {
+        border-left: 4px solid #dc3545;
+      }
 
-    <!-- Projects Section -->
-    <div class="resume-section" id="section-6">
-      <h3 class="mb-4">Projects</h3>
-      <form>
-        <div class="project-entry mb-4">
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Project Name</label>
-              <input type="text" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Technologies Used</label>
-              <input type="text" class="form-control" required />
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Project Description</label>
-            <textarea class="form-control" rows="3"></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Project URL (if any)</label>
-            <input type="url" class="form-control" />
-          </div>
-        </div>
-        <button type="button" class="btn btn-outline-secondary btn-sm">
-          <i class="fas fa-plus"></i> Add Another Project
-        </button>
-      </form>
-    </div>
+      .finish-later-container {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
 
-    <!-- Languages Section -->
-    <div class="resume-section" id="section-7">
-      <h3 class="mb-4">Languages</h3>
-      <form>
-        <div class="language-entry mb-4">
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Language</label>
-              <input type="text" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Proficiency Level</label>
-              <select class="form-select">
-                <option>Native</option>
-                <option>Fluent</option>
-                <option>Advanced</option>
-                <option>Intermediate</option>
-                <option>Basic</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <button type="button" class="btn btn-outline-secondary btn-sm">
-          <i class="fas fa-plus"></i> Add Another Language
-        </button>
-      </form>
-    </div>
-
-    <!-- Achievements Section -->
-    <div class="resume-section" id="section-8">
-      <h3 class="mb-4">Achievements</h3>
-      <form>
-        <div class="achievement-entry mb-4">
-          <div class="mb-3">
-            <label class="form-label">Title</label>
-            <input type="text" class="form-control" required />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Description</label>
-            <textarea class="form-control" rows="3"></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Date</label>
-            <input type="month" class="form-control" />
-          </div>
-        </div>
-        <button type="button" class="btn btn-outline-secondary btn-sm">
-          <i class="fas fa-plus"></i> Add Another Achievement
-        </button>
-      </form>
-    </div>
-
-    <!-- Navigation Buttons -->
-    <div class="navigation-buttons mt-4">
-      <button class="btn btn-outline-primary" onclick="previousSection()" id="prevBtn">
-        <i class="fas fa-arrow-left me-2"></i>Previous
-      </button>
-      <button class="btn btn-success" onclick="saveProgress()" id="saveBtn">
-        <i class="fas fa-save me-2"></i>Save Progress
-      </button>
-      <button class="btn btn-primary" onclick="nextSection()" id="nextBtn">
-        Next<i class="fas fa-arrow-right ms-2"></i>
-      </button>
-    </div>
-  </div>
-
-  <script>
-    let currentSection = 1;
-    const totalSections = 8;
-
-    function updateProgress() {
-      document.querySelectorAll(".progress-item").forEach((item, index) => {
-        const step = index + 1;
-        item.classList.remove("active", "completed");
-        if (step === currentSection) {
-          item.classList.add("active");
-        } else if (step < currentSection) {
-          item.classList.add("completed");
+      @media (max-width: 768px) {
+        .sidebar {
+          min-height: auto;
         }
-      });
-    }
+      }
+    </style>
 
-    function showSection(sectionNumber) {
-      document.querySelectorAll(".resume-section").forEach((section) => {
-        section.classList.remove("active");
-      });
+    <script src="{{ url_for('static', filename='webpage/js/resume_validation.js') }}"></script>
+  </head>
+
+  <body>
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+      <div class="progress-path">
+        <div class="progress-item active" data-step="1">
+          Personal Information
+        </div>
+        <div class="progress-item" data-step="2">Professional Summary</div>
+        <div class="progress-item" data-step="3">Education</div>
+        <div class="progress-item" data-step="4">Skills</div>
+        <div class="progress-item" data-step="5">Work Experience</div>
+        <div class="progress-item" data-step="6">Projects</div>
+        <div class="progress-item" data-step="7">Languages</div>
+        <div class="progress-item" data-step="8">Achievements</div>
+      </div>
+
+      <div
+        class="finish-later-container"
+        style="margin-top: auto; padding-top: 20px; text-align: center"
+      >
+        <button
+          onclick="finishLater()"
+          class="btn btn-outline-secondary"
+          style="margin-bottom: 20px"
+        >
+          Finish Later
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Personal Information Section -->
+      <div class="resume-section active" id="section-1">
+        <h3 class="mb-4">Personal Information</h3>
+        <form>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" required />
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Position</label>
+              <input type="text" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">LinkedIn</label>
+              <input type="url" class="form-control" required />
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-7">
+              <label class="form-label">Address</label>
+              <input type="text" class="form-control" required />
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Phone Number</label>
+              <input
+                id="phone"
+                type="tel"
+                class="form-control"
+                name="phone"
+                required
+              />
+            </div>
+          </div>
+          <!-- Add more personal info fields -->
+        </form>
+      </div>
+
+      <!-- Professional Summary Section -->
+      <div class="resume-section" id="section-2">
+        <h3 class="mb-4">Professional Summary</h3>
+        <form>
+          <div class="mb-3">
+            <label class="form-label">Summary</label>
+            <textarea
+              class="form-control"
+              rows="4"
+              placeholder="Write a compelling summary of your professional background, key achievements, and career goals"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+
+      <!-- Education Section -->
+      <div class="resume-section" id="section-3">
+        <h3 class="mb-4">Education</h3>
+        <form>
+          <div id="education-container">
+            <div class="education-entry mb-4">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Degree/Certificate</label>
+                  <input type="text" class="form-control" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Institution</label>
+                  <input type="text" class="form-control" required />
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Start Date</label>
+                  <input type="month" class="form-control" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">End Date</label>
+                  <input type="month" class="form-control" required />
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea
+                  class="form-control"
+                  rows="3"
+                  placeholder="Describe your academic achievements, relevant coursework, etc."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-plus"></i> Add Another Education
+          </button>
+        </form>
+      </div>
+
+      <!-- Skills Section -->
+      <div class="resume-section" id="section-4">
+        <h3 class="mb-4">Skills</h3>
+        <form>
+          <div class="mb-3">
+            <label class="form-label">Technical Skills</label>
+            <input
+              type="text"
+              class="form-control"
+              id="technical_skills"
+              placeholder="e.g., Python, JavaScript, React (separate with commas)"
+            />
+            <div class="form-text">Enter skills separated by commas</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Soft Skills</label>
+            <input
+              type="text"
+              class="form-control"
+              id="soft_skills"
+              placeholder="e.g., Leadership, Communication, Problem Solving (separate with commas)"
+            />
+            <div class="form-text">Enter skills separated by commas</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tools & Technologies</label>
+            <input
+              type="text"
+              class="form-control"
+              id="tools_skills"
+              placeholder="e.g., Git, Docker, AWS (separate with commas)"
+            />
+            <div class="form-text">Enter skills separated by commas</div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Work Experience Section -->
+      <div class="resume-section" id="section-5">
+        <h3 class="mb-4">Work Experience</h3>
+        <form>
+          <div id="experience-container">
+            <div class="experience-entry mb-4">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Job Title</label>
+                  <input type="text" class="form-control" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Company</label>
+                  <input type="text" class="form-control" required />
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Start Date</label>
+                  <input type="month" class="form-control" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">End Date</label>
+                  <input type="month" class="form-control" />
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label"
+                  >Responsibilities & Achievements</label
+                >
+                <textarea class="form-control" rows="4"></textarea>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-plus"></i> Add Another Experience
+          </button>
+        </form>
+      </div>
+
+      <!-- Projects Section -->
+      <div class="resume-section" id="section-6">
+        <h3 class="mb-4">Projects</h3>
+        <form>
+          <div id="project-container">
+            <div class="project-entry mb-4">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Project Name</label>
+                  <input type="text" class="form-control" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Technologies Used</label>
+                  <input type="text" class="form-control" required />
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Project Description</label>
+                <textarea class="form-control" rows="3"></textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Project URL (if any)</label>
+                <input type="url" class="form-control" />
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-plus"></i> Add Another Project
+          </button>
+        </form>
+      </div>
+
+      <!-- Languages Section -->
+      <div class="resume-section" id="section-7">
+        <h3 class="mb-4">Languages</h3>
+        <form>
+          <div id="language-container">
+            <div class="language-entry mb-4">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Language</label>
+                  <input type="text" class="form-control" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Proficiency Level</label>
+                  <select class="form-select">
+                    <option>Native</option>
+                    <option>Fluent</option>
+                    <option>Advanced</option>
+                    <option>Intermediate</option>
+                    <option>Basic</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-plus"></i> Add Another Language
+          </button>
+        </form>
+      </div>
+
+      <!-- Achievements Section -->
+      <div class="resume-section" id="section-8">
+        <h3 class="mb-4">Achievements</h3>
+        <form>
+          <div id="achievement-container">
+            <div class="achievement-entry mb-4">
+              <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-control" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" rows="3"></textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Date</label>
+                <select class="form-control" name="year">
+                  <option value="">Select Year</option>
+                  <script>
+                    // Generate years from current year to 30 years ago
+                    const currentYear = new Date().getFullYear();
+                    for (
+                      let year = currentYear;
+                      year >= currentYear - 30;
+                      year--
+                    ) {
+                      document.write(
+                        `<option value="${year}">${year}</option>`
+                      );
+                    }
+                  </script>
+                </select>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-plus"></i> Add Another Achievement
+          </button>
+        </form>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="navigation-buttons mt-4">
+        <button
+          class="btn btn-outline-primary"
+          onclick="previousSection()"
+          id="prevBtn"
+        >
+          <i class="fas fa-arrow-left me-2"></i>Previous
+        </button>
+        <button class="btn btn-success" onclick="saveProgress()" id="saveBtn">
+          <i class="fas fa-save me-2"></i>Save Progress
+        </button>
+        <button class="btn btn-primary" onclick="nextSection()" id="nextBtn">
+          Next<i class="fas fa-arrow-right ms-2"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Updated toast container position -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+      <div
+        id="saveToast"
+        class="toast"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="toast-body" id="toastMessage">
+          Progress saved successfully!
+        </div>
+      </div>
+    </div>
+
+    <!-- Add this modal HTML just before the closing </body> tag -->
+    <div
+      class="modal fade"
+      id="finishModal"
+      tabindex="-1"
+      aria-labelledby="finishModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="finishModalLabel">
+              Finish Resume Creation
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to finish creating your resume?
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="window.location.href='/seeker/choose-template'"
+            >
+              View Resume
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              onclick="window.location.href='/'"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add this JavaScript to handle the finish button click -->
+    <script>
       document
-        .getElementById(`section-${sectionNumber}`)
-        .classList.add("active");
+        .getElementById("finishBtn")
+        .addEventListener("click", function () {
+          // Save progress before showing modal
+          saveProgress()
+            .then(() => {
+              const finishModal = new bootstrap.Modal(
+                document.getElementById("finishModal")
+              );
+              finishModal.show();
+            })
+            .catch((error) => {
+              console.error("Error saving progress:", error);
+              // Show error toast
+              const toastMessage = document.getElementById("toastMessage");
+              toastMessage.textContent =
+                "Error saving progress: " + error.message;
+              toastMessage.parentElement.classList.remove("bg-success");
+              toastMessage.parentElement.classList.add(
+                "bg-danger",
+                "text-white"
+              );
+              const saveToast = new bootstrap.Toast(
+                document.getElementById("saveToast")
+              );
+              saveToast.show();
+            });
+        });
+    </script>
 
-      // Update buttons
-      document.getElementById("prevBtn").style.display =
-        sectionNumber === 1 ? "none" : "block";
-      document.getElementById("nextBtn").textContent =
-        sectionNumber === totalSections ? "Finish" : "Next";
-    }
+    <!-- Add these script tags before your existing scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
 
-    function nextSection() {
-      if (currentSection < totalSections) {
-        currentSection++;
-        showSection(currentSection);
-        updateProgress();
+    <!-- Your existing scripts -->
+    <script>
+      let currentSection = 1;
+      const totalSections = 8;
+      const completedSections = new Set(); // Track completed sections
+
+      // Declare a variable to store the phone input instance
+      let phoneInput;
+
+      function updateProgress() {
+        document.querySelectorAll(".progress-item").forEach((item, index) => {
+          const step = index + 1;
+          item.classList.remove("active", "completed");
+
+          // Mark as active if it's the current section
+          if (step === currentSection) {
+            item.classList.add("active");
+          }
+
+          // Mark as completed if the section is in the completedSections set
+          if (completedSections.has(step)) {
+            item.classList.add("completed");
+          }
+        });
       }
-    }
 
-    function previousSection() {
-      if (currentSection > 1) {
-        currentSection--;
-        showSection(currentSection);
-        updateProgress();
+      function showSection(sectionNumber) {
+        document.querySelectorAll(".resume-section").forEach((section) => {
+          section.classList.remove("active");
+        });
+        document
+          .getElementById(`section-${sectionNumber}`)
+          .classList.add("active");
+
+        // Update buttons
+        document.getElementById("prevBtn").style.display =
+          sectionNumber === 1 ? "none" : "block";
+        const nextBtn = document.getElementById("nextBtn");
+
+        if (sectionNumber === totalSections) {
+          nextBtn.textContent = "Finish";
+          nextBtn.id = "finishBtn"; // Change ID to finishBtn on last section
+          nextBtn.onclick = function () {
+            // Save progress before showing modal
+            saveProgress()
+              .then(() => {
+                const finishModal = new bootstrap.Modal(
+                  document.getElementById("finishModal")
+                );
+                finishModal.show();
+              })
+              .catch((error) => {
+                console.error("Error saving progress:", error);
+                // Show error toast
+                const toastMessage = document.getElementById("toastMessage");
+                toastMessage.textContent =
+                  "Error saving progress: " + error.message;
+                toastMessage.parentElement.classList.remove("bg-success");
+                toastMessage.parentElement.classList.add(
+                  "bg-danger",
+                  "text-white"
+                );
+                const saveToast = new bootstrap.Toast(
+                  document.getElementById("saveToast")
+                );
+                saveToast.show();
+              });
+          };
+        } else {
+          nextBtn.textContent = "Next";
+          nextBtn.id = "nextBtn"; // Restore ID on other sections
+          nextBtn.onclick = nextSection; // Restore normal next section behavior
+        }
       }
-    }
 
-    // Allow clicking on progress items to navigate
-    document.querySelectorAll(".progress-item").forEach((item) => {
-      item.addEventListener("click", () => {
-        const step = parseInt(item.getAttribute("data-step"));
-        if (step <= currentSection) {
+      function nextSection() {
+        if (currentSection < totalSections) {
+          currentSection++;
+          showSection(currentSection);
+          updateProgress();
+        }
+      }
+
+      function previousSection() {
+        if (currentSection > 1) {
+          currentSection--;
+          showSection(currentSection);
+          updateProgress();
+        }
+      }
+
+      // Allow clicking on progress items to navigate
+      document.querySelectorAll(".progress-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          const step = parseInt(item.getAttribute("data-step"));
           currentSection = step;
           showSection(step);
           updateProgress();
-        }
-      });
-    });
-
-    // Initialize phone input after DOM is loaded
-    document.addEventListener("DOMContentLoaded", function () {
-      const phoneInputField = document.querySelector("#phone");
-      const phoneInput = window.intlTelInput(phoneInputField, {
-        utilsScript:
-          "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-        preferredCountries: ["us", "gb", "in"],
-        separateDialCode: true,
-      });
-    });
-
-    // Initialize Select2
-    $(document).ready(function () {
-      $('#institution').select2({
-        placeholder: 'Select a university',
-        ajax: {
-          url: 'http://universities.hipolabs.com/search',
-          dataType: 'json',
-          delay: 250,
-          data: function (params) {
-            return {
-              name: params.term, // search term
-              country: ''  // optional: can add country filter
-            };
-          },
-          processResults: function (data) {
-            return {
-              results: data.map(function (item) {
-                return {
-                  id: item.name,  // changed from web_pages[0] to name
-                  text: item.name + ' (' + item.country + ')'
-                };
-              })
-            };
-          },
-          cache: true
-        },
-        minimumInputLength: 3,
-        allowClear: true
-      });
-    });
-
-    function collectFormData() {
-      const personalInfo = {
-        fullName: document.querySelector('input[name="fullName"]')?.value,
-        email: document.querySelector('input[name="email"]')?.value,
-        phone: document.querySelector('input[name="phone"]')?.value,
-        // Add other personal info fields
-      };
-
-      const professionalSummary = document.querySelector('textarea[name="summary"]')?.value;
-
-      const education = Array.from(document.querySelectorAll('.education-entry')).map(entry => ({
-        degree: entry.querySelector('input[name="degree"]')?.value,
-        institution: entry.querySelector('select[name="institution"]')?.value,
-        startDate: entry.querySelector('input[name="eduStartDate"]')?.value,
-        endDate: entry.querySelector('input[name="eduEndDate"]')?.value,
-        description: entry.querySelector('textarea[name="eduDescription"]')?.value
-      }));
-
-      // Collect data from other sections similarly
-
-      return {
-        template: '{{ template }}',
-        personal_info: personalInfo,
-        professional_summary: professionalSummary,
-        education: education,
-        // Add other sections
-        last_updated: new Date().toISOString()
-      };
-    }
-
-    function saveProgress() {
-      const saveBtn = document.getElementById('saveBtn');
-      const originalText = saveBtn.innerHTML;
-      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-      saveBtn.disabled = true;
-
-      const formData = collectFormData();
-
-      fetch('/seeker/save-resume', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === 'success') {
-            // Show success message
-            const toast = `
-              <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-                <div class="toast show" role="alert">
-                  <div class="toast-header bg-success text-white">
-                    <strong class="me-auto">Success</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-                  </div>
-                  <div class="toast-body">
-                    Progress saved successfully!
-                  </div>
-                </div>
-              </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', toast);
-            setTimeout(() => {
-              document.querySelector('.toast').remove();
-            }, 3000);
-          } else {
-            alert('Error saving progress: ' + data.message);
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Error saving progress');
-        })
-        .finally(() => {
-          saveBtn.innerHTML = originalText;
-          saveBtn.disabled = false;
         });
-    }
+      });
 
-    // Add this to your existing DOMContentLoaded event
-    document.addEventListener('DOMContentLoaded', function () {
-      // Load existing data if available
-      fetch('/seeker/get-resume')
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === 'success' && data.data) {
-            // Populate form fields with existing data
-            populateFormFields(data.data);
+      // Function to check if a section is completed
+      function isSectionCompleted(sectionNumber) {
+        const section = document.querySelector(`#section-${sectionNumber}`);
+        if (!section) return false;
+
+        switch (sectionNumber) {
+          case 1: // Personal Information
+            return Boolean(
+              getValue('input[type="text"]', section) && // full name
+                getValue('input[type="email"]', section) && // email
+                getValue("#phone", section) // phone
+            );
+          case 2: // Professional Summary
+            return Boolean(getValue("textarea", section));
+          case 3: // Education
+            const educationEntries =
+              section.querySelectorAll(".education-entry");
+            return (
+              educationEntries.length > 0 &&
+              Array.from(educationEntries).some(
+                (entry) =>
+                  getValue('input[type="text"]:first-of-type', entry) && // degree
+                  getValue('.col-md-6:nth-child(2) input[type="text"]', entry) // institution
+              )
+            );
+          case 4: // Skills
+            return Boolean(
+              document.getElementById("technical_skills").value.trim() ||
+                document.getElementById("soft_skills").value.trim() ||
+                document.getElementById("tools_skills").value.trim()
+            );
+          case 5: // Work Experience
+            const workEntries = section.querySelectorAll(".experience-entry");
+            return (
+              workEntries.length > 0 &&
+              Array.from(workEntries).some(
+                (entry) =>
+                  getValue("input:first-of-type", entry) && // job title
+                  getValue(".col-md-6:nth-child(2) input[type='text']", entry) // company
+              )
+            );
+          case 6: // Projects
+            const projectEntries = section.querySelectorAll(".project-entry");
+            return (
+              projectEntries.length > 0 &&
+              Array.from(projectEntries).some(
+                (entry) =>
+                  getValue("input:first-of-type", entry) && // project name
+                  getValue("textarea", entry) // description
+              )
+            );
+          case 7: // Languages
+            const languageEntries = section.querySelectorAll(".language-entry");
+            return (
+              languageEntries.length > 0 &&
+              Array.from(languageEntries).some(
+                (entry) =>
+                  getValue("input", entry) && // language
+                  getValue("select", entry) // proficiency
+              )
+            );
+          case 8: // Achievements
+            const achievementEntries =
+              section.querySelectorAll(".achievement-entry");
+            return (
+              achievementEntries.length > 0 &&
+              Array.from(achievementEntries).some(
+                (entry) =>
+                  getValue("input", entry) && // title
+                  getValue("textarea", entry) // description
+              )
+            );
+          default:
+            return false;
+        }
+      }
+
+      // Helper function to safely get input value
+      function getValue(selector, parent = document) {
+        const element = parent.querySelector(selector);
+        return element ? element.value.trim() : "";
+      }
+
+      // Update completed sections
+      function updateCompletedSections() {
+        for (let i = 1; i <= totalSections; i++) {
+          if (isSectionCompleted(i)) {
+            completedSections.add(i);
+          } else {
+            completedSections.delete(i);
           }
-        })
-        .catch(error => console.error('Error loading resume data:', error));
-    });
-
-    function populateFormFields(data) {
-      // Populate personal info
-      if (data.personal_info) {
-        document.querySelector('input[name="fullName"]').value = data.personal_info.fullName || '';
-        document.querySelector('input[name="email"]').value = data.personal_info.email || '';
-        document.querySelector('input[name="phone"]').value = data.personal_info.phone || '';
-        // Populate other fields
+        }
+        updateProgress();
       }
 
-      // Populate other sections
-      if (data.professional_summary) {
-        document.querySelector('textarea[name="summary"]').value = data.professional_summary;
+      // Auto-save functionality
+      let autoSaveInterval;
+
+      function startAutoSave() {
+        // Clear any existing interval
+        if (autoSaveInterval) {
+          clearInterval(autoSaveInterval);
+        }
+
+        // Set new interval to save every minute (60000 milliseconds)
+        autoSaveInterval = setInterval(async () => {
+          try {
+            await saveProgress(true); // Pass true to indicate it's an auto-save
+          } catch (error) {
+            console.error("Auto-save failed:", error);
+          }
+        }, 60000);
       }
 
-      // Add population logic for other sections
-    }
-  </script>
-</body>
+      // Update saveProgress to handle auto-save
+      async function saveProgress(isAutoSave = false) {
+        try {
+          // Helper function to safely get input value
+          const getValue = (selector, parent = document) => {
+            const element = parent.querySelector(selector);
+            return element ? element.value.trim() : "";
+          };
 
+          // Show saving toast
+          const toastMessage = document.getElementById("toastMessage");
+          const saveToast = new bootstrap.Toast(
+            document.getElementById("saveToast")
+          );
+
+          // Only show button loading state if it's not an auto-save
+          if (!isAutoSave) {
+            const saveBtn = document.getElementById("saveBtn");
+            saveBtn.disabled = true;
+            saveBtn.innerHTML =
+              '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+          }
+
+          // Get phone number with country code
+          const phoneNumber = phoneInput ? phoneInput.getNumber() : "";
+
+          const resumeData = {
+            personal_info: {
+              full_name: getValue(
+                "#section-1 .row:first-child .col-md-6:first-child input"
+              ),
+              email: getValue(
+                "#section-1 .row:first-child .col-md-6:last-child input"
+              ),
+              position: getValue(
+                "#section-1 .row:nth-child(2) .col-md-6:first-child input"
+              ),
+              linkedin: getValue(
+                "#section-1 .row:nth-child(2) .col-md-6:last-child input"
+              ),
+              address: getValue("#section-1 .row:nth-child(3) .col-md-7 input"),
+              phone: phoneNumber, // Save the full number with country code
+            },
+            professional_summary: getValue("#section-2 textarea"),
+            education: Array.from(
+              document.querySelectorAll(".education-entry")
+            ).map((entry) => ({
+              degree: getValue('input[type="text"]:first-of-type', entry),
+              institution: getValue(
+                '.col-md-6:nth-child(2) input[type="text"]',
+                entry
+              ),
+              start_date: getValue(
+                '.col-md-6:first-child input[type="month"]',
+                entry
+              ),
+              end_date: getValue(
+                '.col-md-6:last-child input[type="month"]',
+                entry
+              ),
+              description: getValue("textarea", entry),
+            })),
+            skills: {
+              technical: document
+                .getElementById("technical_skills")
+                .value.split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+              soft: document
+                .getElementById("soft_skills")
+                .value.split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+              tools: document
+                .getElementById("tools_skills")
+                .value.split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+            },
+            work_experience: Array.from(
+              document.querySelectorAll(".experience-entry")
+            ).map((entry) => ({
+              title: getValue('input[type="text"]:first-of-type', entry),
+              company: getValue(
+                '.col-md-6:nth-child(2) input[type="text"]',
+                entry
+              ),
+              start_date: getValue(
+                '.col-md-6:first-child input[type="month"]',
+                entry
+              ),
+              end_date: getValue(
+                '.col-md-6:last-child input[type="month"]',
+                entry
+              ),
+              responsibilities: getValue("textarea", entry),
+            })),
+            projects: Array.from(
+              document.querySelectorAll(".project-entry")
+            ).map((entry) => ({
+              name: getValue("input:first-of-type", entry),
+              technologies: getValue("input:nth-of-type(2)", entry),
+              description: getValue("textarea", entry),
+              url: getValue('input[type="url"]', entry),
+            })),
+            languages: Array.from(
+              document.querySelectorAll(".language-entry")
+            ).map((entry) => ({
+              language: getValue("input", entry),
+              proficiency: getValue("select", entry),
+            })),
+            achievements: Array.from(
+              document.querySelectorAll(".achievement-entry")
+            ).map((entry) => ({
+              title: getValue("input", entry),
+              description: getValue("textarea", entry),
+              date: getValue('input[type="month"]', entry),
+            })),
+          };
+
+          const response = await fetch("/seeker/save-resume", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(resumeData),
+          });
+
+          if (!response.ok) {
+            throw new Error(
+              `Server returned ${response.status}: ${response.statusText}`
+            );
+          }
+
+          const result = await response.json();
+
+          if (result.status === "success") {
+            // Show success toast with different message for auto-save
+            toastMessage.textContent = isAutoSave
+              ? "Auto-saved successfully!"
+              : "Progress saved successfully!";
+            toastMessage.parentElement.classList.remove("bg-danger");
+            toastMessage.parentElement.classList.add(
+              "bg-success",
+              "text-white"
+            );
+            saveToast.show();
+
+            // Update completed sections based on filled data
+            updateCompletedSections();
+          } else {
+            throw new Error(result.message || "Failed to save progress");
+          }
+        } catch (error) {
+          console.error("Error saving progress:", error);
+          // Show error toast only if it's not an auto-save
+          if (!isAutoSave) {
+            const toastMessage = document.getElementById("toastMessage");
+            toastMessage.textContent =
+              "Error saving progress: " + error.message;
+            toastMessage.parentElement.classList.remove("bg-success");
+            toastMessage.parentElement.classList.add("bg-danger", "text-white");
+            const saveToast = new bootstrap.Toast(
+              document.getElementById("saveToast")
+            );
+            saveToast.show();
+          }
+        } finally {
+          // Reset button state only if it's not an auto-save
+          if (!isAutoSave) {
+            const saveBtn = document.getElementById("saveBtn");
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Progress';
+          }
+        }
+      }
+
+      // Initialize phone input after DOM is loaded
+      document.addEventListener("DOMContentLoaded", function () {
+        const phoneInputField = document.querySelector("#phone");
+        phoneInput = window.intlTelInput(phoneInputField, {
+          utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+          preferredCountries: ["us", "gb", "in"],
+          separateDialCode: true,
+          formatOnDisplay: true,
+        });
+
+        // Load saved data after initializing phone input
+        loadSavedData();
+        startAutoSave();
+      });
+
+      // Add this function to load and populate saved data
+      async function loadSavedData() {
+        try {
+          const response = await fetch("/seeker/load-resume");
+          if (!response.ok) {
+            throw new Error(
+              `Server returned ${response.status}: ${response.statusText}`
+            );
+          }
+
+          const data = await response.json();
+          console.log("Loaded resume data:", data); // Debug log
+
+          if (data.status === "success" && data.resume) {
+            const resume = data.resume;
+            console.log("Resume skills:", resume.skills); // Debug log
+
+            // Helper function to safely set input value
+            const setValue = (selector, value, parent = document) => {
+              const element = parent.querySelector(selector);
+              if (element && value) {
+                element.value = value;
+              }
+            };
+
+            // Populate personal information
+            if (resume.personal_info) {
+              setValue(
+                "#section-1 .row:first-child .col-md-6:first-child input",
+                resume.personal_info.full_name
+              );
+              setValue(
+                "#section-1 .row:first-child .col-md-6:last-child input",
+                resume.personal_info.email
+              );
+              setValue(
+                "#section-1 .row:nth-child(2) .col-md-6:first-child input",
+                resume.personal_info.position
+              );
+              setValue(
+                "#section-1 .row:nth-child(2) .col-md-6:last-child input",
+                resume.personal_info.linkedin
+              );
+              setValue(
+                "#section-1 .row:nth-child(3) .col-md-7 input",
+                resume.personal_info.address
+              );
+
+              // Set phone number with country
+              if (resume.personal_info.phone && phoneInput) {
+                phoneInput.setNumber(resume.personal_info.phone);
+              }
+            }
+
+            // Populate professional summary
+            setValue("#section-2 textarea", resume.professional_summary);
+
+            // Populate education entries
+            if (resume.education && resume.education.length > 0) {
+              const educationContainer =
+                document.querySelector("#section-3 form");
+              educationContainer.innerHTML = ""; // Clear existing entries
+
+              resume.education.forEach((edu) => {
+                const educationEntry = document.createElement("div");
+                educationEntry.className = "education-entry mb-4";
+                educationEntry.innerHTML = `
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Degree/Certificate</label>
+                      <input type="text" class="form-control" required value="${
+                        edu.degree || ""
+                      }" />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Institution</label>
+                      <input type="text" class="form-control" required value="${
+                        edu.institution || ""
+                      }" />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Start Date</label>
+                      <input type="month" class="form-control" required value="${
+                        edu.start_date || ""
+                      }" />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">End Date</label>
+                      <input type="month" class="form-control" required value="${
+                        edu.end_date || ""
+                      }" />
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" rows="3">${
+                      edu.description || ""
+                    }</textarea>
+                  </div>
+                `;
+                educationContainer.appendChild(educationEntry);
+              });
+
+              // Add the "Add Another Education" button
+              const addButton = document.createElement("button");
+              addButton.type = "button";
+              addButton.className = "btn btn-outline-secondary btn-sm";
+              addButton.innerHTML =
+                '<i class="fas fa-plus"></i> Add Another Education';
+              addButton.onclick = function () {
+                const newEntry = document.createElement("div");
+                newEntry.className = "education-entry mb-4";
+                newEntry.innerHTML = `
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Degree/Certificate</label>
+                      <input type="text" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Institution</label>
+                      <input type="text" class="form-control" required />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Start Date</label>
+                      <input type="month" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">End Date</label>
+                      <input type="month" class="form-control" required />
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" rows="3"></textarea>
+                  </div>
+                `;
+                educationContainer.insertBefore(newEntry, addButton);
+              };
+              educationContainer.appendChild(addButton);
+            }
+
+            // Populate skills
+            if (resume.skills) {
+              console.log("Processing skills:", resume.skills); // Debug log
+
+              // Technical Skills
+              if (resume.skills.technical) {
+                console.log("Technical skills:", resume.skills.technical); // Debug log
+                const technicalSkills = Array.isArray(resume.skills.technical)
+                  ? resume.skills.technical.join(", ")
+                  : resume.skills.technical;
+                document.getElementById("technical_skills").value =
+                  technicalSkills;
+              }
+
+              // Soft Skills
+              if (resume.skills.soft) {
+                console.log("Soft skills:", resume.skills.soft); // Debug log
+                const softSkills = Array.isArray(resume.skills.soft)
+                  ? resume.skills.soft.join(", ")
+                  : resume.skills.soft;
+                document.getElementById("soft_skills").value = softSkills;
+              }
+
+              // Tools Skills
+              if (resume.skills.tools) {
+                console.log("Tools skills:", resume.skills.tools); // Debug log
+                const toolsSkills = Array.isArray(resume.skills.tools)
+                  ? resume.skills.tools.join(", ")
+                  : resume.skills.tools;
+                document.getElementById("tools_skills").value = toolsSkills;
+              }
+            }
+
+            // Populate work experience
+            if (resume.work_experience && resume.work_experience.length > 0) {
+              const workContainer = document.querySelector("#section-5 form");
+              workContainer.innerHTML = "";
+
+              resume.work_experience.forEach((exp) => {
+                const workEntry = document.createElement("div");
+                workEntry.className = "experience-entry mb-4";
+                workEntry.innerHTML = `
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Job Title</label>
+                      <input type="text" class="form-control" required value="${
+                        exp.title || ""
+                      }" />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Company</label>
+                      <input type="text" class="form-control" required value="${
+                        exp.company || ""
+                      }" />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Start Date</label>
+                      <input type="month" class="form-control" required value="${
+                        exp.start_date || ""
+                      }" />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">End Date</label>
+                      <input type="month" class="form-control" value="${
+                        exp.end_date || ""
+                      }" />
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Responsibilities & Achievements</label>
+                    <textarea class="form-control" rows="4">${
+                      exp.responsibilities || ""
+                    }</textarea>
+                  </div>
+                `;
+                workContainer.appendChild(workEntry);
+              });
+
+              // Add the "Add Another Experience" button
+              const addButton = document.createElement("button");
+              addButton.type = "button";
+              addButton.className = "btn btn-outline-secondary btn-sm";
+              addButton.innerHTML =
+                '<i class="fas fa-plus"></i> Add Another Experience';
+              addButton.onclick = function () {
+                const newEntry = document.createElement("div");
+                newEntry.className = "experience-entry mb-4";
+                newEntry.innerHTML = `
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Job Title</label>
+                      <input type="text" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Company</label>
+                      <input type="text" class="form-control" required />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Start Date</label>
+                      <input type="month" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">End Date</label>
+                      <input type="month" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Responsibilities & Achievements</label>
+                    <textarea class="form-control" rows="4"></textarea>
+                  </div>
+                `;
+                workContainer.insertBefore(newEntry, addButton);
+              };
+              workContainer.appendChild(addButton);
+            }
+
+            // Projects section
+            if (resume.projects && resume.projects.length > 0) {
+              const projectContainer =
+                document.querySelector("#section-6 form");
+              projectContainer.innerHTML = "";
+
+              resume.projects.forEach((proj) => {
+                const projectEntry = document.createElement("div");
+                projectEntry.className = "project-entry mb-4";
+                projectEntry.innerHTML = `
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Project Name</label>
+                                <input type="text" class="form-control" required value="${
+                                  proj.name || ""
+                                }" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Technologies Used</label>
+                                <input type="text" class="form-control" required value="${
+                                  proj.technologies || ""
+                                }" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Project Description</label>
+                            <textarea class="form-control" rows="3">${
+                              proj.description || ""
+                            }</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Project URL (if any)</label>
+                            <input type="url" class="form-control" value="${
+                              proj.url || ""
+                            }" />
+                        </div>
+                    `;
+                projectContainer.appendChild(projectEntry);
+              });
+
+              // Add the "Add Another Project" button
+              const addProjectButton = document.createElement("button");
+              addProjectButton.type = "button";
+              addProjectButton.className = "btn btn-outline-secondary btn-sm";
+              addProjectButton.innerHTML =
+                '<i class="fas fa-plus"></i> Add Another Project';
+              addProjectButton.onclick = function () {
+                const newEntry = document.createElement("div");
+                newEntry.className = "project-entry mb-4";
+                newEntry.innerHTML = `
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Project Name</label>
+                                <input type="text" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Technologies Used</label>
+                                <input type="text" class="form-control" required />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Project Description</label>
+                            <textarea class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Project URL (if any)</label>
+                            <input type="url" class="form-control" />
+                        </div>
+                    `;
+                projectContainer.insertBefore(newEntry, addProjectButton);
+              };
+              projectContainer.appendChild(addProjectButton);
+            }
+
+            // Languages section
+            if (resume.languages && resume.languages.length > 0) {
+              const languageContainer =
+                document.querySelector("#section-7 form");
+              languageContainer.innerHTML = "";
+
+              resume.languages.forEach((lang) => {
+                const languageEntry = document.createElement("div");
+                languageEntry.className = "language-entry mb-4";
+                languageEntry.innerHTML = `
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Language</label>
+                                <input type="text" class="form-control" required value="${
+                                  lang.language || ""
+                                }" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Proficiency Level</label>
+                                <select class="form-select">
+                                    <option ${
+                                      lang.proficiency === "Native"
+                                        ? "selected"
+                                        : ""
+                                    }>Native</option>
+                                    <option ${
+                                      lang.proficiency === "Fluent"
+                                        ? "selected"
+                                        : ""
+                                    }>Fluent</option>
+                                    <option ${
+                                      lang.proficiency === "Advanced"
+                                        ? "selected"
+                                        : ""
+                                    }>Advanced</option>
+                                    <option ${
+                                      lang.proficiency === "Intermediate"
+                                        ? "selected"
+                                        : ""
+                                    }>Intermediate</option>
+                                    <option ${
+                                      lang.proficiency === "Basic"
+                                        ? "selected"
+                                        : ""
+                                    }>Basic</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                languageContainer.appendChild(languageEntry);
+              });
+
+              // Add the "Add Another Language" button
+              const addLanguageButton = document.createElement("button");
+              addLanguageButton.type = "button";
+              addLanguageButton.className = "btn btn-outline-secondary btn-sm";
+              addLanguageButton.innerHTML =
+                '<i class="fas fa-plus"></i> Add Another Language';
+              addLanguageButton.onclick = function () {
+                const newEntry = document.createElement("div");
+                newEntry.className = "language-entry mb-4";
+                newEntry.innerHTML = `
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Language</label>
+                                <input type="text" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Proficiency Level</label>
+                                <select class="form-select">
+                                    <option>Native</option>
+                                    <option>Fluent</option>
+                                    <option>Advanced</option>
+                                    <option>Intermediate</option>
+                                    <option>Basic</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                languageContainer.insertBefore(newEntry, addLanguageButton);
+              };
+              languageContainer.appendChild(addLanguageButton);
+            }
+
+            // Achievements section
+            if (resume.achievements && resume.achievements.length > 0) {
+              const achievementContainer =
+                document.querySelector("#section-8 form");
+              achievementContainer.innerHTML = "";
+
+              resume.achievements.forEach((achieve) => {
+                const achievementEntry = document.createElement("div");
+                achievementEntry.className = "achievement-entry mb-4";
+                achievementEntry.innerHTML = `
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-control" required value="${
+                              achieve.title || ""
+                            }" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" rows="3">${
+                              achieve.description || ""
+                            }</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="month" class="form-control" value="${
+                              achieve.date || ""
+                            }" />
+                        </div>
+                    `;
+                achievementContainer.appendChild(achievementEntry);
+              });
+
+              // Add the "Add Another Achievement" button
+              const addAchievementButton = document.createElement("button");
+              addAchievementButton.type = "button";
+              addAchievementButton.className =
+                "btn btn-outline-secondary btn-sm";
+              addAchievementButton.innerHTML =
+                '<i class="fas fa-plus"></i> Add Another Achievement';
+              addAchievementButton.onclick = function () {
+                const newEntry = document.createElement("div");
+                newEntry.className = "achievement-entry mb-4";
+                newEntry.innerHTML = `
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="month" class="form-control" />
+                        </div>
+                    `;
+                achievementContainer.insertBefore(
+                  newEntry,
+                  addAchievementButton
+                );
+              };
+              achievementContainer.appendChild(addAchievementButton);
+            }
+
+            // Update completed sections after loading data
+            updateCompletedSections();
+          }
+        } catch (error) {
+          console.error("Error loading saved data:", error);
+          const toastMessage = document.getElementById("toastMessage");
+          toastMessage.textContent =
+            "Error loading saved data: " + error.message;
+          toastMessage.parentElement.classList.remove("bg-success");
+          toastMessage.parentElement.classList.add("bg-danger", "text-white");
+          const saveToast = new bootstrap.Toast(
+            document.getElementById("saveToast")
+          );
+          saveToast.show();
+        }
+      }
+
+      function finishLater() {
+        // Save current progress
+        saveProgress(true)
+          .then(() => {
+            // Redirect to dashboard or profile page
+            window.location.href = "{{ url_for('index') }}";
+          })
+          .catch((error) => {
+            console.error("Error saving progress:", error);
+            showToast(
+              "Error saving progress before exit: " + error.message,
+              "error"
+            );
+          });
+      }
+    </script>
+  </body>
 </html>

@@ -1,18 +1,41 @@
 <!-- templates/_navbar.html -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+/>
 <nav class="navbar navbar-expand-xl {{ custom_class }}">
   <div class="container">
     <a class="navbar-brand" href="{{ url_for('recruiter.recruiter_index') }}">
-      <img class="w-100" src="{{ url_for('static', filename='webpage/img/icon/jobseek-transparent.png') }}" alt="">
+      <img
+        class="w-100"
+        src="{{ url_for('static', filename='webpage/img/icon/jobseek-transparent.png') }}"
+        alt=""
+      />
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
       <i class="fas fa-bars"></i>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav">
         <li class="nav-card-item">
-          <a class="nav-link active" href="{{ url_for('recruiter.recruiter_index') }}">Home</a>
+          <a
+            class="nav-link active"
+            href="{{ url_for('recruiter.recruiter_index') }}"
+            >Home</a
+          >
+        </li>
+        <li class="nav-card-item">
+          <a class="nav-link" href="{{ url_for('recruiter.network') }}"
+            >Network</a
+          >
         </li>
         <!-- <li class="nav-card-item">
           <a class="nav-link" href="aboutus.html">About</a>
@@ -25,37 +48,63 @@
         </li> -->
       </ul>
       <ul class="right navbar-nav ms-auto">
-        <li class="nav-card-item-right">
-          <!-- ... (notification dropdown remains unchanged) ... -->
-        </li>
         <li class="nav-card-item-right dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
-            aria-expanded="false">
-            {% if current_user.is_authenticated %}
-                {% set recruiter = collection_recruiter_registration.find_one({"user_id": current_user.id|objectid}) %}
-                {% if recruiter and recruiter.get('company_logo') %}
-                    <img src="{{ url_for('static', filename=recruiter['company_logo']) }}" 
-                         alt="Company Logo" 
-                         class="rounded-circle" 
-                         width="40" 
-                         height="40">
-                {% else %}
-                    <img src="{{ url_for('static', filename='webpage/img/profile.png') }}" 
-                         alt="Profile Photo"
-                         class="rounded-circle" 
-                         width="40" 
-                         height="40">
-                {% endif %}
-            {% endif %}
+          <a
+            class="nav-link dropdown-toggle"
+            href="#"
+            id="profileDropdown"
+            role="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            {% if current_user.is_authenticated %} {% set recruiter =
+            collection_recruiter_registration.find_one({"user_id":
+            current_user.id|objectid}) %} {% if recruiter and
+            recruiter.get('company_logo') %}
+            <img
+              src="{{ url_for('static', filename=recruiter['company_logo']) }}"
+              alt="Company Logo"
+              class="rounded-circle"
+              width="40"
+              height="40"
+            />
+            {% else %}
+            <img
+              src="{{ url_for('static', filename='webpage/img/profile.png') }}"
+              alt="Profile Photo"
+              class="rounded-circle"
+              width="40"
+              height="40"
+            />
+            {% endif %} {% endif %}
           </a>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+          <ul
+            class="dropdown-menu dropdown-menu-end"
+            aria-labelledby="profileDropdown"
+          >
             <li class="dropdown-item-text">
               <strong>{{ current_user.full_name }}</strong>
             </li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{{ url_for('recruiter.post_job') }}">Post a Job</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('recruiter.posted_jobs') }}">Posted Jobs</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Sign out</a></li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a
+                class="dropdown-item"
+                href="{{ url_for('recruiter.post_job') }}"
+                >Post a Job</a
+              >
+            </li>
+            <li>
+              <a
+                class="dropdown-item"
+                href="{{ url_for('recruiter.posted_jobs') }}"
+                >Posted Jobs</a
+              >
+            </li>
+            <li>
+              <a class="dropdown-item" href="{{ url_for('logout') }}"
+                >Sign out</a
+              >
+            </li>
           </ul>
         </li>
       </ul>
@@ -67,19 +116,19 @@
   // Existing script for history and caching
   (function () {
     if (window.history && window.history.pushState) {
-      window.history.pushState('forward', null, window.location.href);
+      window.history.pushState("forward", null, window.location.href);
       window.onpopstate = function () {
-        window.history.pushState('forward', null, window.location.href);
+        window.history.pushState("forward", null, window.location.href);
       };
     }
   })();
 
   window.onload = function () {
-    if (typeof window.history.pushState == 'function') {
+    if (typeof window.history.pushState == "function") {
       window.history.pushState({}, "Hide", window.location.href);
     }
-  }
-  window.onunload = function () { };
+  };
+  window.onunload = function () {};
 </script>
 
 <style>
@@ -107,7 +156,6 @@
   .notification-dropdown .unread:hover {
     background-color: #e9ecef;
   }
-
 
   .notification-dropdown .read {
     color: #6c757d;

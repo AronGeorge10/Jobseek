@@ -14,6 +14,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import stripe
 from bson import json_util
 import re
+import traceback
 
 stripe.api_key = 'sk_test_51MiftOSIxs4ZUV5mMRwCJZPY6Sa5xxQjwNW7j3NZ7Z0uAMdOZpfkJ8z5PXEvGURVzOkilzvmrTPVpn8vkZT7embw00HJuQCUXf'
 
@@ -32,6 +33,9 @@ collection_resume = db.tbl_resume_details
 collection_notifications = db.tbl_notifications
 collection_payment = db.tbl_payment
 collection_interviews = db.tbl_interviews
+collection_connections = db.tbl_connections
+collection_talent_pool = db['tbl_talent_pool']
+collection_conversations = db.tbl_conversations
 
 @recruiter_bp.route('/index')
 @login_required
@@ -1084,3 +1088,418 @@ def hire_candidate(application_id):
             'success': False, 
             'message': 'Failed to update application status'
         }), 500
+
+@recruiter_bp.route('/network', methods=['GET'])
+@login_required
+def network():
+    if current_user.user_type != 'recruiter':
+        flash('Access denied. Recruiter privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    # Get search parameters
+    skills = request.args.get('skills', '')
+    experience = request.args.get('experience', '')
+    location = request.args.get('location', '')
+    
+    # Build query for job seekers
+    query = {}
+    if skills:
+        # Split skills by comma and create a regex pattern for each skill
+        skill_list = [skill.strip() for skill in skills.split(',')]
+        query['$or'] = [
+            {'skills.technical': {'$in': [{'$regex': skill, '$options': 'i'} for skill in skill_list]}},
+            {'skills.soft': {'$in': [{'$regex': skill, '$options': 'i'} for skill in skill_list]}}
+        ]
+    
+    if experience:
+        # Note: You might need to add a total_experience field to your schema
+        # or calculate it based on work_experience dates
+        if experience == '5+':
+            query['total_experience'] = {'$gte': 5}
+        else:
+            min_exp, max_exp = map(int, experience.split('-'))
+            query['total_experience'] = {'$gte': min_exp, '$lt': max_exp}
+    
+    if location:
+        query['personal_info.address'] = {'$regex': location, '$options': 'i'}
+    
+    # Fetch job seekers from resume collection and process them
+    seekers_cursor = collection_resume.find(query)
+    seekers = []
+    
+    for seeker in seekers_cursor:
+        # Check if seeker is already in recruiter's pool
+        in_pool = collection_talent_pool.find_one({
+            'recruiter_id': ObjectId(current_user.id),
+            'seeker_id': seeker['_id']
+        }) is not None
+        
+        personal_info = seeker.get('personal_info', {})
+        skills = seeker.get('skills', {})
+        
+        processed_seeker = {
+            '_id': seeker.get('_id'),
+            'full_name': personal_info.get('full_name', 'Anonymous'),
+            'profile_photo': seeker.get('profile_photo'),
+            'headline': personal_info.get('position', 'Professional'),
+            'location': personal_info.get('address', 'Location not specified'),
+            'technical_skills': skills.get('technical', []),
+            'soft_skills': skills.get('soft', []),
+            'tools': skills.get('tools', []),
+            'experience': seeker.get('total_experience', 0),
+            'about': seeker.get('professional_summary', 'No description available.')[:150] + '...' 
+                    if seeker.get('professional_summary') 
+                    else 'No description available.',
+            'in_pool': in_pool  # Add this field
+        }
+        seekers.append(processed_seeker)
+    
+    return render_template('recruiter/network.html', seekers=seekers)
+
+@recruiter_bp.route('/send-network-request', methods=['POST'])
+@login_required
+def send_network_request():
+    if current_user.user_type != 'recruiter':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    data = request.get_json()
+    seeker_id = data.get('seeker_id')
+    
+    if not seeker_id:
+        return jsonify({'success': False, 'message': 'Seeker ID is required'}), 400
+    
+    try:
+        # Create network request
+        network_request = {
+            'recruiter_id': ObjectId(current_user.id),
+            'seeker_id': ObjectId(seeker_id),
+            'status': 'pending',
+            'created_at': datetime.utcnow()
+        }
+        
+        # Check if network request already exists
+        existing_request = collection_connections.find_one({
+            'recruiter_id': ObjectId(current_user.id),
+            'seeker_id': ObjectId(seeker_id)
+        })
+        
+        if existing_request:
+            return jsonify({'success': False, 'message': 'Network request already sent'}), 400
+        
+        # Insert network request
+        result = collection_connections.insert_one(network_request)
+        
+        if result.inserted_id:
+            # Create notification for the seeker
+            recruiter = collection_recruiter_registration.find_one({'user_id': ObjectId(current_user.id)})
+            company_name = recruiter.get('company_name', 'A recruiter') if recruiter else 'A recruiter'
+            
+            notification = {
+                'user_id': ObjectId(seeker_id),
+                'type': 'network_request',
+                'message': f"{company_name} wants to add you to their network",
+                'created_at': datetime.utcnow(),
+                'is_read': False
+            }
+            collection_notifications.insert_one(notification)
+            
+            return jsonify({'success': True, 'message': 'Network request sent successfully'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to send network request'}), 500
+            
+    except Exception as e:
+        current_app.logger.error(f"Error in send_network_request: {str(e)}")
+        return jsonify({'success': False, 'message': 'An error occurred while sending the request'}), 500
+
+@recruiter_bp.route('/add-to-pool', methods=['POST'])
+@login_required
+def add_to_pool():
+    if current_user.user_type != 'recruiter':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    data = request.get_json()
+    seeker_id = data.get('seeker_id')
+    
+    if not seeker_id:
+        return jsonify({'success': False, 'message': 'Seeker ID is required'}), 400
+    
+    try:
+        # Check if already in pool
+        existing_entry = collection_talent_pool.find_one({
+            'recruiter_id': ObjectId(current_user.id),
+            'seeker_id': ObjectId(seeker_id)
+        })
+        
+        if existing_entry:
+            return jsonify({'success': False, 'message': 'Already in talent pool'}), 400
+        
+        # Add to talent pool
+        pool_entry = {
+            'recruiter_id': ObjectId(current_user.id),
+            'seeker_id': ObjectId(seeker_id),
+            'added_at': datetime.utcnow(),
+            'notes': '',  # Optional field for recruiter's private notes
+            'status': 'active'  # Could be used for categorizing candidates
+        }
+        
+        result = collection_talent_pool.insert_one(pool_entry)
+        
+        if result.inserted_id:
+            return jsonify({
+                'success': True, 
+                'message': 'Added to talent pool successfully'
+            })
+        else:
+            return jsonify({
+                'success': False, 
+                'message': 'Failed to add to talent pool'
+            }), 500
+            
+    except Exception as e:
+        current_app.logger.error(f"Error in add_to_pool: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': 'An error occurred while adding to pool'
+        }), 500
+
+@recruiter_bp.route('/talent-pool')
+@login_required
+def view_talent_pool():
+    if current_user.user_type != 'recruiter':
+        flash('Access denied. Recruiter privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    # Fetch all candidates in the recruiter's talent pool
+    pool_entries = collection_talent_pool.find({
+        'recruiter_id': ObjectId(current_user.id)
+    }).sort('added_at', -1)  # Most recent first
+    
+    # Get detailed information for each candidate
+    candidates = []
+    for entry in pool_entries:
+        seeker = collection_resume.find_one({'_id': entry['seeker_id']})
+        if seeker:
+            personal_info = seeker.get('personal_info', {})
+            skills = seeker.get('skills', {})
+            
+            # Format the date before sending to template
+            added_at = entry.get('added_at')
+            formatted_date = added_at.strftime('%b %d, %Y') if added_at else 'Unknown date'
+            
+            candidate = {
+                'pool_id': entry['_id'],
+                'seeker_id': entry['seeker_id'],  # Add seeker_id for chat functionality
+                'added_at_raw': added_at,  # Keep original for sorting
+                'added_at': formatted_date,  # Formatted for display
+                'notes': entry.get('notes', ''),
+                'status': entry.get('status', 'active'),
+                'full_name': personal_info.get('full_name', 'Anonymous'),
+                'position': personal_info.get('position', 'Professional'),
+                'location': personal_info.get('address', 'Location not specified'),
+                'technical_skills': skills.get('technical', []),
+                'soft_skills': skills.get('soft', []),
+                'about': seeker.get('professional_summary', 'No description available.')
+            }
+            candidates.append(candidate)
+    
+    return render_template('recruiter/talent_pool.html', candidates=candidates)
+
+@recruiter_bp.route('/update-candidate-notes', methods=['POST'])
+@login_required
+def update_candidate_notes():
+    if current_user.user_type != 'recruiter':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    data = request.get_json()
+    candidate_id = data.get('candidate_id')
+    notes = data.get('notes', '')
+    
+    if not candidate_id:
+        return jsonify({'success': False, 'message': 'Candidate ID is required'}), 400
+    
+    try:
+        # Verify the candidate belongs to this recruiter
+        candidate = collection_talent_pool.find_one({
+            '_id': ObjectId(candidate_id),
+            'recruiter_id': ObjectId(current_user.id)
+        })
+        
+        if not candidate:
+            return jsonify({'success': False, 'message': 'Candidate not found in your pool'}), 404
+        
+        # Update the notes
+        result = collection_talent_pool.update_one(
+            {'_id': ObjectId(candidate_id)},
+            {'$set': {'notes': notes}}
+        )
+        
+        if result.modified_count > 0:
+            return jsonify({'success': True, 'message': 'Notes updated successfully'})
+        else:
+            return jsonify({'success': True, 'message': 'No changes made'})
+            
+    except Exception as e:
+        current_app.logger.error(f"Error in update_candidate_notes: {str(e)}")
+        return jsonify({'success': False, 'message': 'An error occurred while updating notes'}), 500
+
+@recruiter_bp.route('/update-candidate-status', methods=['POST'])
+@login_required
+def update_candidate_status():
+    if current_user.user_type != 'recruiter':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    data = request.get_json()
+    candidate_id = data.get('candidate_id')
+    status = data.get('status')
+    
+    valid_statuses = ['active', 'contacted', 'interviewing', 'shortlisted']
+    
+    if not candidate_id:
+        return jsonify({'success': False, 'message': 'Candidate ID is required'}), 400
+    
+    if not status or status not in valid_statuses:
+        return jsonify({'success': False, 'message': 'Invalid status'}), 400
+    
+    try:
+        # Verify the candidate belongs to this recruiter
+        candidate = collection_talent_pool.find_one({
+            '_id': ObjectId(candidate_id),
+            'recruiter_id': ObjectId(current_user.id)
+        })
+        
+        if not candidate:
+            return jsonify({'success': False, 'message': 'Candidate not found in your pool'}), 404
+        
+        # Update the status
+        result = collection_talent_pool.update_one(
+            {'_id': ObjectId(candidate_id)},
+            {'$set': {'status': status}}
+        )
+        
+        if result.modified_count > 0:
+            return jsonify({'success': True, 'message': 'Status updated successfully'})
+        else:
+            return jsonify({'success': True, 'message': 'No changes made'})
+            
+    except Exception as e:
+        current_app.logger.error(f"Error in update_candidate_status: {str(e)}")
+        return jsonify({'success': False, 'message': 'An error occurred while updating status'}), 500
+
+@recruiter_bp.route('/remove-from-pool', methods=['POST'])
+@login_required
+def remove_from_pool():
+    if current_user.user_type != 'recruiter':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    data = request.get_json()
+    candidate_id = data.get('candidate_id')
+    
+    if not candidate_id:
+        return jsonify({'success': False, 'message': 'Candidate ID is required'}), 400
+    
+    try:
+        # Verify the candidate belongs to this recruiter
+        candidate = collection_talent_pool.find_one({
+            '_id': ObjectId(candidate_id),
+            'recruiter_id': ObjectId(current_user.id)
+        })
+        
+        if not candidate:
+            return jsonify({'success': False, 'message': 'Candidate not found in your pool'}), 404
+        
+        # Remove from pool
+        result = collection_talent_pool.delete_one({
+            '_id': ObjectId(candidate_id),
+            'recruiter_id': ObjectId(current_user.id)
+        })
+        
+        if result.deleted_count > 0:
+            return jsonify({'success': True, 'message': 'Candidate removed from pool'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to remove candidate'}), 500
+            
+    except Exception as e:
+        current_app.logger.error(f"Error in remove_from_pool: {str(e)}")
+        return jsonify({'success': False, 'message': 'An error occurred while removing candidate'}), 500
+
+@recruiter_bp.route('/initiate-chat/<seeker_id>', methods=['POST'])
+@login_required
+def initiate_chat(seeker_id):
+    if current_user.user_type != 'recruiter':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        # Debug logging
+        current_app.logger.info(f"Initiating chat with seeker ID: {seeker_id}")
+        
+        # Check if seeker exists
+        seeker = collection_resume.find_one({'_id': ObjectId(seeker_id)})
+        if not seeker:
+            current_app.logger.error(f"Seeker not found with ID: {seeker_id}")
+            return jsonify({'success': False, 'message': 'Candidate not found'}), 404
+        
+        # Get seeker's user ID
+        seeker_user_id = seeker.get('user_id')
+        if not seeker_user_id:
+            current_app.logger.error(f"No user_id found for seeker: {seeker_id}")
+            return jsonify({'success': False, 'message': 'Cannot identify candidate user account'}), 400
+        
+        current_app.logger.info(f"Found seeker user_id: {seeker_user_id}")
+        
+        # Check if a conversation already exists
+        existing_conversation = collection_conversations.find_one({
+            '$or': [
+                {'user1_id': ObjectId(current_user.id), 'user2_id': ObjectId(seeker_user_id)},
+                {'user1_id': ObjectId(seeker_user_id), 'user2_id': ObjectId(current_user.id)}
+            ]
+        })
+        
+        if existing_conversation:
+            conversation_id = existing_conversation['_id']
+            current_app.logger.info(f"Found existing conversation: {conversation_id}")
+        else:
+            # Create a new conversation
+            conversation_data = {
+                'user1_id': ObjectId(current_user.id),
+                'user2_id': ObjectId(seeker_user_id),
+                'created_at': datetime.now(),
+                'last_message_at': datetime.now(),
+                'unread_count_user1': 0,
+                'unread_count_user2': 0
+            }
+            
+            current_app.logger.info(f"Creating new conversation with data: {conversation_data}")
+            
+            conversation_result = collection_conversations.insert_one(conversation_data)
+            conversation_id = conversation_result.inserted_id
+            
+            # Create a notification for the seeker
+            notification_data = {
+                'user_id': ObjectId(seeker_user_id),
+                'type': 'chat',
+                'message': f'Recruiter {current_user.name} has started a conversation with you',
+                'is_read': False,
+                'created_at': datetime.now()
+            }
+            
+            current_app.logger.info(f"Creating notification with data: {notification_data}")
+            collection_notifications.insert_one(notification_data)
+        
+        # Check if messages blueprint exists and has the view_conversation endpoint
+        if 'messages.view_conversation' in current_app.view_functions:
+            redirect_url = url_for('messages.view_conversation', conversation_id=str(conversation_id))
+        else:
+            # Fallback to a generic messages URL
+            redirect_url = f"/messages/{conversation_id}"
+            current_app.logger.warning(f"messages.view_conversation endpoint not found, using fallback URL: {redirect_url}")
+        
+        return jsonify({
+            'success': True, 
+            'conversation_id': str(conversation_id),
+            'redirect_url': redirect_url
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in initiate_chat: {str(e)}")
+        current_app.logger.error(traceback.format_exc())  # Log the full traceback
+        return jsonify({'success': False, 'message': f'An error occurred while initiating chat: {str(e)}'}), 500

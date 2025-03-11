@@ -1,6 +1,6 @@
 import os
 from pymongo import MongoClient
-from flask import Blueprint, render_template, request, jsonify, current_app
+from flask import Blueprint, render_template, request, jsonify, current_app, flash, redirect, url_for
 from bson.objectid import ObjectId
 from flask_login import login_required, current_user
 from datetime import datetime
@@ -311,3 +311,82 @@ def parse_resume():
             'status': 'error',
             'message': str(e)
         }), 500
+
+@resume_maker_bp.route('/load-resume', methods=['GET'])
+@login_required
+def load_resume():
+    try:
+        # Find the user's resume in the database
+        resume = collection_resume_details.find_one({'user_id': ObjectId(current_user.id)})
+        
+        if resume:
+            # Remove MongoDB's _id field before sending
+            resume.pop('_id', None)
+            resume.pop('user_id', None)
+            return jsonify({
+                'status': 'success',
+                'resume': resume
+            })
+        else:
+            return jsonify({
+                'status': 'success',
+                'resume': None
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@resume_maker_bp.route('/choose-template')
+@login_required
+def choose_template():
+    return render_template('seeker/choose_template.html')
+
+@resume_maker_bp.route('/generate-resume/<template_name>')
+@login_required
+def generate_resume(template_name):
+    # Get user's resume data from database
+    resume_data = collection_resume_details.find_one({'user_id': ObjectId(current_user.id)})
+    
+    if not resume_data:
+        flash('Please create your resume first', 'error')
+        return redirect(url_for('resume_maker.resume_maker'))
+    
+    # Remove MongoDB specific fields
+    if '_id' in resume_data:
+        resume_data.pop('_id')
+    if 'user_id' in resume_data:
+        resume_data.pop('user_id')
+    
+    # Ensure skills are in the correct format
+    if 'skills' in resume_data:
+        if isinstance(resume_data['skills'], str):
+            # If skills is a string, convert it to the expected format
+            resume_data['skills'] = {
+                'technical': resume_data['skills'].split(','),
+                'soft': []
+            }
+        elif isinstance(resume_data['skills'], dict):
+            # Ensure each skill list contains full strings, not characters
+            if 'technical' in resume_data['skills']:
+                if isinstance(resume_data['skills']['technical'], str):
+                    resume_data['skills']['technical'] = resume_data['skills']['technical'].split(',')
+            if 'soft' in resume_data['skills']:
+                if isinstance(resume_data['skills']['soft'], str):
+                    resume_data['skills']['soft'] = resume_data['skills']['soft'].split(',')
+    
+    # Render the appropriate template
+    template_map = {
+        'ats': 'seeker/templates/ats_template.html',
+        'bold': 'seeker/templates/bold_template.html',
+        'distinct': 'seeker/templates/distinct_template.html'
+    }
+    
+    template_path = template_map.get(template_name)
+    if not template_path:
+        flash('Invalid template selected', 'error')
+        return redirect(url_for('resume_maker.choose_template'))
+    
+    return render_template(template_path, resume=resume_data)
