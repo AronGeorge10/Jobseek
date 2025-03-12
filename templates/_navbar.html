@@ -53,11 +53,19 @@
             </li>
             <li><hr class="dropdown-divider"></li>
             {% if has_profile %}
-              <li><a class="dropdown-item" href="{{ url_for('resume_maker.setup_profile') }}">View Profile</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('resume_maker.setup_profile') }}"><i class="fas fa-user"></i> View Profile</a></li>
             {% else %}
-              <li><a class="dropdown-item" href="{{ url_for('resume_maker.setup_profile') }}">Set up Profile</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('resume_maker.setup_profile') }}"><i class="fas fa-user"></i> Set up Profile</a></li>
             {% endif %}
-            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Sign out</a></li>
+            <li>
+              <a class="dropdown-item" href="{{ url_for('messages.messages_list') }}">
+                <i class="fas fa-envelope me-2"></i>Messages
+                {% if unread_messages_count and unread_messages_count > 0 %}
+                  <span class="badge bg-danger">{{ unread_messages_count }}</span>
+                {% endif %}
+              </a>
+            </li>
+            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Sign out</a></li>
           </ul>
         </li>
       </ul>

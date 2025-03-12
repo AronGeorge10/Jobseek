@@ -1,0 +1,87 @@
+<!-- Add this button near the recruiter information section -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">{{ recruiter.company_name }}</h5>
+    <p class="card-text">{{ recruiter.company_description }}</p>
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <button
+        class="btn btn-outline-primary initiate-chat"
+        data-recruiter-id="{{ recruiter._id }}"
+      >
+        <i class="fas fa-comment-dots me-1"></i> Message Recruiter
+      </button>
+      <!-- Other buttons like "View Jobs" can go here -->
+    </div>
+  </div>
+</div>
+
+<!-- Add this JavaScript at the end of the file -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Reset all chat buttons on page load
+    document.querySelectorAll(".initiate-chat").forEach((button) => {
+      button.innerHTML =
+        '<i class="fas fa-comment-dots me-1"></i> Message Recruiter';
+      button.disabled = false;
+    });
+
+    // Chat functionality
+    document.querySelectorAll(".initiate-chat").forEach((button) => {
+      button.addEventListener("click", async function () {
+        const recruiterId = this.dataset.recruiterId;
+        console.log("Initiating chat with recruiter ID:", recruiterId);
+
+        try {
+          // Show loading state
+          const originalText = button.innerHTML;
+          button.innerHTML =
+            '<i class="fas fa-spinner fa-spin me-1"></i> Connecting...';
+          button.disabled = true;
+
+          const response = await fetch(`/seeker/initiate-chat/${recruiterId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          const data = await response.json();
+          console.log("Chat initiation response:", data);
+
+          if (data.success) {
+            // Redirect to the conversation
+            window.location.href = data.redirect_url;
+          } else {
+            console.error("Failed to initiate chat:", data.message);
+            alert(data.message || "Failed to initiate chat");
+            // Reset button
+            button.innerHTML = originalText;
+            button.disabled = false;
+          }
+        } catch (error) {
+          console.error("Error initiating chat:", error);
+          alert(
+            "An error occurred while initiating chat. Please check the console for details."
+          );
+          // Reset button
+          button.innerHTML =
+            '<i class="fas fa-comment-dots me-1"></i> Message Recruiter';
+          button.disabled = false;
+        }
+      });
+    });
+
+    // Handle browser back button navigation
+    window.addEventListener("pageshow", function (event) {
+      // Check if the page is loaded from cache (back/forward navigation)
+      if (event.persisted) {
+        // Reset all chat buttons
+        document.querySelectorAll(".initiate-chat").forEach((button) => {
+          button.innerHTML =
+            '<i class="fas fa-comment-dots me-1"></i> Message Recruiter';
+          button.disabled = false;
+        });
+      }
+    });
+  });
+</script>
