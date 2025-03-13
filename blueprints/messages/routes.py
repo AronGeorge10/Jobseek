@@ -18,6 +18,9 @@ collection_messages = db['tbl_messages']
 collection_users = db['tbl_login_credentials']
 collection_resume = db['tbl_resume_details']
 collection_recruiter_registration = db['tbl_recruiter_registration']
+collection_talent_pool = db['tbl_talent_pool']
+collection_jobs = db['tbl_jobs']
+collection_applications = db['tbl_applications']
 
 messages_bp = Blueprint('messages', __name__)
 
@@ -36,6 +39,8 @@ def messages_list():
         
         # Process conversations to include user details
         conversations_list = []
+        total_unread = 0
+        
         for conv in conversations:
             # Determine the other user in the conversation
             other_user_id = conv['user2_id'] if str(conv['user1_id']) == current_user.id else conv['user1_id']
@@ -76,6 +81,7 @@ def messages_list():
                 
             # Determine unread count for current user
             unread_count = conv.get('unread_count_user1', 0) if str(conv['user1_id']) == current_user.id else conv.get('unread_count_user2', 0)
+            total_unread += unread_count
             
             # Format timestamp
             last_message_time = last_message.get('timestamp') if last_message else conv.get('created_at')
@@ -83,7 +89,6 @@ def messages_list():
             
             conversations_list.append({
                 'id': str(conv['_id']),
-                'other_user_id': str(other_user_id),
                 'display_name': display_name,
                 'profile_pic': profile_pic,
                 'last_message': last_message_text,
@@ -91,12 +96,45 @@ def messages_list():
                 'unread_count': unread_count
             })
         
-        return render_template('messages/conversations.html', conversations=conversations_list)
+        # Get potential contacts for new messages tab
+        recruiters = []
+        job_seekers = []
+        
+        if current_user.user_type == 'seeker':
+            # For job seekers, show recruiters
+            recruiters_cursor = collection_recruiter_registration.find({}).limit(20)
+            recruiters = list(recruiters_cursor)
+        else:
+            # For recruiters, show job seekers from talent pool and applications
+            # First get from talent pool
+            pool_entries = collection_talent_pool.find({'recruiter_id': ObjectId(current_user.id)})
+            seeker_ids = [entry['seeker_id'] for entry in pool_entries]
+            
+            # Then get from job applications
+            jobs = collection_jobs.find({'recruiter_id': ObjectId(current_user.id)})
+            job_ids = [job['_id'] for job in jobs]
+            
+            applications = collection_applications.find({'job_id': {'$in': job_ids}})
+            for app in applications:
+                if app.get('seeker_id') and app['seeker_id'] not in seeker_ids:
+                    seeker_ids.append(app['seeker_id'])
+            
+            # Get seeker details
+            if seeker_ids:
+                job_seekers = list(collection_resume.find({'_id': {'$in': seeker_ids}}))
+        
+        return render_template(
+            'messages/conversations.html', 
+            conversations=conversations_list,
+            total_unread=total_unread,
+            recruiters=recruiters,
+            job_seekers=job_seekers
+        )
         
     except Exception as e:
         current_app.logger.error(f"Error in messages_list: {str(e)}")
         current_app.logger.error(traceback.format_exc())
-        flash('An error occurred while loading your conversations', 'error')
+        flash('An error occurred while loading your messages', 'error')
         return redirect(url_for('index'))
 
 @messages_bp.route('/messages/<conversation_id>')
