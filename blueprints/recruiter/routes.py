@@ -219,26 +219,49 @@ def view_applications(job_id):
     for app in applications:
         resume = collection_resume.find_one({'user_id': ObjectId(app['user_id'])})
         if resume:
-            if technical_skills and not all(skill in resume.get('technical_skills', []) for skill in technical_skills):
+            # Check technical skills (now in skills.technical)
+            if technical_skills and not all(skill in resume.get('skills', {}).get('technical', []) for skill in technical_skills):
                 continue
-            if soft_skills and not all(skill in resume.get('soft_skills', []) for skill in soft_skills):
+                
+            # Check soft skills (now in skills.soft)
+            if soft_skills and not all(skill in resume.get('skills', {}).get('soft', []) for skill in soft_skills):
                 continue
+                
+            # Calculate total experience from work_experience entries
+            total_experience = 0
+            if 'work_experience' in resume:
+                for exp in resume['work_experience']:
+                    try:
+                        start_date = datetime.strptime(exp.get('start_date', ''), '%Y-%m')
+                        end_date = datetime.strptime(exp.get('end_date', ''), '%Y-%m') if exp.get('end_date') else datetime.now()
+                        duration = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
+                        total_experience += duration / 12  # Convert months to years
+                    except (ValueError, TypeError):
+                        continue
+            
+            # Check experience filter
             if experience:
                 if experience == '5+':
-                    if resume.get('total_experience', 0) < 5:
+                    if total_experience < 5:
                         continue
                 else:
                     try:
                         min_exp, max_exp = map(int, experience.split('-'))
-                        if not (min_exp <= resume.get('total_experience', 0) < max_exp):
+                        if not (min_exp <= total_experience < max_exp):
                             continue
                     except ValueError:
                         pass
-            if education and resume.get('highest_education') != education:
-                continue
             
-            app['applicant_name'] = resume.get('full_name', 'Unknown')
-            app['applicant_email'] = resume.get('email', 'N/A')
+            # Check education (highest degree)
+            if education and resume.get('education'):
+                highest_education = resume['education'][0].get('degree', '') if resume.get('education') else ''
+                if not any(edu.lower() in highest_education.lower() for edu in [education]):
+                    continue
+            
+            # Get applicant info from personal_info
+            personal_info = resume.get('personal_info', {})
+            app['applicant_name'] = personal_info.get('full_name', 'Unknown')
+            app['applicant_email'] = personal_info.get('email', 'N/A')
             app['id'] = str(app['_id'])
             app['user_id'] = str(app['user_id'])
             app['applied_at'] = app['applied_at'].strftime('%Y-%m-%d %H:%M:%S') if app.get('applied_at') else 'N/A'
@@ -822,7 +845,8 @@ def schedule_interview():
             # Use user_id to find the full_name in collection_resume
             user_id = candidate['user_id']
             resume = collection_resume.find_one({'user_id': ObjectId(user_id)})
-            full_name = resume['full_name'] if resume else 'Unknown'  # Default to 'Unknown' if not found
+            # Get full_name from personal_info object
+            full_name = resume.get('personal_info', {}).get('full_name', 'Unknown') if resume else 'Unknown'
             candidates.append({'id': str(candidate['_id']), 'name': full_name})
         return render_template('recruiter/schedule_interview.html', candidates=candidates, job=job, default_candidate_name=default_candidate_name)
 
