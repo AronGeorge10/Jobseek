@@ -12,6 +12,8 @@ import spacy
 import io
 from bson import json_util
 import json
+import yaml
+import google.generativeai as genai
 
 resume_maker_bp = Blueprint('resume_maker', __name__)
 MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://AronJain:4E1zkxYGeaWZQCL8@cluster0.qy4jgjm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
@@ -390,3 +392,141 @@ def generate_resume(template_name):
         return redirect(url_for('resume_maker.choose_template'))
     
     return render_template(template_path, resume=resume_data)
+
+# Add the resume parser functionality
+def ats_extractor(resume_data):
+    try:
+        # Get API key from config file
+        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
+                                  'config', 'ai_config.yaml')
+        
+        with open(config_path) as file:
+            data = yaml.load(file, Loader=yaml.FullLoader)
+            api_key = data.get('GEMINI_API_KEY')
+        
+        # Configure the Gemini API
+        genai.configure(api_key=api_key)
+        
+        # Set up the model
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        
+        prompt = '''
+        You are an AI bot designed to act as a professional for parsing resumes. You are given with resume and your job is to extract the following information from the resume:
+        
+        1. full_name: The person's full name
+        2. email_id: Email address
+        3. github_portfolio: GitHub profile URL (if available)
+        4. linkedin_id: LinkedIn profile URL (if available)
+        5. summary: Look for any professional summary, profile, objective, or career statement. This might be labeled as "Summary", "Profile", "Professional Profile", "Career Objective", "About Me", etc.
+        6. education: List of education entries, each with:
+           - degree: The degree or certification obtained
+           - institution: The school, college, or university name
+           - graduation_date: When they graduated or expect to graduate
+           - gpa: GPA if mentioned
+        7. experience: List of work experiences, each with:
+           - title: Job title
+           - company: Company name
+           - location: Job location (if available)
+           - dates: Employment period
+           - description: Bullet points or description of responsibilities and achievements
+        8. skills: List of technical skills, programming languages, tools, etc.
+        9. certifications: List of professional certifications (if available)
+        10. projects: List of projects with descriptions (if available)
+        
+        Return the information in a clean JSON format. If any information is not available, use null or an empty array as appropriate.
+        '''
+        
+        full_prompt = f"{prompt}\n\nResume content:\n{resume_data}"
+        
+        # Generate content
+        response = model.generate_content(full_prompt)
+        
+        # Extract the text from the response
+        data = response.text
+        
+        return data
+    except Exception as e:
+        print(f"Error generating content: {str(e)}")
+        raise Exception(f"Failed to generate content: {str(e)}")
+
+def extract_text_from_pdf(pdf_file):
+    """Extract text from a PDF file using pdfplumber"""
+    text = ""
+    try:
+        with pdfplumber.open(pdf_file) as pdf:
+            for page in pdf.pages:
+                text += page.extract_text() or ""
+        return text
+    except Exception as e:
+        raise Exception(f"Error extracting text from PDF: {str(e)}")
+
+# Add a new route for AI-powered resume parsing
+@resume_maker_bp.route('/ai-parse-resume', methods=['POST'])
+@login_required
+def ai_parse_resume():
+    try:
+        if 'file' not in request.files:
+            current_app.logger.error('No file in request')
+            return jsonify({'status': 'error', 'message': 'No file provided'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            current_app.logger.error('No filename')
+            return jsonify({'status': 'error', 'message': 'No file selected'}), 400
+
+        # Create upload folder if it doesn't exist
+        upload_path = os.path.join(current_app.root_path, 'static', 'uploads', 'resumes')
+        if not os.path.exists(upload_path):
+            os.makedirs(upload_path)
+
+        # Save the file
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(upload_path, filename)
+        file.save(file_path)
+
+        # Extract text based on file type
+        if filename.lower().endswith('.pdf'):
+            resume_text = extract_text_from_pdf(file_path)
+        elif filename.lower().endswith('.docx'):
+            resume_text = extract_text_from_docx(file_path)
+        elif filename.lower().endswith('.doc'):
+            # For .doc files, you might need additional handling
+            # This is a simplified approach - consider using antiword or other tools for better extraction
+            try:
+                # Try to open as docx first (some .doc files are actually .docx)
+                resume_text = extract_text_from_docx(file_path)
+            except:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Legacy .doc format is not supported. Please convert to .docx or .pdf.'
+                }), 400
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Unsupported file format. Please upload a PDF or DOCX file.'
+            }), 400
+
+        # Parse the resume using AI
+        parsed_data = ats_extractor(resume_text)
+        
+        # Return the parsed data
+        return jsonify({
+            'status': 'success',
+            'data': parsed_data
+        })
+
+    except Exception as e:
+        current_app.logger.error(f'Error in AI parse_resume: {str(e)}')
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+def extract_text_from_docx(docx_file):
+    """Extract text from a DOCX file"""
+    try:
+        doc = Document(docx_file)
+        text = "\n".join([paragraph.text for paragraph in doc.paragraphs if paragraph.text])
+        return text
+    except Exception as e:
+        raise Exception(f"Error extracting text from DOCX: {str(e)}")

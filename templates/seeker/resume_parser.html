@@ -291,9 +291,8 @@
           }
         }, 200);
 
-        // Updated URL to match the blueprint registration
-        fetch("/seeker/parse-resume", {
-          // Changed to match blueprint url_prefix
+        // Updated URL to use the AI-powered resume parser
+        fetch("/seeker/ai-parse-resume", {
           method: "POST",
           body: formData,
           headers: {
@@ -324,13 +323,41 @@
 
               if (data.status === "success") {
                 parsedContent.style.display = "block";
+
+                // Process the AI response which might be in string format
+                let parsedData;
+                if (typeof data.data === "string") {
+                  try {
+                    // Try to extract JSON from the response if it's a string
+                    const jsonMatch = data.data.match(
+                      /```json\n([\s\S]*?)\n```/
+                    ) ||
+                      data.data.match(/```\n([\s\S]*?)\n```/) || [
+                        null,
+                        data.data,
+                      ];
+                    parsedData = JSON.parse(jsonMatch[1]);
+                  } catch (e) {
+                    console.error("Error parsing JSON from AI response:", e);
+                    alert("Error processing AI response. Please try again.");
+                    return;
+                  }
+                } else {
+                  parsedData = data.data;
+                }
+
                 // Store the parsed data globally for the save function
-                window.parsedResumeData = data.data;
-                displayParsedData(data.data);
-                console.log("Resume parsed successfully:", data.data);
+                window.parsedResumeData = processAIResponse(parsedData);
+                displayParsedData(window.parsedResumeData);
+                console.log(
+                  "Resume parsed successfully:",
+                  window.parsedResumeData
+                );
               } else {
                 console.error("Parse error:", data.message);
-                throw new Error(data.message || "Error parsing resume");
+                alert(
+                  "Error parsing resume: " + (data.message || "Unknown error")
+                );
               }
             }, 500);
           })
@@ -342,7 +369,89 @@
               message: error.message,
               stack: error.stack,
             });
+            alert("Error: " + error.message);
           });
+      }
+
+      // Function to process and normalize AI response to match our expected format
+      function processAIResponse(aiData) {
+        console.log("Processing AI response:", aiData);
+
+        // Create a normalized structure
+        const normalizedData = {
+          personal_info: {
+            full_name: aiData.full_name || "",
+            email: aiData.email_id || "",
+            phone: "", // AI might not extract phone
+            address: "", // AI might not extract address
+          },
+          professional_summary: aiData.summary || "",
+          skills: {
+            technical: [],
+            soft: [],
+            tools: [],
+          },
+          work_experience: [],
+          education: [],
+          projects: [],
+          achievements: [],
+        };
+
+        // Process skills - AI might return them as a single array
+        if (aiData.skills && Array.isArray(aiData.skills)) {
+          // Categorize skills based on common patterns
+          aiData.skills.forEach((skill) => {
+            if (
+              /java|python|c\+\+|javascript|html|css|sql|react|node|angular|vue|php|ruby|swift|kotlin|go|rust|scala|perl|bash|shell|typescript|dart|r|matlab|fortran/i.test(
+                skill
+              )
+            ) {
+              normalizedData.skills.technical.push(skill);
+            } else if (
+              /communication|leadership|teamwork|problem.solving|critical.thinking|time.management|adaptability|creativity|collaboration|organization|flexibility|patience|empathy|negotiation|presentation|public.speaking/i.test(
+                skill
+              )
+            ) {
+              normalizedData.skills.soft.push(skill);
+            } else {
+              normalizedData.skills.tools.push(skill);
+            }
+          });
+        }
+
+        // Process work experience
+        if (aiData.experience && Array.isArray(aiData.experience)) {
+          normalizedData.work_experience = aiData.experience.map((exp) => ({
+            title: exp.title || "",
+            company: exp.company || "",
+            start_date: exp.dates ? exp.dates.split("-")[0].trim() : "",
+            end_date: exp.dates ? exp.dates.split("-")[1]?.trim() : "",
+            responsibilities: exp.description || "",
+          }));
+        }
+
+        // Process education
+        if (aiData.education && Array.isArray(aiData.education)) {
+          normalizedData.education = aiData.education.map((edu) => ({
+            degree: edu.degree || "",
+            institution: edu.institution || "",
+            start_date: edu.graduation_date ? "" : "", // AI might not provide start date
+            end_date: edu.graduation_date || "",
+            description: edu.gpa ? `GPA: ${edu.gpa}` : "",
+          }));
+        }
+
+        // Process projects
+        if (aiData.projects && Array.isArray(aiData.projects)) {
+          normalizedData.projects = aiData.projects.map((proj) => ({
+            name: proj.title || proj.name || "",
+            description: proj.description || "",
+            technologies: "", // AI might not categorize technologies
+            url: proj.url || "",
+          }));
+        }
+
+        return normalizedData;
       }
 
       function displayParsedData(data) {
