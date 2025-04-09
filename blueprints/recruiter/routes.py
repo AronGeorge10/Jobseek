@@ -1128,12 +1128,12 @@ def network():
     # Build query for job seekers
     query = {}
     if skills:
-        # Split skills by comma and create a regex pattern for each skill
         skill_list = [skill.strip() for skill in skills.split(',')]
-        query['$or'] = [
-            {'skills.technical': {'$in': [{'$regex': skill, '$options': 'i'} for skill in skill_list]}},
-            {'skills.soft': {'$in': [{'$regex': skill, '$options': 'i'} for skill in skill_list]}}
-        ]
+        skill_conditions = []
+        for skill in skill_list:
+            skill_conditions.append({'skills.technical': {'$regex': skill, '$options': 'i'}})
+            skill_conditions.append({'skills.soft': {'$regex': skill, '$options': 'i'}})
+        query['$or'] = skill_conditions
     
     if experience:
         # Note: You might need to add a total_experience field to your schema

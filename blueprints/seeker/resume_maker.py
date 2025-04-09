@@ -530,3 +530,40 @@ def extract_text_from_docx(docx_file):
         return text
     except Exception as e:
         raise Exception(f"Error extracting text from DOCX: {str(e)}")
+
+@resume_maker_bp.route('/save-parsed-resume', methods=['POST'])
+@login_required
+def save_parsed_resume():
+    try:
+        data = request.json
+        
+        resume_data = {
+            'user_id': ObjectId(current_user.id),
+            'personal_info': data.get('personal_info', {}),
+            'professional_summary': data.get('professional_summary', ''),
+            'education': data.get('education', []),
+            'skills': data.get('skills', {}),
+            'work_experience': data.get('work_experience', []),
+            'projects': data.get('projects', []),
+            'achievements': data.get('achievements', []),
+            'last_updated': datetime.utcnow()
+        }
+        
+        # Update or insert resume in database
+        result = collection_resume_details.update_one(
+            {'user_id': ObjectId(current_user.id)},
+            {'$set': resume_data},
+            upsert=True
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Resume saved successfully'
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f'Error saving parsed resume: {str(e)}')
+        return jsonify({
+            'status': 'error',
+            'message': f'Error saving resume data: {str(e)}'
+        }), 500

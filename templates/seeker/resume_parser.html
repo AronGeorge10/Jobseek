@@ -589,6 +589,13 @@
                 .join("")
             : "<p>No education details found</p>";
 
+        // Find the save button container and remove it temporarily
+        const saveButtonContainer =
+          parsedContent.querySelector(".text-center.mt-4");
+        if (saveButtonContainer) {
+          parsedContent.removeChild(saveButtonContainer);
+        }
+
         // Display projects if available
         if (data.projects && data.projects.length > 0) {
           const projectsSection = document.createElement("div");
@@ -664,6 +671,11 @@
           parsedContent.appendChild(achievementsSection);
         }
 
+        // Add the save button back at the end
+        if (saveButtonContainer) {
+          parsedContent.appendChild(saveButtonContainer);
+        }
+
         // Display professional summary if available
         if (data.professional_summary) {
           const summarySection = document.createElement("div");
@@ -711,7 +723,7 @@
             .then((data) => {
               if (data.status === "success") {
                 alert("Resume data saved successfully!");
-                window.location.href = "/seeker/profile";
+                window.location.href = "/seeker/resume-maker";
               } else {
                 alert(data.message || "Error saving resume data");
               }
