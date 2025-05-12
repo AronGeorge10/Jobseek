@@ -921,3 +921,59 @@ def clear_viewed_notifications():
         return jsonify({'success': result.deleted_count > 0})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
+@seeker_bp.route('/my_applications')
+@login_required
+def my_applications():
+    try:
+        # Create a pipeline to fetch applications with job and company details
+        pipeline = [
+            {
+                '$match': {
+                    'user_id': ObjectId(current_user.id)
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'tbl_jobs',
+                    'localField': 'job_id',
+                    'foreignField': '_id',
+                    'as': 'job_info'
+                }
+            },
+            {
+                '$unwind': '$job_info'
+            },
+            {
+                '$lookup': {
+                    'from': 'tbl_recruiter_registration',
+                    'localField': 'job_info.recruiter_id',
+                    'foreignField': 'user_id',
+                    'as': 'company_info'
+                }
+            },
+            {
+                '$unwind': {
+                    'path': '$company_info',
+                    'preserveNullAndEmptyArrays': True
+                }
+            },
+            {
+                '$project': {
+                    'job_id': '$job_id',
+                    'job_title': '$job_info.title',
+                    'company_name': '$company_info.company_name',
+                    'status': '$status',
+                    'applied_date': '$applied_at'
+                }
+            }
+        ]
+
+        # Execute the pipeline
+        applications = list(db.tbl_job_applications.aggregate(pipeline))
+        
+        return render_template('seeker/my_applications.html', applications=applications)
+    except Exception as e:
+        current_app.logger.error(f"Error in my_applications: {str(e)}")
+        flash('An error occurred while fetching your applications.', 'error')
+        return redirect(url_for('seeker.job_postings'))

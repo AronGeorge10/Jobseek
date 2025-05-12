@@ -1,294 +1,445 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job Postings - JOBSEEK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://kit.fontawesome.com/0e035b9984.js"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='webpage/css/main.css') }}"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      @media (max-width: 991px) {
+        .col-lg-3,
+        .col-lg-6 {
+          margin-bottom: 20px;
+        }
+      }
 
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Job Postings - JOBSEEK</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
-  <script src="https://kit.fontawesome.com/0e035b9984.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='webpage/css/main.css') }}">
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-  <style>
-    @media (max-width: 991px) {
+      .main {
+        margin-top: 0;
+        padding: 2rem 0;
+      }
 
-      .col-lg-3,
-      .col-lg-6 {
+      #filter-options,
+      #results-container {
+        max-height: 600px;
+        overflow-y: auto;
+      }
+
+      .job-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: box-shadow 0.3s ease;
+      }
+
+      .job-item:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .job-title {
+        margin-bottom: 5px;
+        color: #333;
+      }
+
+      .company-name {
+        color: #666;
+        font-size: 0.9em;
+      }
+
+      .job-details p {
+        color: #666;
+        font-size: 0.9em;
+      }
+
+      .salary-range {
+        font-weight: bold;
+        color: #28a745;
+      }
+
+      .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+      }
+
+      .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+      }
+
+      .recommendations-btn {
         margin-bottom: 20px;
       }
-    }
 
-    #filter-options,
-    #results-container {
-      max-height: 600px;
-      overflow-y: auto;
-    }
-
-    .job-item {
-      border: 1px solid #e0e0e0;
-      border-radius: 5px;
-      padding: 15px;
-      margin-bottom: 15px;
-      transition: box-shadow 0.3s ease;
-    }
-
-    .job-item:hover {
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
-    .job-title {
-      margin-bottom: 5px;
-      color: #333;
-    }
-
-    .company-name {
-      color: #666;
-      font-size: 0.9em;
-    }
-
-    .job-details p {
-      color: #666;
-      font-size: 0.9em;
-    }
-
-    .salary-range {
-      font-weight: bold;
-      color: #28a745;
-    }
-
-    .btn-primary {
-      background-color: #007bff;
-      border-color: #007bff;
-    }
-
-    .btn-primary:hover {
-      background-color: #0056b3;
-      border-color: #0056b3;
-    }
-
-    .recommendations-btn {
-      margin-bottom: 20px;
-    }
-  </style>
-</head>
-
-<body>
-  {% include '_navbar.html' %}
-  <main>
-    <div class="main">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-3">
-            <h3>Filters</h3>
-            <form id="filter-form">
-              <div class="mb-3">
-                <label class="form-label">Location</label>
-                {% if filter_options.locations %}
-                    {% for location in filter_options.locations %}
-                        <div class="form-check">
-                            <input class="form-check-input filter-checkbox" type="checkbox" name="location" value="{{ location }}" id="location-{{ loop.index }}">
-                            <label class="form-check-label" for="location-{{ loop.index }}">
-                                {{ location }}
-                            </label>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p>No locations available</p>
-                {% endif %}
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Job Type</label>
-                {% if filter_options.job_types %}
-                    {% for job_type in filter_options.job_types %}
-                        <div class="form-check">
-                            <input class="form-check-input filter-checkbox" type="checkbox" name="job_type" value="{{ job_type }}" id="job-type-{{ loop.index }}">
-                            <label class="form-check-label" for="job-type-{{ loop.index }}">
-                                {{ job_type }}
-                            </label>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p>No job types available</p>
-                {% endif %}
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Experience Level</label>
-                {% if filter_options.experience_levels %}
-                    {% for level in filter_options.experience_levels %}
-                        <div class="form-check">
-                            <input class="form-check-input filter-checkbox" type="checkbox" name="experience_level" value="{{ level }}" id="experience-level-{{ loop.index }}">
-                            <label class="form-check-label" for="experience-level-{{ loop.index }}">
-                                {{ level }}
-                            </label>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p>No experience levels available</p>
-                {% endif %}
-              </div>
-              <div class="mb-3">
-                <label for="salary_range" class="form-label">Salary Range (LPA)</label>
-                <div id="salary-slider"></div>
-                <input type="hidden" id="salary_min" name="salary_min">
-                <input type="hidden" id="salary_max" name="salary_max">
-                <span id="salary-display"></span>
-              </div>
-            </form>
-          </div>
-          <div class="col-md-9">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <h3>Job Postings</h3>
-              <a href="{{ url_for('seeker.recommendations') }}" class="btn btn-primary recommendations-btn">
-                <i class="fas fa-star me-2"></i>Get Job Recommendations
-              </a>
-            </div>
-            <div id="job-listings"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
-  <!-- Footer -->
-  <footer>
-    <div class="container text-center text-md-start">
-      <div class="footer-wrap">
-        <div class="about">
-          <img src="./img/icon/company-logo.svg" alt="">
-          <p class="text-muted py-4">
-            Start working with Firmbee which can provide you with all the tools needed to run an effcieint business
-            remotely.
-          </p>
-          <div class="social-media">
-            <a href="" class="me-2 text-reset"><img src="img/icon/facebook-icon.svg" alt=""></a>
-            <a href="" class="me-2 text-reset"><img src="img/icon/twitter-icon.svg" alt=""></a>
-            <a href="" class="me-2 text-reset"><img src="img/icon/linkedin-icon.svg" alt=""></a>
-            <a href="" class="me-2 text-reset"><img src="img/icon/instagram-icon.svg" alt=""></a>
-          </div>
-        </div>
-        <div class="company">
-          <h6 class="fw-bold">Company</h6>
-          <p><a href="">About us</a></p>
-          <p><a href="">Services</a></p>
-          <p><a href="">Team</a></p>
-          <p><a href="">Pricing</a></p>
-          <p><a href="">Project</a></p>
-          <p><a href="">Careers</a></p>
-          <p><a href="">Blog</a></p>
-          <p><a href="">Login</a></p>
-        </div>
-        <div class="useful-links">
-          <h6 class="fw-bold">Useful links</h6>
-          <p><a href="">Terms of </a></p>
-          <p><a href="">Services</a></p>
-          <p><a href="">Privacy Policy</a></p>
-          <p><a href="">Documentation</a></p>
-          <p><a href="">Changelog</a></p>
-          <p><a href="">Components</a></p>
-        </div>
-        <div class="newsletter">
-          <h6 class="fw-bold">Newsletter</h6>
-          <p class="text-muted">Sign up and receive the latest tips
-            via email.</p>
-          <form id="subscribe" action="">
-            <label for="email">Your e-mail:</label>
-            <input type="email" placeholder="e-mail:" name="email" required>
-            <button type="submit" class="main-btn">Subscribe</button>
-          </form>
-        </div>
-      </div>
-      <div class="copyright">
-        <p>&copy; 2024 JOBSEEK</p>
-      </div>
-    </div>
-  </footer>
-  <div class="fb2022-copy">Fbee 2022 copyright</div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
-    crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-  <script>
-    $(document).ready(function() {
-      function updateJobListings() {
-        $.ajax({
-          url: "{{ url_for('seeker.get_filtered_jobs') }}",
-          type: 'GET',
-          data: $('#filter-form').serialize(),
-          success: function(response) {
-            console.log("Received response:", response);  // Add this line for debugging
-            var jobListings = $('#job-listings');
-            jobListings.empty();
-            if (response && response.length > 0) {
-              response.forEach(function(job) {
-                var jobHtml = `
-                  <div class="job-item">
-                    <div class="row align-items-center">
-                      <div class="col-md-6 col-lg-4">
-                        <h5 class="job-title">${job.title}</h5>
-                        <p class="company-name mb-0">${job.company}</p>
-                      </div>
-                      <div class="col-md-6 col-lg-3">
-                        <div class="job-details">
-                          <p class="mb-0"><i class="fas fa-map-marker-alt"></i> ${job.location}</p>
-                          <p class="mb-0"><i class="fas fa-briefcase"></i> ${job.job_type}</p>
-                          <p class="mb-0"><i class="fas fa-graduation-cap"></i> ${job.experience_level}</p>
-                        </div>
-                      </div>
-                      <div class="col-md-6 col-lg-3">
-                        <p class="salary-range mb-0">₹${job.salary_min} - ₹${job.salary_max} LPA</p>
-                      </div>
-                      <div class="col-md-6 col-lg-2 text-md-end">
-                        <a href="/seeker/view_job/${job._id}" class="btn btn-primary">View Details</a>
-                      </div>
-                    </div>
-                  </div>
-                `;
-                jobListings.append(jobHtml);
-              });
-            } else {
-              jobListings.html('<p>No jobs found matching your criteria.</p>');
-            }
-          },
-          error: function(xhr, status, error) {
-            console.error("Error fetching jobs:", error);
-            console.error("Status:", status);
-            console.error("Response:", xhr.responseText);
-            $('#job-listings').html('<p>An error occurred while fetching jobs. Please try again later.</p>');
-          }
-        });
+      body {
+        background-color: #f8f9fa;
+        font-family: "Inter", sans-serif;
       }
+      .main {
+        padding: 2rem 0;
+      }
+      .filter-sidebar {
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        padding: 2rem 1.5rem;
+        margin-bottom: 2rem;
+      }
+      .job-cards-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      @media (min-width: 768px) {
+        .job-cards-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (min-width: 1200px) {
+        .job-cards-grid {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+      }
+      .job-card {
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        padding: 1.5rem 1.25rem;
+        border: 1px solid #e5e7eb;
+        transition: box-shadow 0.2s, transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 220px;
+      }
+      .job-card:hover {
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+        transform: translateY(-3px);
+      }
+      .job-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+      }
+      .company-name {
+        color: #6366f1;
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+      .job-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+      }
+      .job-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #6b7280;
+      }
+      .job-meta .fa-map-marker-alt {
+        color: #ef4444;
+      }
+      .job-meta .fa-briefcase {
+        color: #10b981;
+      }
+      .job-meta .fa-graduation-cap {
+        color: #f59e0b;
+      }
+      .job-meta .fa-money-bill-wave {
+        color: #22c55e;
+      }
+      .job-meta .fa-calendar-alt {
+        color: #8b5cf6;
+      }
+      .salary-range {
+        font-weight: 600;
+        color: #22c55e;
+      }
+      .view-btn {
+        background-color: #3b82f6;
+        color: white;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        border: none;
+        transition: background 0.2s, transform 0.2s;
+        margin-top: 1rem;
+        align-self: flex-end;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .view-btn:hover {
+        background-color: #2563eb;
+        color: white;
+        transform: translateY(-2px);
+      }
+      .recommendations-btn {
+        margin-bottom: 20px;
+        background: #6366f1;
+        color: #fff;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        padding: 0.5rem 1.25rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+        transition: background 0.2s, transform 0.2s;
+      }
+      .recommendations-btn:hover {
+        background: #4f46e5;
+        color: #fff;
+        transform: translateY(-2px);
+      }
+      .no-jobs {
+        text-align: center;
+        color: #6b7280;
+        margin-top: 2rem;
+      }
+      .show-filters-btn {
+        display: none !important;
+      }
+      .filter-backdrop {
+        display: none !important;
+      }
+      .filter-sidebar .close-btn {
+        display: none !important;
+      }
+    </style>
+  </head>
 
-      $(".filter-checkbox").change(updateJobListings);
+  <body>
+    {% include '_navbar.html' %}
+    <main>
+      <div class="main">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="filter-sidebar">
+                <h3 class="mb-4">Filters</h3>
+                <form id="filter-form">
+                  <div class="mb-3">
+                    <label class="form-label">Location</label>
+                    {% if filter_options.locations %} {% for location in
+                    filter_options.locations %}
+                    <div class="form-check">
+                      <input
+                        class="form-check-input filter-checkbox"
+                        type="checkbox"
+                        name="location"
+                        value="{{ location }}"
+                        id="location-{{ loop.index }}"
+                      />
+                      <label
+                        class="form-check-label"
+                        for="location-{{ loop.index }}"
+                        >{{ location }}</label
+                      >
+                    </div>
+                    {% endfor %} {% else %}
+                    <p>No locations available</p>
+                    {% endif %}
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Job Type</label>
+                    {% if filter_options.job_types %} {% for job_type in
+                    filter_options.job_types %}
+                    <div class="form-check">
+                      <input
+                        class="form-check-input filter-checkbox"
+                        type="checkbox"
+                        name="job_type"
+                        value="{{ job_type }}"
+                        id="job-type-{{ loop.index }}"
+                      />
+                      <label
+                        class="form-check-label"
+                        for="job-type-{{ loop.index }}"
+                        >{{ job_type }}</label
+                      >
+                    </div>
+                    {% endfor %} {% else %}
+                    <p>No job types available</p>
+                    {% endif %}
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Experience Level</label>
+                    {% if filter_options.experience_levels %} {% for level in
+                    filter_options.experience_levels %}
+                    <div class="form-check">
+                      <input
+                        class="form-check-input filter-checkbox"
+                        type="checkbox"
+                        name="experience_level"
+                        value="{{ level }}"
+                        id="experience-level-{{ loop.index }}"
+                      />
+                      <label
+                        class="form-check-label"
+                        for="experience-level-{{ loop.index }}"
+                        >{{ level }}</label
+                      >
+                    </div>
+                    {% endfor %} {% else %}
+                    <p>No experience levels available</p>
+                    {% endif %}
+                  </div>
+                  <div class="mb-3">
+                    <label for="salary_range" class="form-label"
+                      >Salary Range (LPA)</label
+                    >
+                    <div id="salary-slider"></div>
+                    <input type="hidden" id="salary_min" name="salary_min" />
+                    <input type="hidden" id="salary_max" name="salary_max" />
+                    <span id="salary-display"></span>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="col-md-9">
+              <div
+                class="d-flex justify-content-between align-items-center mb-4"
+              >
+                <h3 class="mb-0">Job Postings</h3>
+                <a
+                  href="{{ url_for('seeker.recommendations') }}"
+                  class="recommendations-btn"
+                >
+                  <i class="fas fa-star"></i>Get Job Recommendations
+                </a>
+              </div>
+              <div id="job-listings" class="job-cards-grid"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
 
-      $("#salary-slider").slider({
-        range: true,
-        min: {{ filter_options.salary_range.min }},
-        max: {{ filter_options.salary_range.max }},
-        values: [{{ filter_options.salary_range.min }}, {{ filter_options.salary_range.max }}],
-        slide: function(event, ui) {
-          $("#salary_min").val(ui.values[0]);
-          $("#salary_max").val(ui.values[1]);
-          $("#salary-display").text(Math.floor(ui.values[0]) + " - " + Math.floor(ui.values[1]) + " LPA");
-        },
-        stop: updateJobListings
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"
+    />
+    <script>
+      $(document).ready(function() {
+        function updateJobListings() {
+          $.ajax({
+            url: "{{ url_for('seeker.get_filtered_jobs') }}",
+            type: 'GET',
+            data: $('#filter-form').serialize(),
+            success: function(response) {
+              console.log("Received response:", response);  // Add this line for debugging
+              var jobListings = $('#job-listings');
+              jobListings.empty();
+              if (response && response.length > 0) {
+                response.forEach(function(job) {
+                  var deadline = '';
+                  if (job.application_deadline) {
+                    deadline = job.application_deadline.split(' ')[0];
+                  }
+                  var jobHtml = `
+                    <div class="job-card">
+                      <div>
+                        <div class="job-title">${job.title}</div>
+                        <div class="company-name"><i class="fas fa-building me-1"></i> ${job.company}</div>
+                        <div class="job-meta mb-2">
+                          <span><i class="fas fa-map-marker-alt"></i> ${job.location}</span>
+                          <span><i class="fas fa-briefcase"></i> ${job.job_type}</span>
+                          <span><i class="fas fa-graduation-cap"></i> ${job.experience_level}</span>
+                          <span><i class="fas fa-money-bill-wave"></i> ₹${job.salary_min} - ₹${job.salary_max} LPA</span>
+
+                        </div>
+                      </div>
+                      <a href="/seeker/view_job/${job._id}" class="view-btn mt-2"><i class="fas fa-arrow-right"></i>View Details</a>
+                    </div>
+                  `;
+                  jobListings.append(jobHtml);
+                });
+              } else {
+                jobListings.html('<div class="no-jobs">No jobs found matching your criteria.</div>');
+              }
+            },
+            error: function(xhr, status, error) {
+              console.error("Error fetching jobs:", error);
+              console.error("Status:", status);
+              console.error("Response:", xhr.responseText);
+              $('#job-listings').html('<p>An error occurred while fetching jobs. Please try again later.</p>');
+            }
+          });
+        }
+
+        $(".filter-checkbox").change(updateJobListings);
+
+        // Initial load of job listings
+        updateJobListings();
       });
 
-      $("#salary_min").val({{ filter_options.salary_range.min }});
-      $("#salary_max").val({{ filter_options.salary_range.max }});
-      $("#salary-display").text(Math.floor({{ filter_options.salary_range.min }}) + " - " + Math.floor({{ filter_options.salary_range.max }}) + " LPA");
-
-      // Initial load of job listings
-      updateJobListings();
-    });
-  </script>
-</body>
-
+      // Salary slider initialization outside of document ready
+      $(function() {
+        $('#salary-slider').slider({
+          range: true,
+          min: {{ filter_options.salary_range.min }},
+          max: {{ filter_options.salary_range.max }},
+          values: [{{ filter_options.salary_range.min }}, {{ filter_options.salary_range.max }}],
+          slide: function(event, ui) {
+            $('#salary_min').val(ui.values[0]);
+            $('#salary_max').val(ui.values[1]);
+            $('#salary-display').text(Math.floor(ui.values[0]) + ' - ' + Math.floor(ui.values[1]) + ' LPA');
+          },
+          stop: function(event, ui) {
+            $('#salary_min').val(ui.values[0]);
+            $('#salary_max').val(ui.values[1]);
+            $('#salary-display').text(Math.floor(ui.values[0]) + ' - ' + Math.floor(ui.values[1]) + ' LPA');
+            $(".filter-checkbox").trigger('change');
+          }
+        });
+        $('#salary_min').val({{ filter_options.salary_range.min }});
+        $('#salary_max').val({{ filter_options.salary_range.max }});
+        $('#salary-display').text(Math.floor({{ filter_options.salary_range.min }}) + ' - ' + Math.floor({{ filter_options.salary_range.max }}) + ' LPA');
+      });
+    </script>
+  </body>
 </html>

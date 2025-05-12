@@ -1,307 +1,559 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ job.title }} - JOBSEEK</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
-    <script src="https://kit.fontawesome.com/0e035b9984.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='webpage/css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://kit.fontawesome.com/0e035b9984.js"></script>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='webpage/css/main.css') }}"
+    />
     <style>
-        .tag {
-            display: inline-block;
-            background-color: #f1f1f1;
-            padding: 5px 10px;
-            margin: 5px;
-            border-radius: 20px;
-            font-size: 0.9em;
+      :root {
+        --primary-color: #4f46e5;
+        --secondary-color: #818cf8;
+        --success-color: #10b981;
+        --danger-color: #ef4444;
+        --warning-color: #f59e0b;
+        --info-color: #3b82f6;
+        --text-primary: #1f2937;
+        --text-secondary: #6b7280;
+        --bg-light: #f9fafb;
+        --bg-white: #ffffff;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        color: var(--text-primary);
+        background: var(--bg-light);
+        line-height: 1.6;
+      }
+
+      .main {
+        margin-top: 0;
+        padding: 2rem 0;
+      }
+
+      .job-details {
+        background: var(--bg-white);
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+      }
+
+      .job-header {
+        margin-bottom: 2rem;
+      }
+
+      .job-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+      }
+
+      .job-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin: 1rem 0;
+      }
+
+      .job-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+      }
+
+      .job-meta-item i {
+        font-size: 1.1rem;
+        transition: transform 0.2s ease;
+      }
+
+      .job-meta-item:hover i {
+        transform: scale(1.1);
+      }
+
+      .job-meta-item.company i {
+        color: #4f46e5; /* Indigo */
+      }
+
+      .job-meta-item.location i {
+        color: #ef4444; /* Red */
+      }
+
+      .job-meta-item.type i {
+        color: #10b981; /* Green */
+      }
+
+      .job-meta-item.experience i {
+        color: #f59e0b; /* Amber */
+      }
+
+      .job-meta-item.deadline i {
+        color: #8b5cf6; /* Purple */
+      }
+
+      .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 2rem 0 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--bg-light);
+      }
+
+      .tag {
+        display: inline-block;
+        background: #f3f4f6;
+        color: var(--text-primary);
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+
+      .tag:hover {
+        background: #e5e7eb;
+        transform: translateY(-1px);
+      }
+
+      .requirements-list,
+      .responsibilities-list,
+      .recruitment-procedure-list {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .requirements-list li,
+      .responsibilities-list li,
+      .recruitment-procedure-list li {
+        position: relative;
+        padding-left: 1.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .requirements-list li::before,
+      .responsibilities-list li::before,
+      .recruitment-procedure-list li::before {
+        content: "•";
+        color: var(--primary-color);
+        font-weight: bold;
+        position: absolute;
+        left: 0;
+      }
+
+      .action-buttons {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      .btn {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .btn-primary:hover {
+        background: var(--secondary-color);
+        border-color: var(--secondary-color);
+        transform: translateY(-1px);
+      }
+
+      .btn-success {
+        background: var(--success-color);
+        border-color: var(--success-color);
+      }
+
+      .btn-danger {
+        background: var(--danger-color);
+        border-color: var(--danger-color);
+      }
+
+      .badge {
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        border-radius: 9999px;
+      }
+
+      .badge-info {
+        background: var(--info-color);
+      }
+
+      .badge-success {
+        background: var(--success-color);
+      }
+
+      .meeting-info {
+        background: #f0f9ff;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-top: 1rem;
+      }
+
+      .meeting-info p {
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+      }
+
+      .meeting-info strong {
+        color: var(--text-primary);
+      }
+
+      .modal-content {
+        border-radius: 1rem;
+        border: none;
+      }
+
+      .modal-header {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1.5rem;
+      }
+
+      .modal-body {
+        padding: 1.5rem;
+      }
+
+      .modal-footer {
+        border-top: 1px solid #e5e7eb;
+        padding: 1.5rem;
+      }
+
+      @media (max-width: 768px) {
+        .job-meta {
+          flex-direction: column;
+          gap: 1rem;
         }
-        .btn-disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+
+        .job-details {
+          padding: 1.5rem;
         }
-        .btn-disabled:hover {
-            opacity: 0.6;
+
+        .job-title {
+          font-size: 1.5rem;
         }
-        .badge {
-            font-size: 0.9em;
-            padding: 0.5em 0.7em;
-            border-radius: 20px;
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     {% include '_navbar.html' %}
     <main>
-        <div class="main">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-8">
-                        <div class="job-details">
-                            <h2>{{ job.title }}</h2>
-                            <div class="job-meta">
-                                <span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-building" viewBox="0 0 16 16">
-                                        <path fill-rule="evenodd" d="M14.763.075A.5.5 0 0 1 15 .5v15a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V14h-1v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V10a.5.5 0 0 1 .342-.474L6 7.64V4.5a.5.5 0 0 1 .276-.447l8-4a.5.5 0 0 1 .487.022zM6 8.694 1 10.36V15h5V8.694zM7 15h2v-1.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5V15h2V1.309l-7 3.5V15z"/>
-                                        <path d="M2 11h1v1H2v-1zm2 0h1v1H4v-1zm-2 2h1v1H2v-1zm2 0h1v1H4v-1zm4-4h1v1H8V9zm2 0h1v1h-1V9zm-2 2h1v1H8v-1zm2 0h1v1h-1v-1zm2-2h1v1h-1V9zm0 2h1v1h-1v-1zM8 7h1v1H8V7zm2 0h1v1h-1V7zm2 0h1v1h-1V7zM8 5h1v1H8V5zm2 0h1v1h-1V5zm2 0h1v1h-1V5zm0-2h1v1h-1V3z"/>
-                                    </svg>
-                                    {{ job.company }}
-                                </span>
-                                <span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-geo-alt" viewBox="0 0 16 16">
-                                        <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A31.493 31.493 0 0 1 8 14.58a31.481 31.481 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94zM8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z"/>
-                                        <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-                                    </svg>
-                                    {{ job.location }}
-                                </span>
-                                <span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
-                                        <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-                                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-                                    </svg>
-                                    {{ job.job_type }}
-                                </span>
-                            </div>
-                            <h4 class="mt-4">Job Description</h4>
-                            <p>{{ job.description }}</p>
-
-                            <h4 class="mt-4">Responsibilities</h4>
-                            <ul>
-                                {% for responsibility in job.responsibilities %}
-                                    <li>{{ responsibility }}</li>
-                                {% endfor %}
-                            </ul>
-
-                            <h4 class="mt-4">Requirements</h4>
-                            <ul>
-                                {% for requirement in job.requirements %}
-                                    <li>{{ requirement }}</li>
-                                {% endfor %}
-                            </ul>
-
-                            <h4 class="mt-4">Soft Skills</h4>
-                            <div>
-                                {% for skill in job.soft_skills %}
-                                    <span class="tag">{{ skill }}</span>
-                                {% endfor %}
-                            </div>
-                            <h4 class="mt-4">Technical Skills</h4>
-                            <div>
-                                {% for skill in job.technical_skills %}
-                                    <span class="tag">{{ skill }}</span>
-                                {% endfor %}
-                            </div>
-                            <h4 class="mt-4">Experience Level</h4>
-                            <p>{{ job.experience_level }}</p>
-                            <h4 class="mt-4">Application Deadline</h4>
-                            <p>{{ job.application_deadline }}</p>
-                            <div id="application-status">
-                                {% if has_applied %}
-                                    {% if is_shortlisted %}
-                                        <button class="btn btn-success mt-4" disabled>Shortlisted</button>
-                                    {% elif meeting_scheduled %}
-                                        <span id="meeting-status" class="badge bg-info text-white me-2">Meeting Scheduled</span>
-                                        {% if interview %}
-                                            <div class="mt-2">
-                                                <a href="#" 
-                                                   id="enter-meeting-btn"
-                                                   class="btn btn-primary enter-meeting-btn" 
-                                                   data-meeting-time="{{ interview.get('interview_time', '') }}"
-                                                   data-meeting-duration="{{ interview.get('interview_duration', 30) }}"
-                                                   data-room-name="{{ interview.get('room_name', '') }}"
-                                                   data-toggle="tooltip"
-                                                   title="Enter Meeting">
-                                                   Enter Meeting
-                                                </a>
-                                                
-                                                <button type="button" 
-                                                        class="btn btn-info view-notes-btn ms-2" 
-                                                        data-job-id="{{ job._id }}"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#notesModal">
-                                                    <i class="fas fa-sticky-note"></i> View Notes
-                                                </button>
-                                            </div>
-                                        {% endif %}
-                                    {% elif is_hired %}
-                                        <span class="badge bg-success text-white me-2">
-                                            <i class="fas fa-check-circle"></i> You Have Been Hired
-                                        </span>
-                                        
-                                        <button type="button" 
-                                                class="btn btn-info view-notes-btn mt-2" 
-                                                data-job-id="{{ job._id }}"
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#notesModal">
-                                            <i class="fas fa-sticky-note"></i> View Notes
-                                        </button>
-                                    {% else %}
-                                        <button class="btn btn-secondary mt-4" disabled>Applied</button>
-                                    {% endif %}
-                                    
-                                    {% if not meeting_scheduled and not is_hired %}
-                                        <button id="cancel-application" class="btn btn-danger mt-4">Cancel Application</button>
-                                    {% endif %}
-                                {% else %}
-                                    <button id="apply-job" class="btn btn-primary mt-4">Apply Now</button>
-                                {% endif %}
-                            </div>
-                        </div>
+      <div class="main">
+        <div class="container">
+          <div class="row justify-content-center">
+            <div class="col-lg-10">
+              <div class="job-details">
+                <div class="job-header">
+                  <h1 class="job-title">{{ job.title }}</h1>
+                  <div class="job-meta">
+                    <div class="job-meta-item company">
+                      <i class="fas fa-building"></i>
+                      <span>{{ job.company }}</span>
                     </div>
-                    <div class="col-lg-4">
-                        <!-- Sidebar content (e.g., related jobs, company info) can be added here -->
+                    <div class="job-meta-item location">
+                      <i class="fas fa-map-marker-alt"></i>
+                      <span>{{ job.location }}</span>
                     </div>
+                    <div class="job-meta-item type">
+                      <i class="fas fa-clock"></i>
+                      <span>{{ job.job_type }}</span>
+                    </div>
+                    <div class="job-meta-item experience">
+                      <i class="fas fa-graduation-cap"></i>
+                      <span>{{ job.experience_level }}</span>
+                    </div>
+                    <div class="job-meta-item deadline">
+                      <i class="fas fa-calendar-alt"></i>
+                      <span
+                        >{{ job.application_deadline.strftime('%Y-%m-%d') if
+                        job.application_deadline else '' }}</span
+                      >
+                    </div>
+                  </div>
                 </div>
+
+                <h2 class="section-title">Job Description</h2>
+                <p>{{ job.description }}</p>
+
+                <h2 class="section-title">Responsibilities</h2>
+                <ul class="responsibilities-list">
+                  {% for responsibility in job.responsibilities %}
+                  <li>{{ responsibility }}</li>
+                  {% endfor %}
+                </ul>
+
+                <h2 class="section-title">Requirements</h2>
+                <ul class="requirements-list">
+                  {% for requirement in job.requirements %}
+                  <li>{{ requirement }}</li>
+                  {% endfor %}
+                </ul>
+
+                <h2 class="section-title">Recruitment Procedure</h2>
+                <ul class="recruitment-procedure-list">
+                  {% for procedure in job.recruitment_procedure %}
+                  <li>{{ procedure }}</li>
+                  {% endfor %}
+                </ul>
+
+                <h2 class="section-title">Skills Required</h2>
+                <div class="mb-4">
+                  <h3 class="h6 text-muted mb-2">Soft Skills</h3>
+                  <div>
+                    {% for skill in job.soft_skills %}
+                    <span class="tag">{{ skill }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div>
+                  <h3 class="h6 text-muted mb-2">Technical Skills</h3>
+                  <div>
+                    {% for skill in job.technical_skills %}
+                    <span class="tag">{{ skill }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+
+                <div class="action-buttons">
+                  <div id="application-status">
+                    {% if has_applied %} {% if is_shortlisted %}
+                    <button class="btn btn-success" disabled>
+                      <i class="fas fa-check-circle me-2"></i>Shortlisted
+                    </button>
+                    {% elif meeting_scheduled %}
+                    <span
+                      id="meeting-status"
+                      class="badge bg-info text-white me-2"
+                    >
+                      <i class="fas fa-video me-1"></i>Meeting Scheduled
+                    </span>
+                    {% if interview %}
+                    <div class="meeting-info">
+                      <p>
+                        <strong>Meeting Time:</strong> {{
+                        interview.get('interview_time', '') }}
+                      </p>
+                      <p>
+                        <strong>Duration:</strong> {{
+                        interview.get('interview_duration', 30) }} minutes
+                      </p>
+                      <a
+                        href="#"
+                        id="enter-meeting-btn"
+                        class="btn btn-primary enter-meeting-btn"
+                        data-meeting-time="{{ interview.get('interview_time', '') }}"
+                        data-meeting-duration="{{ interview.get('interview_duration', 30) }}"
+                        data-room-name="{{ interview.get('room_name', '') }}"
+                        data-toggle="tooltip"
+                        title="Enter Meeting"
+                      >
+                        <i class="fas fa-video me-2"></i>Enter Meeting
+                      </a>
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary ms-2 view-notes-btn"
+                        data-job-id="{{ job._id }}"
+                        data-bs-toggle="modal"
+                        data-bs-target="#notesModal"
+                      >
+                        <i class="fas fa-sticky-note me-2"></i>View Notes
+                      </button>
+                    </div>
+                    {% endif %} {% elif is_hired %}
+                    <span class="badge bg-success text-white me-2">
+                      <i class="fas fa-trophy me-1"></i>You Have Been Hired
+                    </span>
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary mt-2 view-notes-btn"
+                      data-job-id="{{ job._id }}"
+                      data-bs-toggle="modal"
+                      data-bs-target="#notesModal"
+                    >
+                      <i class="fas fa-sticky-note me-2"></i>View Notes
+                    </button>
+                    {% else %}
+                    <button class="btn btn-secondary" disabled>
+                      <i class="fas fa-check me-2"></i>Applied
+                    </button>
+                    {% endif %} {% if not meeting_scheduled and not is_hired %}
+                    <button id="cancel-application" class="btn btn-danger ms-2">
+                      <i class="fas fa-times me-2"></i>Cancel Application
+                    </button>
+                    {% endif %} {% else %}
+                    <button id="apply-job" class="btn btn-primary">
+                      <i class="fas fa-paper-plane me-2"></i>Apply Now
+                    </button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </main>
-    <!-- Footer -->
-    <footer>
-        <div class="container text-center text-md-start">
-            <div class="footer-wrap">
-                <div class="about">
-                    <img src="./img/icon/company-logo.svg" alt="">
-                    <p class="text-muted py-4">
-                        Start working with Firmbee which can provide you with all the tools needed to run an effcieint business remotely.
-                    </p>
-                    <div class="social-media">
-                        <a href="" class="me-2 text-reset"><img src="img/icon/facebook-icon.svg" alt=""></a>
-                        <a href="" class="me-2 text-reset"><img src="img/icon/twitter-icon.svg" alt=""></a>
-                        <a href="" class="me-2 text-reset"><img src="img/icon/linkedin-icon.svg" alt=""></a>
-                        <a href="" class="me-2 text-reset"><img src="img/icon/instagram-icon.svg" alt=""></a>
-                    </div>
-                </div>
-                <div class="company">
-                    <h6 class="fw-bold">Company</h6>
-                    <p><a href="">About us</a></p>
-                    <p><a href="">Services</a></p>
-                    <p><a href="">Team</a></p>
-                    <p><a href="">Pricing</a></p>
-                    <p><a href="">Project</a></p>
-                    <p><a href="">Careers</a></p>
-                    <p><a href="">Blog</a></p>
-                    <p><a href="">Login</a></p>
-                </div>
-                <div class="useful-links">
-                    <h6 class="fw-bold">Useful links</h6>
-                    <p><a href="">Terms of </a></p>
-                    <p><a href="">Services</a></p>
-                    <p><a href="">Privacy Policy</a></p>
-                    <p><a href="">Documentation</a></p>
-                    <p><a href="">Changelog</a></p>
-                    <p><a href="">Components</a></p>
-                </div>
-                <div class="newsletter">
-                    <h6 class="fw-bold">Newsletter</h6>
-                    <p class="text-muted">Sign up and receive the latest tips
-                        via email.</p>
-                        <form id="subscribe" action="">
-                            <label for="email">Your e-mail:</label>
-                            <input type="email" placeholder="e-mail:" name="email" required>
-                            <button type="submit" class="main-btn">Subscribe</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="copyright">
-                    <p>&copy; 2024 JOBSEEK</p>
-                    <!--
-                    This template is licenced under Attribution 3.0 (CC BY 3.0 PL),
-                    You are free to: Share and Adapt. You must give appropriate credit, you may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-                    --> 
-                </div>
-            </div>
+
+    <!-- Notes Modal -->
+    <div
+      class="modal fade"
+      id="notesModal"
+      tabindex="-1"
+      aria-labelledby="notesModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="notesModalLabel">
+              <i class="fas fa-sticky-note me-2"></i>Interview Notes
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="notes-content">Loading...</div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
         </div>
-    </footer>
-    <div class="fb2022-copy">Fbee 2022 copyright</div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-    $(document).ready(function() {
-        $('#application-status').on('click', '#apply-job', function() {
-            $.ajax({
-                url: "{{ url_for('seeker.apply_job', job_id=job._id) }}",
-                type: 'POST',
-                success: function(response) {
-                    if (response.success) {
-                        $('#application-status').html(response.html);
-                    } else {
-                        console.error('Failed to apply:', response.message);
-                    }
-                },
-                error: function(xhr) {
-                    console.error('An error occurred. Please try again.');
-                }
-            });
+      $(document).ready(function () {
+        $("#application-status").on("click", "#apply-job", function () {
+          $.ajax({
+            url: "{{ url_for('seeker.apply_job', job_id=job._id) }}",
+            type: "POST",
+            success: function (response) {
+              if (response.success) {
+                $("#application-status").html(response.html);
+              } else {
+                console.error("Failed to apply:", response.message);
+              }
+            },
+            error: function (xhr) {
+              console.error("An error occurred. Please try again.");
+            },
+          });
         });
 
-        $('#application-status').on('click', '#cancel-application', function() {
+        $("#application-status").on(
+          "click",
+          "#cancel-application",
+          function () {
             $.ajax({
-                url: "{{ url_for('seeker.cancel_application', job_id=job._id) }}",
-                type: 'POST',
-                success: function(response) {
-                    if (response.success) {
-                        $('#application-status').html(response.html);
-                    } else {
-                        console.error('Failed to cancel application:', response.message);
-                    }
-                },
-                error: function(xhr) {
-                    console.error('An error occurred. Please try again.');
-                }
-            });
-        });
-    });
-
-    $(document).ready(function() {
-        function updateMeetingStatus() {
-            const $button = $('#enter-meeting-btn');
-            const $meetingStatus = $('#meeting-status');
-            if ($button.length === 0) return;
-
-            const currentTime = new Date();
-            const meetingTimeStr = $button.data('meeting-time');
-            if (!meetingTimeStr) {
-                console.error('No meeting time provided');
-                return;
-            }
-
-            const meetingTime = new Date(meetingTimeStr);
-            const meetingDuration = parseInt($button.data('meeting-duration')) || 30;
-            const meetingEndTime = new Date(meetingTime.getTime() + meetingDuration * 60000);
-
-            const timeDifference = meetingTime.getTime() - currentTime.getTime();
-
-            console.log('Current Time:', currentTime);
-            console.log('Meeting Time:', meetingTime);
-            console.log('Meeting End Time:', meetingEndTime);
-            console.log('Time Difference (ms):', timeDifference);
-
-            if (currentTime >= meetingEndTime) {
-                // Meeting has ended
-                $meetingStatus.remove();
-                $button.prop('disabled', true);
-                $button.addClass('btn-disabled');
-                $button.attr('title', 'Meeting has ended');
-            } else {
-                const shouldBeEnabled = timeDifference <= 5 * 60 * 1000 && currentTime < meetingEndTime;
-
-                console.log('Should Be Enabled:', shouldBeEnabled);
-
-                $button.prop('disabled', !shouldBeEnabled);
-                $button.toggleClass('btn-disabled', !shouldBeEnabled);
-
-                if (timeDifference > 5 * 60 * 1000) {
-                    $button.attr('title', `Meeting starts in ${Math.ceil(timeDifference / 60000)} minutes`);
+              url: "{{ url_for('seeker.cancel_application', job_id=job._id) }}",
+              type: "POST",
+              success: function (response) {
+                if (response.success) {
+                  $("#application-status").html(response.html);
                 } else {
-                    $button.attr('title', 'Click to enter the meeting');
+                  console.error(
+                    "Failed to cancel application:",
+                    response.message
+                  );
                 }
-            }
+              },
+              error: function (xhr) {
+                console.error("An error occurred. Please try again.");
+              },
+            });
+          }
+        );
+      });
 
-            $button.tooltip('dispose').tooltip();
+      $(document).ready(function () {
+        function updateMeetingStatus() {
+          const $button = $("#enter-meeting-btn");
+          const $meetingStatus = $("#meeting-status");
+          if ($button.length === 0) return;
+
+          const currentTime = new Date();
+          const meetingTimeStr = $button.data("meeting-time");
+          if (!meetingTimeStr) {
+            console.error("No meeting time provided");
+            return;
+          }
+
+          const meetingTime = new Date(meetingTimeStr);
+          const meetingDuration =
+            parseInt($button.data("meeting-duration")) || 30;
+          const meetingEndTime = new Date(
+            meetingTime.getTime() + meetingDuration * 60000
+          );
+
+          const timeDifference = meetingTime.getTime() - currentTime.getTime();
+
+          console.log("Current Time:", currentTime);
+          console.log("Meeting Time:", meetingTime);
+          console.log("Meeting End Time:", meetingEndTime);
+          console.log("Time Difference (ms):", timeDifference);
+
+          if (currentTime >= meetingEndTime) {
+            // Meeting has ended
+            $meetingStatus.remove();
+            $button.prop("disabled", true);
+            $button.addClass("btn-disabled");
+            $button.attr("title", "Meeting has ended");
+          } else {
+            const shouldBeEnabled =
+              timeDifference <= 5 * 60 * 1000 && currentTime < meetingEndTime;
+
+            console.log("Should Be Enabled:", shouldBeEnabled);
+
+            $button.prop("disabled", !shouldBeEnabled);
+            $button.toggleClass("btn-disabled", !shouldBeEnabled);
+
+            if (timeDifference > 5 * 60 * 1000) {
+              $button.attr(
+                "title",
+                `Meeting starts in ${Math.ceil(timeDifference / 60000)} minutes`
+              );
+            } else {
+              $button.attr("title", "Click to enter the meeting");
+            }
+          }
+
+          $button.tooltip("dispose").tooltip();
         }
 
         updateMeetingStatus();
@@ -309,68 +561,61 @@
 
         $('[data-toggle="tooltip"]').tooltip();
 
-        $('#enter-meeting-btn').on('click', function(e) {
-            e.preventDefault();
-            if ($(this).prop('disabled')) {
-                return;
-            }
-            const roomName = $(this).data('room-name');
-            if (roomName) {
-                const videoInterviewUrl = "{{ url_for('seeker.video_interview', room_name='ROOM_NAME_PLACEHOLDER') }}".replace('ROOM_NAME_PLACEHOLDER', roomName);
-                window.location.href = videoInterviewUrl;
-            } else {
-                console.error('Room name is not available');
-            }
+        $("#enter-meeting-btn").on("click", function (e) {
+          e.preventDefault();
+          if ($(this).prop("disabled")) {
+            return;
+          }
+          const roomName = $(this).data("room-name");
+          if (roomName) {
+            const videoInterviewUrl =
+              "{{ url_for('seeker.video_interview', room_name='ROOM_NAME_PLACEHOLDER') }}".replace(
+                "ROOM_NAME_PLACEHOLDER",
+                roomName
+              );
+            window.location.href = videoInterviewUrl;
+          } else {
+            console.error("Room name is not available");
+          }
         });
-    });
+      });
 
-    $(document).ready(function() {
-        $('.view-notes-btn').on('click', function() {
-            const jobId = $(this).data('job-id');
-            
-            // Show loading state
-            $('#notes-content').html('Loading...');
-            
-            // Fetch notes using AJAX
-            $.ajax({
-                url: `/seeker/get_interview_notes/${jobId}`,
-                method: 'GET',
-                success: function(response) {
-                    if (response.success) {
-                        if (response.notes) {
-                            // Replace newlines with <br> tags for proper formatting
-                            const formattedNotes = response.notes.replace(/\n/g, '<br>');
-                            $('#notes-content').html(formattedNotes);
-                        } else {
-                            $('#notes-content').html('<p class="text-muted">No notes available.</p>');
-                        }
-                    } else {
-                        $('#notes-content').html(`<p class="text-danger">${response.message}</p>`);
-                    }
-                },
-                error: function(xhr) {
-                    $('#notes-content').html('<p class="text-danger">Failed to load notes. Please try again later.</p>');
+      $(document).ready(function () {
+        $(".view-notes-btn").on("click", function () {
+          const jobId = $(this).data("job-id");
+
+          // Show loading state
+          $("#notes-content").html("Loading...");
+
+          // Fetch notes using AJAX
+          $.ajax({
+            url: `/seeker/get_interview_notes/${jobId}`,
+            method: "GET",
+            success: function (response) {
+              if (response.success) {
+                if (response.notes) {
+                  // Replace newlines with <br> tags for proper formatting
+                  const formattedNotes = response.notes.replace(/\n/g, "<br>");
+                  $("#notes-content").html(formattedNotes);
+                } else {
+                  $("#notes-content").html(
+                    '<p class="text-muted">No notes available.</p>'
+                  );
                 }
-            });
+              } else {
+                $("#notes-content").html(
+                  `<p class="text-danger">${response.message}</p>`
+                );
+              }
+            },
+            error: function (xhr) {
+              $("#notes-content").html(
+                '<p class="text-danger">Failed to load notes. Please try again later.</p>'
+              );
+            },
+          });
         });
-    });
+      });
     </script>
-    <!-- Notes Modal -->
-    <div class="modal fade" id="notesModal" tabindex="-1" aria-labelledby="notesModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="notesModalLabel">Interview Notes</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="notes-content">Loading...</div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
+  </body>
 </html>

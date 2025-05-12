@@ -120,19 +120,19 @@
         <i class="fas fa-home"></i>Dashboard
       </a>
 
-      <a
+      <!-- <a
         href="{{ url_for('customer_care.ticket_list') }}"
         class="{{ 'active' if request.endpoint == 'customer_care.ticket_list' else '' }}"
       >
         <i class="fas fa-ticket-alt"></i>Support Tickets
-      </a>
+      </a> -->
 
-      <a
+      <!-- <a
         href="#"
         class="{{ 'active' if request.endpoint.startswith('customer_care.contact') else '' }}"
       >
         <i class="fas fa-envelope"></i>Contact Management
-      </a>
+      </a> -->
       <div
         class="sub-menu {{ 'show' if request.endpoint.startswith('customer_care.contact') else '' }}"
       >

@@ -57,6 +57,7 @@
             {% else %}
               <li><a class="dropdown-item" href="{{ url_for('resume_maker.setup_profile') }}"><i class="fas fa-user"></i> Set up Profile</a></li>
             {% endif %}
+            <li><a class="dropdown-item" href="{{ url_for('seeker.my_applications') }}"><i class="fas fa-file-alt"></i> My Applications</a></li>
             <li>
               <a class="dropdown-item" href="{{ url_for('messages.messages_list') }}">
                 <i class="fas fa-envelope me-2"></i>Messages

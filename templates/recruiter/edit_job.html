@@ -19,116 +19,209 @@
     
     <style>
         body {
-            background-color: #f8f9fa;
-            padding-top: 70px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+            min-height: 100vh;
+            font-family: "Lato", "Segoe UI", Arial, sans-serif;
         }
-
-        .job-form-container {
-            max-width: 800px;
-            margin: 60px auto;
-            padding: 30px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        .job-form-outer {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+            background: url("https://www.transparenttextures.com/patterns/diamond-upholstery.png");
         }
-
+        .job-form-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(80, 112, 255, 0.1),
+            0 1.5px 6px rgba(0, 0, 0, 0.04);
+            padding: 40px 36px 32px 36px;
+            max-width: 900px;
+            width: 100%;
+            position: relative;
+            animation: floatIn 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        @keyframes floatIn {
+            0% {
+                transform: translateY(40px) scale(0.98);
+                opacity: 0;
+            }
+            100% {
+                transform: none;
+                opacity: 1;
+            }
+        }
+        .job-form-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        .job-form-header .icon {
+            background: linear-gradient(135deg, #6366f1 0%, #38bdf8 100%);
+            color: #fff;
+            border-radius: 50%;
+            width: 54px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 2px 8px rgba(80, 112, 255, 0.1);
+        }
+        .job-form-header h1 {
+            font-size: 2.1rem;
+            font-weight: 800;
+            margin: 0;
+            color: #1e293b;
+        }
+        .job-form-header p {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin: 0 0 0 2px;
+        }
+        .section-divider {
+            border: none;
+            border-top: 1.5px dashed #e0e7ff;
+            margin: 24px 0 28px 0;
+        }
+        .form-section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #6366f1;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        .job-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px 32px;
+        }
+        .job-form .full-width {
+            grid-column: 1 / -1;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+        .form-control,
+        .form-select,
+        .select2-container--default .select2-selection--multiple {
+            border-radius: 8px !important;
+            border: 1.5px solid #e0e7ff !important;
+            box-shadow: none !important;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus,
+        .form-select:focus,
+        .select2-container--default .select2-selection--multiple:focus {
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 0 2px #6366f11a !important;
+        }
+        .select2-container--default .select2-selection--multiple {
+            min-height: 38px;
+            padding: 4px 8px;
+        }
+        .select2-container--default
+            .select2-selection--multiple
+            .select2-selection__choice {
+            background: #e0e7ff;
+            color: #3730a3;
+            border: none;
+            border-radius: 6px;
+            padding: 2px 10px;
+            margin-top: 4px;
+        }
+        .select2-container--default
+            .select2-selection--multiple
+            .select2-selection__choice__display {
+            cursor: default;
+            padding-left: 17px !important;
+            padding-right: 5px;
+        }
         .error-message {
-            color: #dc3545;
-            font-size: 0.875em;
-            margin-top: 0.25rem;
+            color: #dc2626;
+            font-size: 0.92em;
+            margin-top: 0.18rem;
         }
-
         #experience-slider {
-            margin-top: 20px;
-            margin-bottom: 20px;
+            margin-top: 10px;
+            margin-bottom: 10px;
         }
-
-        /* Custom navbar style for this page */
-        .edit-job-navbar {
-            background-color: aliceblue !important;
+        #experience-value {
+            color: #0ea5e9;
+            font-weight: 600;
+            font-size: 1.02rem;
+        }
+        .btn-gradient {
+            background: linear-gradient(90deg, #6366f1 0%, #38bdf8 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2.2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(80, 112, 255, 0.1);
+            transition: background 0.2s, transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+        .btn-gradient:hover {
+            background: linear-gradient(90deg, #38bdf8 0%, #6366f1 100%);
+            transform: translateY(-2px) scale(1.03);
+            color: #fff;
+        }
+        @media (max-width: 900px) {
+            .job-form-card {
+                padding: 28px 10px 24px 10px;
+            }
+            .job-form {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 600px) {
+            .job-form-outer {
+                padding: 10px 0;
+            }
+            .job-form-card {
+                padding: 12px 2px 10px 2px;
+            }
         }
     </style>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
 </head>
 
 <body>
-    <!-- Include the navigation bar with a custom class -->
-    {% with custom_class="edit-job-navbar" %}
-        {% include 'recruiter/_navbar.html' %}
-    {% endwith %}
-
-    <div class="container">
-        <div class="job-form-container">
-            <h1 class="text-center mb-4">Edit Job</h1>
-            <form method="POST" action="{{ url_for('recruiter.edit_job', job_id=job._id) }}">
-                <div class="mb-3">
-                    <label for="title" class="form-label">Job Title</label>
-                    <input type="text" class="form-control" id="title" name="title" required maxlength="100"
-                        value="{{ job.title }}">
-                    <span class="error-title error-message"></span>
+    <div class="job-form-outer">
+        <div class="job-form-card">
+            <div class="job-form-header">
+                <span class="icon"><i class="fa-solid fa-briefcase"></i></span>
+                <div>
+                    <h1>Edit Job</h1>
+                    <p>Update the job details to attract top talent!</p>
+                </div>
+                </div>
+            <hr class="section-divider" />
+            <form method="POST" action="{{ url_for('recruiter.edit_job', job_id=job._id) }}" id="jobEditForm">
+                <div class="job-form">
+                    <div class="mb-3 full-width">
+                        <div class="form-section-title">Job Basics</div>
                 </div>
                 <div class="mb-3">
-                    <label for="description" class="form-label">Job Description</label>
-                    <textarea class="form-control" id="description" name="description" rows="3"
-                        required>{{ job.description }}</textarea>
-                    <span class="error-description error-message"></span>
-                </div>
-                <div class="mb-3">
-                    <label for="responsibilities" class="form-label">Job Responsibilities</label>
-                    <div id="responsibilities-editor" class="form-control" contenteditable="true"></div>
-                    <textarea id="responsibilities" name="responsibilities" style="display: none;"></textarea>
-                    <span class="error-responsibilities error-message"></span>
-                </div>
-                <div class="mb-3">
-                    <label for="requirements" class="form-label">Job Requirements</label>
-                    <div id="requirements-editor" class="form-control" contenteditable="true"></div>
-                    <textarea id="requirements" name="requirements" style="display: none;"></textarea>
-                    <span class="error-requirements error-message"></span>
-                </div>
-                <div class="mb-3">
-                    <label for="soft_skills">Soft Skills</label>
-                    <select multiple class="form-control select2-multi" id="soft_skills" name="soft_skills[]">
-                        {% for skill in soft_skills %}
-                        <option value="{{ skill }}" {% if skill in job.soft_skills %}selected{% endif %}>{{ skill }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <span class="error-skills error-message"></span>
-                </div>
-                <div class="mb-3">
-                    <label for="technical_skills">Technical Skills</label>
-                    <select multiple class="form-control select2-multi" id="technical_skills" name="technical_skills[]">
-                        {% for skill in technical_skills %}
-                        <option value="{{ skill }}" {% if skill in job.technical_skills %}selected{% endif %}>{{ skill
-                            }}</option>
-                        {% endfor %}
-                    </select>
-                    <span class="error-technical-skills error-message"></span>
-                </div>
-                <div class="mb-3">
-                    <label for="experience" class="form-label">Years of Experience</label>
-                    <div id="experience-slider"></div>
-                    <input type="hidden" id="experience" name="experience" value="{{ job.experience }}">
-                    <p id="experience-value" class="mt-2"></p>
-                    <span class="error-experience error-message"></span>
-                </div>
-                <div class="mb-3">
-                    <label for="salary" class="form-label">Salary Range (LPA)</label>
-                    <div class="row">
-                        <div class="col">
-                            <input type="number" class="form-control" id="salary_min" name="salary_min" required
-                                value="{{ job.salary_min }}">
-                        </div>
-                        <div class="col">
-                            <input type="number" class="form-control" id="salary_max" name="salary_max" required
-                                value="{{ job.salary_max }}">
-                        </div>
-                    </div>
-                    <span class="error-salary error-message"></span>
+                        <label for="title" class="form-label">Job Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required maxlength="100" value="{{ job.title }}">
+                        <span class="error-title error-message"></span>
                 </div>
                 <div class="mb-3">
                     <label for="location" class="form-label">Job Location</label>
-                    <input type="text" class="form-control" id="location" name="location" required
-                        value="{{ job.location }}">
+                        <input type="text" class="form-control" id="location" name="location" required value="{{ job.location }}">
                     <span class="error-location error-message"></span>
                 </div>
                 <div class="mb-3">
@@ -136,8 +229,7 @@
                     <select class="form-select" id="job_type" name="job_type" required>
                         <option value="">Select Job Type</option>
                         {% for job_type in job_types %}
-                        <option value="{{ job_type._id }}" {% if job.job_type==job_type._id %}selected{% endif %}>{{
-                            job_type.type }}</option>
+                            <option value="{{ job_type._id }}" {% if job.job_type==job_type._id %}selected{% endif %}>{{ job_type.type }}</option>
                         {% endfor %}
                     </select>
                     <span class="error-job-type error-message"></span>
@@ -147,26 +239,100 @@
                     <select class="form-select" id="experience_level" name="experience_level" required>
                         <option value="">Select Experience Level</option>
                         {% for level in experience_levels %}
-                        <option value="{{ level._id }}" {% if job.experience_level==level._id %}selected{% endif %}>{{
-                            level.type }}</option>
+                            <option value="{{ level._id }}" {% if job.experience_level==level._id %}selected{% endif %}>{{ level.type }}</option>
                         {% endfor %}
                     </select>
                     <span class="error-experience-level error-message"></span>
                 </div>
                 <div class="mb-3">
-                    <label for="education" class="form-label">Education</label>
-                    <input type="text" class="form-control" id="education" name="education" required
-                        value="{{ job.education }}">
+                        <label for="education" class="form-label">Education Requirements</label>
+                        <input type="text" class="form-control" id="education" name="education" required value="{{ job.education }}">
                     <span class="error-education error-message"></span>
                 </div>
+                    <div class="mb-3">
+                        <label for="salary" class="form-label">Salary Range (LPA)</label>
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="number" class="form-control" id="salary_min" name="salary_min" required value="{{ job.salary_min }}" placeholder="Min">
+                            </div>
+                            <div class="col">
+                                <input type="number" class="form-control" id="salary_max" name="salary_max" required value="{{ job.salary_max }}" placeholder="Max">
+                            </div>
+                        </div>
+                        <span class="error-salary error-message"></span>
+                    </div>
                 <div class="mb-3">
                     <label for="application_deadline" class="form-label">Application Deadline</label>
-                    <input type="date" class="form-control" id="application_deadline" name="application_deadline"
-                        required value="{{ job.application_deadline.strftime('%Y-%m-%d') }}">
+                        <input type="date" class="form-control" id="application_deadline" name="application_deadline" required value="{{ job.application_deadline.strftime('%Y-%m-%d') }}">
                     <span class="error-application-deadline error-message"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="experience" class="form-label">Years of Experience</label>
+                        <div id="experience-slider"></div>
+                        <input type="hidden" id="experience" name="experience" value="{{ job.experience }}">
+                        <p id="experience-value" class="mt-2"></p>
+                        <span class="error-experience error-message"></span>
+                    </div>
+                    <div class="mb-3 full-width">
+                        <hr class="section-divider" />
+                        <div class="form-section-title">Job Description</div>
+                    </div>
+                    <div class="mb-3 full-width">
+                        <label for="description" class="form-label">Job Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required>{{ job.description }}</textarea>
+                        <span class="error-description error-message"></span>
+                    </div>
+                    <div class="mb-3 full-width">
+                        <label for="responsibilities" class="form-label">Job Responsibilities</label>
+                        <div id="responsibilities-editor" class="form-control" contenteditable="true"></div>
+                        <input type="hidden" name="responsibilities" id="responsibilities">
+                        <span class="error-responsibilities error-message"></span>
+                    </div>
+                    <div class="mb-3 full-width">
+                        <label for="requirements" class="form-label">Job Requirements</label>
+                        <div id="requirements-editor" class="form-control" contenteditable="true"></div>
+                        <input type="hidden" name="requirements" id="requirements">
+                        <span class="error-requirements error-message"></span>
+                    </div>
+                    <!-- Recruitment Procedure Section -->
+                    <div class="mb-3 full-width">
+                        <hr class="section-divider" />
+                        <div class="form-section-title">Recruitment Procedure</div>
+                    </div>
+                    <div class="mb-3 full-width">
+                        <label for="recruitment_procedure" class="form-label">Recruitment Procedure</label>
+                        <div id="recruitment-procedure-editor" class="form-control" contenteditable="true"></div>
+                        <input type="hidden" name="recruitment_procedure" id="recruitment_procedure">
+                        <span class="error-recruitment-procedure error-message"></span>
+                    </div>
+                    <div class="mb-3 full-width">
+                        <hr class="section-divider" />
+                        <div class="form-section-title">Skills</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="soft_skills">Soft Skills</label>
+                        <select multiple class="form-control select2-multi" id="soft_skills" name="soft_skills[]" required>
+                            {% for skill in soft_skills %}
+                            <option value="{{ skill }}" {% if skill in job.soft_skills %}selected{% endif %}>{{ skill }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="error-soft-skills error-message"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="technical_skills">Technical Skills</label>
+                        <select multiple class="form-control select2-multi" id="technical_skills" name="technical_skills[]" required>
+                            {% for skill in technical_skills %}
+                            <option value="{{ skill }}" {% if skill in job.technical_skills %}selected{% endif %}>{{ skill }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="error-technical-skills error-message"></span>
+                    </div>
                 </div>
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Update Job</button>
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-gradient" id="submitButton">
+                        <i class="fa-solid fa-save"></i>
+                        Update Job
+                    </button>
                 </div>
             </form>
         </div>
@@ -174,41 +340,41 @@
 
     <script>
         $(document).ready(function () {
-            $('.select2-multi').select2({
+            $(".select2-multi").select2({
                 tags: true,
-                tokenSeparators: [',', ' '],
-                placeholder: "Select or type skills"
+                tokenSeparators: [",", " "],
+                placeholder: "Select or type skills",
             });
 
-            var slider = document.getElementById('experience-slider');
-            var experienceInput = document.getElementById('experience');
-            var experienceValue = document.getElementById('experience-value');
-            var experienceRange = experienceInput.value.split('-').map(Number);
+            var slider = document.getElementById("experience-slider");
+            var experienceInput = document.getElementById("experience");
+            var experienceValue = document.getElementById("experience-value");
+            var experienceRange = experienceInput.value.split("-").map(Number);
 
             noUiSlider.create(slider, {
                 start: experienceRange,
                 connect: true,
                 range: {
-                    'min': 0,
-                    'max': 20
+                    min: 0,
+                    max: 20,
                 },
-                step: 1
+                step: 1,
             });
 
-            slider.noUiSlider.on('update', function (values, handle) {
+            slider.noUiSlider.on("update", function (values, handle) {
                 var minYears = Math.round(values[0]);
                 var maxYears = Math.round(values[1]);
-                experienceValue.innerHTML = minYears + ' - ' + maxYears + ' years';
-                experienceInput.value = minYears + '-' + maxYears;
+                experienceValue.innerHTML = minYears + " - " + maxYears + " years";
+                experienceInput.value = minYears + "-" + maxYears;
             });
 
             // Set minimum date for application deadline
             var today = new Date();
-            var dd = String(today.getDate() + 1).padStart(2, '0'); // Set to tomorrow
-            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var dd = String(today.getDate() + 1).padStart(2, "0"); // Set to tomorrow
+            var mm = String(today.getMonth() + 1).padStart(2, "0");
             var yyyy = today.getFullYear();
-            var minDate = yyyy + '-' + mm + '-' + dd;
-            $('#application_deadline').attr('min', minDate);
+            var minDate = yyyy + "-" + mm + "-" + dd;
+            $("#application_deadline").attr("min", minDate);
 
             function initBulletEditor(editorId, textareaId, initialData) {
                 const editor = document.getElementById(editorId);
@@ -221,157 +387,177 @@
                     editor.innerHTML = '<ul><li></li></ul>';
                 }
 
+                editor.addEventListener("keydown", function (e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        document.execCommand("insertHTML", false, "<li><br></li>");
+                        updateTextarea();
+                    }
+                });
+
+                editor.addEventListener("input", function () {
+                    // Ensure there's always at least one bullet point
+                    if (editor.innerHTML.trim() === "") {
+                        editor.innerHTML = '<ul><li></li></ul>';
+                    }
+                    updateTextarea();
+                    validateForm(); // Add this line to trigger validation on input
+                });
+
                 function updateTextarea() {
                     const bulletPoints = getBulletPoints(editorId);
                     textarea.value = JSON.stringify(bulletPoints);
                 }
 
-                editor.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        document.execCommand('insertHTML', false, '<li><br></li>');
-                        updateTextarea();
-                    }
-                });
-
-                editor.addEventListener('input', function () {
-                    // Ensure there's always at least one bullet point
-                    if (editor.innerHTML.trim() === '') {
-                        editor.innerHTML = '<ul><li><br></li></ul>';
-                    }
-                    updateTextarea();
-                });
-
                 // Initial update of textarea
                 updateTextarea();
             }
 
-            function getBulletPoints(editorId) {
-                const editor = document.getElementById(editorId);
-                const listItems = editor.querySelectorAll('li');
-                return Array.from(listItems)
-                    .map(li => li.textContent.trim())
-                    .filter(text => text !== '');
-            }
+            initBulletEditor("responsibilities-editor", "responsibilities", JSON.parse('{{ job.responsibilities|tojson|safe }}'));
+            initBulletEditor("requirements-editor", "requirements", JSON.parse('{{ job.requirements|tojson|safe }}'));
+            initBulletEditor("recruitment-procedure-editor", "recruitment_procedure", JSON.parse('{{ job.recruitment_procedure|tojson|safe }}'));
 
-            initBulletEditor('responsibilities-editor', 'responsibilities', JSON.parse('{{ job.responsibilities|tojson|safe }}'));
-            initBulletEditor('requirements-editor', 'requirements', JSON.parse('{{ job.requirements|tojson|safe }}'));
-
-            // Form validation
-            $('form').on('submit', function (event) {
-                console.log('Form submitted');
-                var isValid = true;
-                $('.error-message').text('');
+            function validateForm() {
+                let isValid = true;
+                $(".error-message").text("");
 
                 // Job Title
-                if ($('#title').val().trim() === '') {
-                    $('.error-title').text('Job title is required');
+                if ($("#title").val().trim() === "") {
+                    $(".error-title").text("Job title is required");
                     isValid = false;
                 }
 
                 // Job Description
-                if ($('#description').val().trim() === '') {
-                    $('.error-description').text('Job description is required');
+                if ($("#description").val().trim() === "") {
+                    $(".error-description").text("Job description is required");
                     isValid = false;
                 }
 
                 // Responsibilities
-                var responsibilities = JSON.parse($('#responsibilities').val() || '[]');
+                var responsibilities = getBulletPoints("responsibilities-editor");
                 if (responsibilities.length === 0) {
-                    $('.error-responsibilities').text('Job responsibilities are required');
+                    $(".error-responsibilities").text("Job responsibilities are required");
                     isValid = false;
                 }
 
                 // Requirements
-                var requirements = JSON.parse($('#requirements').val() || '[]');
+                var requirements = getBulletPoints("requirements-editor");
                 if (requirements.length === 0) {
-                    $('.error-requirements').text('Job requirements are required');
+                    $(".error-requirements").text("Job requirements are required");
                     isValid = false;
                 }
 
-                // Skills
-                if ($('#soft_skills').val().length === 0) {
-                    $('.error-skills').text('At least one soft skill is required');
+                // Recruitment Procedure
+                var recruitmentProcedure = getBulletPoints("recruitment-procedure-editor");
+                if (recruitmentProcedure.length === 0) {
+                    $(".error-recruitment-procedure").text("Recruitment procedure is required");
+                    isValid = false;
+                }
+
+                // Soft Skills
+                if ($("#soft_skills").val().length === 0) {
+                    $(".error-soft-skills").text("At least one soft skill is required");
                     isValid = false;
                 }
 
                 // Technical Skills
-                if ($('#technical_skills').val().length === 0) {
-                    $('.error-technical-skills').text('At least one technical skill is required');
+                if ($("#technical_skills").val().length === 0) {
+                    $(".error-technical-skills").text("At least one technical skill is required");
                     isValid = false;
                 }
 
                 // Experience
-                var experience = $('#experience').val().split('-');
+                var experience = $("#experience").val().split("-");
                 if (experience.length !== 2 || isNaN(experience[0]) || isNaN(experience[1])) {
-                    $('.error-experience').text('Invalid experience range');
+                    $(".error-experience").text("Invalid experience range");
                     isValid = false;
                 }
 
                 // Salary Range
-                var salaryMin = parseFloat($('#salary_min').val());
-                var salaryMax = parseFloat($('#salary_max').val());
+                var salaryMin = parseFloat($("#salary_min").val());
+                var salaryMax = parseFloat($("#salary_max").val());
                 if (isNaN(salaryMin) || isNaN(salaryMax) || salaryMin >= salaryMax) {
-                    $('.error-salary').text('Invalid salary range');
+                    $(".error-salary").text("Invalid salary range");
                     isValid = false;
                 }
 
                 // Location
-                if ($('#location').val().trim() === '') {
-                    $('.error-location').text('Job location is required');
+                if ($("#location").val().trim() === "") {
+                    $(".error-location").text("Job location is required");
                     isValid = false;
                 }
 
                 // Job Type
-                if ($('#job_type').val() === '') {
-                    $('.error-job-type').text('Job type is required');
+                if ($("#job_type").val() === "") {
+                    $(".error-job-type").text("Job type is required");
                     isValid = false;
                 }
 
                 // Experience Level
-                if ($('#experience_level').val() === '') {
-                    $('.error-experience-level').text('Experience level is required');
+                if ($("#experience_level").val() === "") {
+                    $(".error-experience-level").text("Experience level is required");
                     isValid = false;
                 }
 
                 // Education
-                if ($('#education').val().trim() === '') {
-                    $('.error-education').text('Education requirement is required');
+                if ($("#education").val().trim() === "") {
+                    $(".error-education").text("Education requirement is required");
                     isValid = false;
                 }
 
                 // Application Deadline
-                var deadlineInput = $('#application_deadline');
+                var deadlineInput = $("#application_deadline");
                 var selectedDate = new Date(deadlineInput.val());
                 var currentDate = new Date();
-                currentDate.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+                currentDate.setHours(0, 0, 0, 0);
 
-                if (deadlineInput.val() === '') {
-                    $('.error-application-deadline').text('Application deadline is required');
+                if (deadlineInput.val() === "") {
+                    $(".error-application-deadline").text("Application deadline is required");
                     isValid = false;
                 } else if (selectedDate <= currentDate) {
-                    $('.error-application-deadline').text('Application deadline must be a future date');
+                    $(".error-application-deadline").text("Application deadline must be a future date");
                     isValid = false;
                 }
 
-                if (!isValid) {
+                return isValid;
+            }
+
+            // Add event listeners to all form inputs
+            $("form input, form textarea, form select").on("input change", function () {
+                $("#submitButton").prop("disabled", !validateForm());
+            });
+
+            // Initial form validation
+            validateForm();
+
+            // Form submission
+            $("#jobEditForm").on("submit", function (event) {
+                if (!validateForm()) {
                     event.preventDefault();
                 }
             });
 
             // Prevent selecting past dates
-            $('#application_deadline').on('input', function () {
+            $("#application_deadline").on("input", function () {
                 var selectedDate = new Date($(this).val());
                 var currentDate = new Date();
-                currentDate.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+                currentDate.setHours(0, 0, 0, 0);
 
                 if (selectedDate <= currentDate) {
-                    $('.error-application-deadline').text('Application deadline must be a future date');
-                    $(this).val(''); // Clear the input
+                    $(".error-application-deadline").text("Application deadline must be a future date");
+                    $(this).val("");
                 } else {
-                    $('.error-application-deadline').text('');
+                    $(".error-application-deadline").text("");
                 }
             });
+
+            function getBulletPoints(editorId) {
+                const editor = document.getElementById(editorId);
+                const listItems = editor.querySelectorAll("li");
+                return Array.from(listItems)
+                    .map((li) => li.textContent.trim())
+                    .filter((text) => text !== "");
+            }
         });
     </script>
 </body>

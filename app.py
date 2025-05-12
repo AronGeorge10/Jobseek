@@ -592,31 +592,34 @@ scheduler.start()
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
 
-# @app.context_processor
-# def utility_processor():
-#     return {
-#         'collection_recruiter_registration': collection_recruiter_registration,
-#         'objectid': ObjectId
-#     }
-
-# Initialize the chatbot
 chatbot = JobPortalChatbot()
 
 # Add the chat endpoint
 @app.route('/chat', methods=['POST'])
 def chat():
-    try:
-        data = request.json
-        user_message = data.get('message', '')
-        
-        if not user_message:
-            return jsonify({'error': 'No message provided'}), 400
-        
-        response = chatbot.get_response(user_message)
-        return jsonify({'response': response})
-    except Exception as e:
-        print(f"Chat error: {str(e)}")  # For debugging
-        return jsonify({'error': 'Internal server error'}), 500
+    data = request.json
+    user_message = data.get('message', '')
+    
+    if not user_message:
+        return jsonify({'error': 'No message provided'}), 400
+    
+    # Get user information if available
+    user_id = None
+    user_type = None
+    
+    if current_user and hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
+        user_id = current_user.id
+        user_type = current_user.user_type if hasattr(current_user, 'user_type') else 'seeker'
+        print(f"Authenticated user: {user_id}, type: {user_type}")
+    else:
+        # For testing purposes, always use a test user ID
+        print("No authenticated user found, using test user")
+        from bson.objectid import ObjectId
+        user_id = ObjectId("66b992bcd73da8894fa07834")  # Your test user ID
+        user_type = "seeker"
+    
+    response = chatbot.get_response(user_message, user_id, user_type)
+    return jsonify({'response': response})
 
 if __name__ == '__main__':
     app.run(debug=True)

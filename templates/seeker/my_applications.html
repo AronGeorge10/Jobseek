@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Applications - JOBSEEK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://kit.fontawesome.com/0e035b9984.js"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='webpage/css/main.css') }}"
+    />
+    <style>
+      main {
+        padding-top: 30px;
+        background-color: #f8f9fa;
+        min-height: 100vh;
+      }
+
+      .application-card {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .application-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .card-body {
+        padding: 1.5rem;
+      }
+
+      .card-title {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        font-size: 1.25rem;
+      }
+
+      .card-subtitle {
+        color: #6c757d;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .status-badge {
+        padding: 0.5em 1em;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .application-date {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .btn-outline-primary {
+        border-color: #007bff;
+        color: #007bff;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .btn-outline-primary:hover {
+        background-color: #007bff;
+        color: #fff;
+        transform: translateY(-1px);
+      }
+
+      .alert-info {
+        background-color: #e1f5fe;
+        border-color: #b3e5fc;
+        color: #0288d1;
+        border-radius: 8px;
+        padding: 1rem;
+      }
+
+      .alert-info .alert-link {
+        color: #01579b;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .alert-info .alert-link:hover {
+        text-decoration: underline;
+      }
+
+      .page-header {
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 1rem;
+      }
+
+      .page-header h1 {
+        color: #2c3e50;
+        font-weight: 700;
+        font-size: 2rem;
+      }
+
+      @media (max-width: 768px) {
+        .application-card {
+          margin-bottom: 15px;
+        }
+
+        .page-header h1 {
+          font-size: 1.75rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    {% include '_navbar.html' %}
+    <main>
+      <div class="container">
+        <div class="page-header">
+          <h1><i class="fas fa-clipboard-list me-2"></i>My Applications</h1>
+        </div>
+
+        {% if applications %}
+        <div class="row">
+          {% for application in applications %}
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="application-card">
+              <div class="card-body">
+                <h5 class="card-title">{{ application.job_title }}</h5>
+                <h6 class="card-subtitle">
+                  <i class="fas fa-building me-2"></i>{{
+                  application.company_name }}
+                </h6>
+
+                <div class="mb-3">
+                  {% if application.status == 'pending' %}
+                  <span class="status-badge bg-warning text-dark">
+                    <i class="fas fa-clock me-1"></i>Pending
+                  </span>
+                  {% elif application.status == 'reviewed' %}
+                  <span class="status-badge bg-info text-white">
+                    <i class="fas fa-eye me-1"></i>Reviewed
+                  </span>
+                  {% elif application.status == 'interviewed' %}
+                  <span class="status-badge bg-primary text-white">
+                    <i class="fas fa-user-tie me-1"></i>Interviewed
+                  </span>
+                  {% elif application.status == 'accepted' %}
+                  <span class="status-badge bg-success text-white">
+                    <i class="fas fa-check-circle me-1"></i>Accepted
+                  </span>
+                  {% elif application.status == 'rejected' %}
+                  <span class="status-badge bg-danger text-white">
+                    <i class="fas fa-times-circle me-1"></i>Rejected
+                  </span>
+                  {% endif %}
+                </div>
+
+                <p class="application-date">
+                  <i class="far fa-calendar-alt me-2"></i>
+                  Applied on: {{ application.applied_date.strftime('%B %d, %Y')
+                  }}
+                </p>
+
+                <a
+                  href="{{ url_for('seeker.view_job', job_id=application.job_id) }}"
+                  class="btn btn-outline-primary w-100"
+                >
+                  <i class="fas fa-external-link-alt me-2"></i>View Job Details
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+          <i class="fas fa-info-circle me-2"></i>
+          You haven't submitted any applications yet.
+          <a href="{{ url_for('seeker.job_postings') }}" class="alert-link">
+            Browse available jobs <i class="fas fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </main>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>

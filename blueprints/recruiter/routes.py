@@ -79,6 +79,10 @@ def post_job():
         if not requirements:
             errors['requirements'] = 'Job requirements are required'
 
+        recruitment_procedure = json.loads(request.form.get('recruitment_procedure', '[]'))
+        if not recruitment_procedure:
+            errors['recruitment_procedure'] = 'Recruitment procedure is required'
+
         soft_skills = request.form.getlist('soft_skills[]')
         if not soft_skills:
             errors['skills'] = 'At least one soft skill is required'
@@ -137,6 +141,7 @@ def post_job():
             'description': description,
             'responsibilities': responsibilities,
             'requirements': requirements,
+            'recruitment_procedure': recruitment_procedure,
             'soft_skills': soft_skills,
             'technical_skills': technical_skills,
             'experience': experience,
@@ -398,6 +403,10 @@ def edit_job(job_id):
         if not requirements:
             errors['requirements'] = 'Job requirements are required'
 
+        recruitment_procedure = json.loads(request.form.get('recruitment_procedure', '[]'))
+        if not recruitment_procedure:
+            errors['recruitment_procedure'] = 'Recruitment procedure is required'
+
         skills = request.form.getlist('soft_skills[]')
         if not skills:
             errors['skills'] = 'At least one soft skill is required'
@@ -457,6 +466,7 @@ def edit_job(job_id):
                 'description': description,
                 'responsibilities': responsibilities,
                 'requirements': requirements,
+                'recruitment_procedure': recruitment_procedure,
                 'soft_skills': skills,
                 'technical_skills': technical_skills,
                 'experience': experience,
@@ -479,6 +489,10 @@ def edit_job(job_id):
         except Exception as e:
             print("Error updating job:", str(e))
             flash('An error occurred while updating the job.', 'error')
+
+    # Ensure recruitment_procedure exists in the job object
+    if 'recruitment_procedure' not in job:
+        job['recruitment_procedure'] = []
 
     soft_skills = list(set(skill for job in collection_jobs.find() for skill in job.get('soft_skills', [])))
     technical_skills = list(set(skill for job in collection_jobs.find() for skill in job.get('technical_skills', [])))
